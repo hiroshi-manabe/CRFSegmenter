@@ -3,16 +3,17 @@
 
 #include "types.h"
 
+#include "LabelSequence.h"
+
 #include <memory>
 #include <string>
 
 namespace HighOrderCRF {
 
+class FeatureTemplate;
+
 using std::shared_ptr;
 using std::string;
-
-class LabelSequence;
-class FeatureTemplate;
 
 class Feature
 {

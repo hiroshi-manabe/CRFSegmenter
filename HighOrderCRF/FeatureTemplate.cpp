@@ -3,9 +3,6 @@
 #include "Feature.h"
 #include "LabelSequence.h"
 
-class LabelSequence;
-class FeatureTemplate;
-
 #include <memory>
 #include <string>
 
@@ -41,23 +38,4 @@ size_t FeatureTemplate::hash() const {
 }
 
 }  // namespace HighOrderCRF
-
-
-namespace std {
-
-    template<>
-    struct hash<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
-        std::size_t operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
-            return featureTemplate->hash();
-        }
-    };
-
-    template<>
-    struct equal_to<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
-        bool operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate>& left, const std::shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
-            return *left == *right;
-        }
-    };
-
-}
 

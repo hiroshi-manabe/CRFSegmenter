@@ -2,6 +2,7 @@
 #define HOCRF_HIGH_ORDER_CRF_DATA_H_
 
 #include "types.h"
+#include "Feature.h"
 
 #include <memory>
 #include <string>
@@ -14,8 +15,6 @@ using std::shared_ptr;
 using std::string;
 using std::unordered_map;
 using std::vector;
-
-class Feature;
 
 class HighOrderCRFData {
 public:

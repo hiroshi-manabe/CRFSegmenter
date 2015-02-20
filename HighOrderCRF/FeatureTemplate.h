@@ -3,16 +3,17 @@
 
 #include "types.h"
 
+#include "Feature.h"
+#include "LabelSequence.h"
+
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace HighOrderCRF {
 
 using std::shared_ptr;
 using std::string;
-
-class LabelSequence;
-class Feature;
 
 class FeatureTemplate
 {
@@ -30,4 +31,25 @@ private:
 };
 
 }  // namespace HighOrderCRF
+
+
+
+namespace std {
+
+    template<>
+    struct hash<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
+        std::size_t operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
+            return featureTemplate->hash();
+        }
+    };
+
+    template<>
+    struct equal_to<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
+        bool operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate>& left, const std::shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
+            return *left == *right;
+        }
+    };
+
+}
+
 #endif  // HOCRF_FEATURE_TEMPLATE_H

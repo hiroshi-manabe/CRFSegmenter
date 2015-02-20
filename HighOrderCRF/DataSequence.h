@@ -3,6 +3,10 @@
 
 #include "types.h"
 
+#include "Feature.h"
+#include "FeatureTemplate.h"
+#include "LabelSequence.h"
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -15,9 +19,6 @@ using std::unordered_map;
 using std::vector;
 
 class CompactPatternSetSequence;
-class Feature;
-class FeatureTemplate;
-class LabelSequence;
 
 class DataSequence
 {

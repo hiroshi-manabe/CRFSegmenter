@@ -2,6 +2,7 @@
 #define HOCRF_PATTERN_H_
 
 #include "types.h"
+#include "Feature.h"
 
 #include <memory>
 #include <string>
@@ -12,8 +13,6 @@ namespace HighOrderCRF {
 using std::shared_ptr;
 using std::string;
 using std::vector;
-
-class Feature;
 
 class Pattern
 {

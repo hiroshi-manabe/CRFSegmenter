@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+#include "FeatureTemplate.h"
 #include "FeatureTemplateGenerator.h"
 
 #include <memory>
@@ -13,8 +14,6 @@ namespace HighOrderCRF {
 using std::make_shared;
 using std::shared_ptr;
 using std::vector;
-
-class FeatureTemplate;
 
 template <typename T>
 class AggregatedFeatureTemplateGenerator : public FeatureTemplateGenerator<T>

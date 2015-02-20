@@ -2,6 +2,7 @@
 #define HOCRF_UNCONDITIONAL_FEATURE_TEMPLATE_GENERATOR_H_
 
 #include "types.h"
+#include "FeatureTemplate.h"
 
 #include <algorithm>
 #include <memory>
@@ -12,8 +13,6 @@ namespace HighOrderCRF {
 using std::min;
 using std::shared_ptr;
 using std::vector;
-
-class FeatureTemplate;
 
 template <typename T>
 class UnconditionalFeatureTemplateGenerator : public FeatureTemplateGenerator<T>
