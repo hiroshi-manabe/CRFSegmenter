@@ -1,6 +1,6 @@
 #include "Optimizer.h"
 
-#include "lbfgs.h"
+#include "../liblbfgs/lbfgs.h"
 #include "CompactPatternSetSequence.h"
 
 #include <cmath>
