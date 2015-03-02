@@ -81,13 +81,13 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
     auto emptyLabelSequence = LabelSequence::createEmptyLabelSequence();
 
     for (size_t pos = 0; pos < this->length(); ++pos) {
-        auto &curFeatureTemplateList = featureTemplateListList->at(pos);
+        const auto &curFeatureTemplateList = featureTemplateListList->at(pos);
         mapList->push_back(make_shared<map<shared_ptr<LabelSequence>, shared_ptr<Pattern>>>());
-        auto &curMap = mapList->at(pos);
+        const auto &curMap = mapList->at(pos);
         auto emptyPattern = make_shared<Pattern>(INVALID_LABEL);
         curMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(emptyLabelSequence, emptyPattern));
 
-        for (auto &featureTemplate : *curFeatureTemplateList) {
+        for (const auto &featureTemplate : *curFeatureTemplateList) {
             if (featureTemplate->getLabelLength() > pos + 1) {
                 continue;
             }
@@ -117,16 +117,16 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                     curMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(seq, make_shared<Pattern>(seq->getLastLabel())));
                 }
 
-                auto &pat = curMap->at(seq);
+                auto pat = curMap->at(seq);
                 pat->addFeature(feature);
 
                 if (pos == 0) {
                     pat->setPrevPattern(Pattern::getDummyPattern());
                 } else {
                     size_t labelLength = seq->getLength();
-                    auto &tempMap = mapList->at(pos);
+                    auto tempMap = mapList->at(pos);
                     for (size_t i = 1; i <= labelLength; ++i) {
-                        auto &prevMap = mapList->at(pos - i);
+                        auto prevMap = mapList->at(pos - i);
                         auto prefix = seq->createPrefix();
                         
                         bool prevMapContainsKey = prevMap->find(prefix) != prevMap->end();
@@ -147,17 +147,17 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
     auto patternListList = make_shared<vector<shared_ptr<vector<shared_ptr<Pattern>>>>>();
     auto longestMatchPatternList = make_shared<vector<shared_ptr<Pattern>>>();
     for (size_t pos = 0; pos < length(); ++pos) {
-        auto &curMap = mapList->at(pos);
+        const auto &curMap = mapList->at(pos);
         auto longestSuffixCandidateList = make_shared<vector<shared_ptr<Pattern>>>();
-        auto &emptyPattern = curMap->at(emptyLabelSequence);
+        const auto &emptyPattern = curMap->at(emptyLabelSequence);
         for (size_t i = 0; i < maxLabelLength + 1; ++i) {
             longestSuffixCandidateList->push_back(emptyPattern);
         }
 
         auto prevLabelSequence = emptyLabelSequence;
-        for (auto &entry : *curMap) {
-            auto &curLabelSequence = entry.first;
-            auto &curPattern = entry.second;
+        for (const auto &entry : *curMap) {
+            const auto &curLabelSequence = entry.first;
+            const auto &curPattern = entry.second;
             if (curLabelSequence == emptyLabelSequence) {
                 continue;
             }
@@ -171,14 +171,14 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
         }
 
         auto patternList = make_shared<vector<shared_ptr<Pattern>>>();
-        for (auto &entry : *mapList->at(pos)) {
+        for (const auto &entry : *mapList->at(pos)) {
             patternList->push_back(entry.second);
         }
-        auto &longestMatchPattern = patternList->at(0);
+        auto longestMatchPattern = patternList->at(0);
         if (hasValidLabels) {
-            auto& prevMap = mapList->at(pos);
+            const auto& prevMap = mapList->at(pos);
             for (size_t length = min(maxLabelLength, pos + 1); length > 0; --length) {
-                auto key = getLabelSequence(pos, length);
+                const auto &key = getLabelSequence(pos, length);
                 if (prevMap->find(key) != prevMap->end()) {
                     longestMatchPattern = prevMap->at(key);
                     break;

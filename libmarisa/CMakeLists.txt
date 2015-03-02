@@ -1,0 +1,11 @@
+add_library(libmarisa
+  marisa/agent.cc
+  marisa/grimoire/io/mapper.cc
+  marisa/grimoire/io/reader.cc
+  marisa/grimoire/io/writer.cc
+  marisa/grimoire/trie/louds-trie.cc
+  marisa/grimoire/trie/tail.cc
+  marisa/grimoire/vector/bit-vector.cc
+  marisa/keyset.cc
+  marisa/trie.cc
+)

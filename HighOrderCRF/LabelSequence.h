@@ -36,20 +36,6 @@ private:
 namespace std {
 
 template<>
-struct hash<std::shared_ptr<HighOrderCRF::LabelSequence>> {
-    std::size_t operator()(const std::shared_ptr<HighOrderCRF::LabelSequence> &labelSequence) const {
-        return labelSequence->hash();
-    }
-};
-
-template<>
-struct equal_to<std::shared_ptr<HighOrderCRF::LabelSequence>> {
-    bool operator()(const std::shared_ptr<HighOrderCRF::LabelSequence>& left, const std::shared_ptr<HighOrderCRF::LabelSequence> &right) const {
-        return *left == *right;
-    }
-};
-
-template<>
 struct less<std::shared_ptr<HighOrderCRF::LabelSequence>> {
     bool operator()(const std::shared_ptr<HighOrderCRF::LabelSequence>& left, const std::shared_ptr<HighOrderCRF::LabelSequence> &right) const {
         return *left < *right;

@@ -8,10 +8,12 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace HighOrderCRF {
 
+using std::make_pair;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
@@ -44,6 +46,26 @@ public:
             labels->push_back(hasValidLabels ? labelMap->at(labelList->at(pos)) : 0);
         }
         return make_shared<DataSequence>(featureTemplateListList, labels, hasValidLabels);
+    }
+
+    string generateCRFSuiteData(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+        string ret;
+        for (size_t i = 0; i < observationList->size(); ++i) {
+            ret += (*labelList)[i];
+            auto templateList = featureTemplateGenerator->generateFeatureTemplatesAt(observationList, i);
+            auto tempMap = unordered_map<string, bool>();
+            for (auto &ft : *templateList) {
+                auto &obs = ft->getObservation();
+                if (tempMap.find(obs) == tempMap.end()) {
+                    ret += "\t";
+                    ret += (obs.empty() ? "LABEL" : obs);
+                    tempMap.insert(make_pair(ft->getObservation(), true));
+                }
+            }
+            ret += "\n";
+        }
+        ret += "__BOS_EOS__\n\n";
+        return ret;
     }
 
 private:

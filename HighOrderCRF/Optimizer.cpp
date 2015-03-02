@@ -104,6 +104,7 @@ double Optimizer::evaluate(const double *x, double *g) {
             logLikelihood -= x[i] * x[i] * 0.5 * sigma2inv;
         }
     }
+
     return -logLikelihood;
 }
 

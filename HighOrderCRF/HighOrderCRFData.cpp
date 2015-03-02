@@ -171,14 +171,16 @@ void HighOrderCRFData::write(const string &filename) const {
     out.close();
 }
 
-void HighOrderCRFData::dumpFeatures(const string &filename) const {
-    ofstream out(filename);
+void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) const {
+    ofstream out(filename, ios::binary);
     out.precision(15);
     auto reversedLabelMap = getLabelStringList();
     for (size_t i = 0; i < featureList->size(); ++i) {
         auto &feature = (*featureList)[i];
-        out << (*bestWeightList)[i] << "\t";
-        out << feature->getObservation();
+        if (outputWeights) {
+            out << (*bestWeightList)[i] << "\t";
+        }
+        out << (feature->getObservation().empty() ? "LABEL" : feature->getObservation());
         auto labelSequence = feature->getLabelSequence();
         for (size_t j = 0; j < labelSequence->getLength(); ++j) {
             out << "\t" << reversedLabelMap->at(labelSequence->getLabelAt(j));

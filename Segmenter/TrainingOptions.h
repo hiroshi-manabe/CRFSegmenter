@@ -5,6 +5,8 @@
 
 namespace Segmenter {
 
+using std::string;
+
 struct TrainingOptions {
     size_t charMaxNgram;
     size_t charMaxWindow;
@@ -12,6 +14,7 @@ struct TrainingOptions {
     size_t charTypeMaxNgram;
     size_t charTypeMaxWindow;
     size_t charTypeMaxLabelLength;
+    string dictionaryFilename;
 };
 
 }

@@ -35,7 +35,7 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> CharacterFeatureGenerator::gener
         int curPosOffset = curPos - pos + (curPos >= pos ? 1 : 0);
             
         char buffer[256];
-        sprintf(buffer, "%+d/", curPosOffset);
+        sprintf(buffer, "C%+d/", curPosOffset);
         string prefix(buffer);
         for (size_t n = 1; n <= maxN; ++n) {
 #ifdef EMULATE_BOS_EOS

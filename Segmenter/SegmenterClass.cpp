@@ -7,6 +7,7 @@
 #include "../HighOrderCRF/UnconditionalFeatureTemplateGenerator.h"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
+#include "DictionaryFeatureGenerator.h"
 #include "optionparser.h"
 #include "TrainingOptions.h"
 #include "UnicodeCharacter.h"
@@ -86,6 +87,9 @@ SegmenterClass::SegmenterClass(const TrainingOptions &options) {
     gen->addFeatureTemplateGenerator(make_shared<CharacterTypeFeatureGenerator>(options.charTypeMaxNgram,
                                                                                 options.charTypeMaxWindow,
                                                                                 options.charTypeMaxLabelLength));
+    if (!options.dictionaryFilename.empty()) {
+        gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(options.dictionaryFilename));
+    }
     featureGenerator = gen;
 };
 
@@ -138,7 +142,7 @@ void SegmenterClass::readModel(const string &modelFilename) {
 
 }  // namespace Segmenter
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT };
 
 struct Arg : public option::Arg
 {
@@ -159,6 +163,7 @@ const option::Descriptor usage[] =
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -172,7 +177,7 @@ const option::Descriptor usage[] =
 
 
 int main(int argc, char **argv) {
-    Segmenter::TrainingOptions op = { 3, 3, 4, 3, 3, 1 };
+    Segmenter::TrainingOptions op = { 3, 3, 4, 3, 3, 1, "" };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -198,6 +203,12 @@ int main(int argc, char **argv) {
     else {
         option::printUsage(std::cerr, usage);
         return 0;
+    }
+
+    std::string dictFilename;
+    if (options[DICT]) {
+        dictFilename = options[DICT].arg;
+        op.dictionaryFilename = dictFilename;
     }
 
     if (options[TRAIN]) {

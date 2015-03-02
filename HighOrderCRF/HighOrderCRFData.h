@@ -27,7 +27,7 @@ public:
     shared_ptr<vector<string>> getLabelStringList() const;
     void read(const string &filename);
     void write(const string &filename) const;
-    void dumpFeatures(const string &filename) const;
+    void dumpFeatures(const string &filename, bool outputWeights) const;
 
 private:
     shared_ptr<vector<shared_ptr<Feature>>> featureList;

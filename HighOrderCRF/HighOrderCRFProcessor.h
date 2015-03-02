@@ -19,6 +19,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef CRFSUITE_OUTPUT
+#include <fstream>
+using std::endl;
+using std::ofstream;
+#endif
+
 namespace HighOrderCRF {
 
 using std::make_shared;
@@ -70,6 +76,13 @@ public:
             featureTemplateToFeatureListMap->at(ft)->push_back(feature);
         }
 
+#ifdef CRFSUITE_OUTPUT
+        ofstream ofs("crfsuite.data", std::ios::binary);
+        for (auto &observationSequence : *observationSequenceList) {
+            ofs << observationSequence->generateCRFSuiteData(featureTemplateGenerator);
+        }
+        ofs.close();
+#endif
         auto compactPatternSetSequenceList = make_shared<vector<shared_ptr<CompactPatternSetSequence>>>();
         for (auto &dataSequence : *dataSequenceList) {
             compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
@@ -89,7 +102,9 @@ public:
             }
         }
         modelData = make_shared<HighOrderCRFData>(featureListToSave, bestWeightListToSave, labelMap);
-        modelData->dumpFeatures("features.txt");
+#ifdef CRFSUITE_OUTPUT
+        modelData->dumpFeatures("features.txt", false);
+#endif
         prepare();
     }
 

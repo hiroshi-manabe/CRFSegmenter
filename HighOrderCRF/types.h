@@ -9,6 +9,7 @@ typedef int32_t label_t;
 typedef uint16_t pattern_index_t;
 typedef uint32_t feature_index_t;
 
-//#define EMULATE_BOS_EOS
+#define EMULATE_BOS_EOS
+//#define CRFSUITE_OUTPUT
 
 #endif  // HOCRF_TYPES_H_
