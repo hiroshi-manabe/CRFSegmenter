@@ -27,7 +27,9 @@ using HighOrderCRF::HighOrderCRFProcessor;
 using HighOrderCRF::ObservationSequence;
 using HighOrderCRF::UnconditionalFeatureTemplateGenerator;
 
+using std::endl;
 using std::cout;
+using std::cerr;
 using std::getline;
 using std::ifstream;
 using std::make_shared;
@@ -95,6 +97,10 @@ SegmenterClass::SegmenterClass(const TrainingOptions &options) {
 
 shared_ptr<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>> SegmenterClass::readData(const string &fileName, bool hasValidLabels) {
     ifstream ifs(fileName);
+    if (!ifs.is_open()) {
+        cerr << "Cannot read from file: " << fileName << endl;
+        exit(1);
+    }
     auto observationSequenceList = make_shared<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>>();
     string line;
     while (getline(ifs, line)) {

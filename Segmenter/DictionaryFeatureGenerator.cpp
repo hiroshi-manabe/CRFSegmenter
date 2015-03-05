@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -16,13 +16,14 @@ using std::make_shared;
 using std::make_pair;
 using std::max;
 using std::min;
+using std::pair;
 using std::shared_ptr;
 using std::string;
+using std::stringstream;
 using std::vector;
 
 DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile) {
-    dictionary = make_shared<marisa::Trie>();
-    dictionary->load(dictionaryFile.c_str());
+    dictionary = make_shared<Dictionary>(dictionaryFile);
     resultCache = make_shared<map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
 }
 
@@ -47,39 +48,34 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
             utf8PosToCharPosList[startPosList[i]] = i;
         }
 
-        // Looks up the words
-        marisa::Agent agent;
         for (size_t i = 0; i < startPosList.size(); ++i) {
             size_t startUtf8Pos = startPosList[i];
-            agent.set_query(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos);
-            while (dictionary->common_prefix_search(agent)) {
-                size_t endCharPos = utf8PosToCharPosList[startUtf8Pos + agent.key().length()];
+            // Looks up the words
+            auto results = dictionary->lookup(string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
+            for (const auto &p : results) {
+                const auto &charLength = p.first;
+                const auto &featureList = p.second;
+                
+                size_t endCharPos = utf8PosToCharPosList[startUtf8Pos + charLength];
                 if (endCharPos == 0) {  // This cannot happen if everything is in well-formed utf-8
                     continue;
                 }
                 int wordLength = endCharPos - i;
                 assert(wordLength > 0);
-                string word(sentence.c_str() + startUtf8Pos, agent.key().length());
 
-                char buffer[256];
-                sprintf(buffer, "%d", wordLength);
-                string wordLengthStr(buffer);
                 size_t labelLength = wordLength + 1;
                 if (labelLength > 5) {
                     labelLength = 5;
                 }
-                sprintf(buffer, "%d", labelLength);
-                string labelLengthStr(buffer);
 
                 // Feature template for the left position
                 auto &leftTemplateList = (*templateListList)[i];
                 if (!leftTemplateList) {
                     leftTemplateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
                 }
-                string rightObs("RW0/");
-                rightObs += word;
-//                leftTemplateList->push_back(make_shared<FeatureTemplate>(rightObs, 1));
-                leftTemplateList->push_back(make_shared<FeatureTemplate>(string("Rw") + wordLengthStr + "-1", 1));
+                for (const auto &featureStr : featureList) {
+                    leftTemplateList->push_back(make_shared<FeatureTemplate>(string("Rw-") + featureStr, 1));
+                }
 
                 if (endCharPos >= observationList->size()) {
                     continue;
@@ -89,17 +85,10 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
                 if (!rightTemplateList) {
                     rightTemplateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
                 }
-                string leftObs("LW0/");
-                leftObs += word;
-//                rightTemplateList->push_back(make_shared<FeatureTemplate>(leftObs, 1));
-                rightTemplateList->push_back(make_shared<FeatureTemplate>(string("Lw") + wordLengthStr + "-1", 1));
-
-                string leftObs2("LW");
-                leftObs2 += buffer;
-                leftObs2 += "/";
-                leftObs2.append(sentence.c_str() + startUtf8Pos, agent.key().length());
-//                rightTemplateList->push_back(make_shared<FeatureTemplate>(leftObs2, wordLength + 1));
-                rightTemplateList->push_back(make_shared<FeatureTemplate>(string("Lw") + wordLengthStr + "-" + labelLengthStr, labelLength));
+                for (const auto &featureStr : featureList) {
+                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("Lw-") + featureStr, 1));
+                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("LW-") + featureStr, labelLength));
+                }
             }
         }
         resultCache->insert(make_pair(observationList, templateListList));

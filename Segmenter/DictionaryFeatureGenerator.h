@@ -1,17 +1,14 @@
 #ifndef SEGMENTER_DICTIONARY_FEATURE_GENERATOR_H_
 #define SEGMENTER_DICTIONARY_FEATURE_GENERATOR_H_
 
-// for Visual Studio
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "../libmarisa/marisa.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/FeatureTemplateGenerator.h"
+#include "Dictionary.h"
 
 namespace Segmenter {
 
@@ -31,7 +28,7 @@ public:
     virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<UnicodeCharacter>> observationList, size_t pos) const;
 
 private:
-    shared_ptr<marisa::Trie> dictionary;
+    shared_ptr<Dictionary> dictionary;
     shared_ptr<map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>> resultCache;
 };
 

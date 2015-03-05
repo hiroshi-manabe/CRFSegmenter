@@ -37,9 +37,11 @@ int lbfgsProgress(void *instance,
     return ((Optimizer*)instance)->progress(x, g, fx, xnorm, gnorm, step, n, k, ls);
 }
 
-Optimizer::Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> sequenceList, shared_ptr<vector<double>> featureCountList, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
+Optimizer::Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> sequenceList, shared_ptr<vector<double>> featureCountList,
+    size_t concurrency, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
     this->sequenceList = sequenceList;
     this->featureCountList = featureCountList;
+    this->concurrency = concurrency;
     this->maxIters = maxIters;
     this->useL1Optimization = useL1Optimization;
     this->regularizationCoefficient = regularizationCoefficient;

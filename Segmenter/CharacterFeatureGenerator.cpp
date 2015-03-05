@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -15,7 +15,9 @@ using std::make_shared;
 using std::max;
 using std::min;
 using std::shared_ptr;
+using std::showpos;
 using std::string;
+using std::stringstream;
 using std::vector;
 
 CharacterFeatureGenerator::CharacterFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength) {
@@ -33,10 +35,9 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> CharacterFeatureGenerator::gener
     for (size_t curPos = startPos; curPos <= pos; ++curPos) {
         size_t maxN = min(endPos - curPos, maxNgram);
         int curPosOffset = curPos - pos + (curPos >= pos ? 1 : 0);
-            
-        char buffer[256];
-        sprintf(buffer, "C%+d/", curPosOffset);
-        string prefix(buffer);
+
+        stringstream prefix;
+        prefix << "C" << showpos << curPosOffset << "/";
         for (size_t n = 1; n <= maxN; ++n) {
 #ifdef EMULATE_BOS_EOS
             if (curPos == 0 || pos == observationList->size() - 1 || curPos + n == observationList->size()) {
@@ -46,7 +47,7 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> CharacterFeatureGenerator::gener
             if (curPos + n < pos || curPos > pos) {
                 continue;
             }
-            string obs(prefix);
+            string obs(prefix.str());
             for (size_t offset = 0; offset < n; ++offset) {
                 obs += observationList->at(curPos + offset).toString();
             }

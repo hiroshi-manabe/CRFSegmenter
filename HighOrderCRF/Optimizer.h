@@ -2,9 +2,6 @@
 #define HOCRF_OPTIMIZER_H
 
 #include "types.h"
-#ifdef _MSC_VER
-#include "../win32/liblbfgs/lbfgs.h"
-#endif
 
 #include <memory>
 #include <vector>
@@ -20,7 +17,7 @@ class CompactPatternSetSequence;
 class Optimizer
 {
 public:
-    Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> sequenceList, shared_ptr<vector<double>> featureCountList, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence);
+    Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> sequenceList, shared_ptr<vector<double>> featureCountList, size_t concurrency, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence);
     double evaluate(const double *x, double *g);
     void optimize(const double *featureWeights);
     int progress(const double *x, const double *g, const double fx, const double xnorm, const double gnorm, const double step, int n, int k, int ls);
@@ -31,6 +28,7 @@ private:
     shared_ptr<vector<double>> featureCountList;
     shared_ptr<vector<double>> buffer;
     shared_ptr<vector<double>> bestWeightList;
+    size_t concurrency;
     size_t maxIters;
     bool useL1Optimization;
     double regularizationCoefficient;

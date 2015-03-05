@@ -1,9 +1,6 @@
 #ifndef SEGMENTER_CHARACTER_FEATURE_GENERATOR_H_
 #define SEGMENTER_CHARACTER_FEATURE_GENERATOR_H_
 
-// for Visual Studio
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <memory>
 #include <vector>
 

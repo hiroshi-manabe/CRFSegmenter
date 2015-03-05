@@ -3,6 +3,7 @@ add_executable(
     CharacterFeatureGenerator.cpp
     CharacterTypeFeatureGenerator.cpp
     DictionaryFeatureGenerator.cpp
+    Dictionary.cpp
     SegmenterClass.cpp
     UnicodeCharacter.cpp
 )
