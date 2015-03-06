@@ -1,18 +1,22 @@
 #include "Optimizer.h"
 
 #include "../liblbfgs/lbfgs.h"
+#include "../task/task_queue.hpp"
 #include "CompactPatternSetSequence.h"
 
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <thread>
 #include <vector>
 
 namespace HighOrderCRF {
 
 using std::cout;
 using std::endl;
+using std::future;
 using std::make_shared;
+using std::move;
 using std::shared_ptr;
 using std::vector;
 
@@ -94,9 +98,23 @@ double Optimizer::evaluate(const double *x, double *g) {
         g[i] = -(*featureCountList)[i];
     }
 
-    double logLikelihood = 0.0;
+    hwm::task_queue tq(concurrency);
+    vector<future<double>> futureList;
+
     for (auto &sequence : *sequenceList) {
-        logLikelihood += sequence->accumulateFeatureExpectations(expWeights.data(), g);
+        future<double> f = tq.enqueue([](shared_ptr<CompactPatternSetSequence> pat, double* expWeightArray, double* expectationArray) -> double {
+                return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
+            },
+            sequence,
+            expWeights.data(),
+            g);
+        futureList.push_back(move(f));
+    }
+    tq.wait();
+
+    double logLikelihood = 0.0;
+    for (auto &f : futureList) {
+        logLikelihood += f.get();
     }
 
     if (!useL1Optimization) {

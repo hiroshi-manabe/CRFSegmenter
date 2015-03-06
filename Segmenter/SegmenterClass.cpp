@@ -5,18 +5,23 @@
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../HighOrderCRF/ObservationSequence.h"
 #include "../HighOrderCRF/UnconditionalFeatureTemplateGenerator.h"
+#include "../task/task_queue.hpp"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
 #include "DictionaryFeatureGenerator.h"
 #include "optionparser.h"
-#include "TrainingOptions.h"
+#include "SegmenterOptions.h"
 #include "UnicodeCharacter.h"
 
+#include <chrono>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace Segmenter {
@@ -80,7 +85,8 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
     return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, hasValidLabels);
 }
 
-SegmenterClass::SegmenterClass(const TrainingOptions &options) {
+SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
+    this->options = options;
     auto gen = make_shared<AggregatedFeatureTemplateGenerator<UnicodeCharacter>>();
     gen->addFeatureTemplateGenerator(make_shared<UnconditionalFeatureTemplateGenerator<UnicodeCharacter>>(1));
     gen->addFeatureTemplateGenerator(make_shared<CharacterFeatureGenerator>(options.charMaxNgram,
@@ -114,7 +120,7 @@ void SegmenterClass::train(const string &trainingFilename,
     const string &modelFilename) {
     auto observationSequenceList = readData(trainingFilename, true);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
-    CRFProcessor->train(observationSequenceList, featureGenerator, 10000, false, 10.0, 0.00001);
+    CRFProcessor->train(observationSequenceList, featureGenerator, options.numThreads, 10000, false, 10.0, 0.00001);
     CRFProcessor->writeModel(modelFilename);
 }
 
@@ -138,7 +144,7 @@ void SegmenterClass::test(const string &testFilename) {
     for (auto &observationSequence : *observationSequenceList) {
         labelListList->push_back(observationSequence->getLabelList());
     }
-    CRFProcessor->test(observationSequenceList, featureGenerator, labelListList);
+    CRFProcessor->test(observationSequenceList, featureGenerator, labelListList, options.numThreads);
 }
 
 void SegmenterClass::readModel(const string &modelFilename) {
@@ -148,7 +154,7 @@ void SegmenterClass::readModel(const string &modelFilename) {
 
 }  // namespace Segmenter
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS };
 
 struct Arg : public option::Arg
 {
@@ -173,6 +179,7 @@ const option::Descriptor usage[] =
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
     "  Segmenter --train train.txt --model model.dat\n"
     "  Segmenter --test test.txt --model model.dat\n"
@@ -183,7 +190,7 @@ const option::Descriptor usage[] =
 
 
 int main(int argc, char **argv) {
-    Segmenter::TrainingOptions op = { 3, 3, 4, 3, 3, 1, "" };
+    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1, "" };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -217,6 +224,17 @@ int main(int argc, char **argv) {
         op.dictionaryFilename = dictFilename;
     }
 
+    op.numThreads = 1;
+    if (options[THREADS]) {
+        char* endptr;
+        int num = strtol(options[THREADS].arg, &endptr, 10);
+        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
+            std::cerr << "Illegal number of threads" << std::endl;
+            exit(1);
+        }
+        op.numThreads = num;
+    }
+
     if (options[TRAIN]) {
         std::string trainingFilename = options[TRAIN].arg;
         Segmenter::SegmenterClass s(op);
@@ -232,12 +250,25 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    // SEGMENT or none
+    // segments the inputs
     Segmenter::SegmenterClass s(op);
     s.readModel(modelFilename);
+    
     std::string line;
+    hwm::task_queue tq(op.numThreads);
+    std::queue<std::future<std::string>> futureQueue;
+    
     while (std::getline(std::cin, line)) {
-        std::cout << s.segment(line) << std::endl;
+        std::future<std::string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, &s, line);
+        futureQueue.push(std::move(f));
+        while (futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            std::cout << futureQueue.front().get() << std::endl;
+            futureQueue.pop();
+        }
+    }
+    while (!futureQueue.empty()) {
+        std::cout << futureQueue.front().get() << std::endl;
+        futureQueue.pop();
     }
 
     return 0;

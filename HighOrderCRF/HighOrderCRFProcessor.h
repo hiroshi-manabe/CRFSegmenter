@@ -2,6 +2,7 @@
 #define HOCRF_HIGH_ORDER_CRF_H_
 
 #include "types.h"
+#include "../task/task_queue.hpp"
 #include "CompactPatternSetSequence.h"
 #include "DataSequence.h"
 #include "Feature.h"
@@ -27,7 +28,9 @@ using std::ofstream;
 
 namespace HighOrderCRF {
 
+using std::future;
 using std::make_shared;
+using std::move;
 using std::pair;
 using std::shared_ptr;
 using std::string;
@@ -43,6 +46,7 @@ public:
     HighOrderCRFProcessor() : modelData(new HighOrderCRFData) {}
     void train(shared_ptr<vector<shared_ptr<ObservationSequence<T>>>> observationSequenceList,
                shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
+               size_t concurrency,
                size_t maxIters,
                bool useL1Regularization,
                double regularizationCoefficient,
@@ -87,7 +91,7 @@ public:
         for (auto &dataSequence : *dataSequenceList) {
             compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
         }
-        auto optimizer = make_shared<Optimizer>(compactPatternSetSequenceList, featureCountList, 0, false, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = make_shared<Optimizer>(compactPatternSetSequenceList, featureCountList, concurrency, 0, false, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
@@ -119,8 +123,9 @@ public:
     }
     
     void test(shared_ptr<vector<shared_ptr<ObservationSequence<T>>>> observationSequenceList,
-        shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
-        shared_ptr<vector<shared_ptr<vector<string>>>> correctLabelListList) {
+              shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
+              shared_ptr<vector<shared_ptr<vector<string>>>> correctLabelListList,
+              size_t concurrency) {
         // number of distinct labels
         size_t labelCount = modelData->getLabelStringList()->size();
         vector<size_t> observationLabelCounts(labelCount);
@@ -132,10 +137,16 @@ public:
         size_t allLabelCount = 0;
         size_t sequenceCount = observationSequenceList->size();
 
+        hwm::task_queue tq(concurrency);
+        vector<future<shared_ptr<vector<label_t>>>> futureList;
+        for (size_t i = 0 ; i < sequenceCount; ++i) {
+            future<shared_ptr<vector<label_t>>> f = tq.enqueue(&HighOrderCRFProcessor::tagLabelType, this, observationSequenceList->at(i), featureTemplateGenerator);
+            futureList.push_back(move(f));
+        }
+
         for (size_t i = 0; i < sequenceCount; ++i) {
-            auto &observationSequence = observationSequenceList->at(i);
             auto &correctLabelList = correctLabelListList->at(i);
-            auto inferredLabelList = tagLabelType(observationSequence, featureTemplateGenerator);
+            auto inferredLabelList = futureList[i].get();
             bool isAllCorrect = true;
             for (size_t j = 0; j < correctLabelList->size(); ++j) {
                 auto correctLabel = modelData->getLabelMap()->at(correctLabelList->at(j));

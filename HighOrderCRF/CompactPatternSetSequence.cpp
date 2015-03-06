@@ -13,6 +13,7 @@ namespace HighOrderCRF {
 using std::copy;
 using std::fill;
 using std::make_shared;
+using std::mutex;
 using std::shared_ptr;
 using std::swap;
 using std::vector;
@@ -52,6 +53,8 @@ void CompactPatternSetSequence::accumulateFeatureCounts(double *counts) const {
         }
     }
 }
+
+mutex expectationMutex;
 
 // returns log likelihood of the sequence
 double CompactPatternSetSequence::accumulateFeatureExpectations(double *expWeights, double *expectations) const {
@@ -173,6 +176,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(double *expWeigh
     }
     
     // accumulates expectations
+    expectationMutex.lock();
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
 #ifdef EMULATE_BOS_EOS
         if (pos == 0 || pos == sequenceLength - 1) {
@@ -186,6 +190,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(double *expWeigh
             }
         }
     }
+    expectationMutex.unlock();
 
     // calculates the log likelihood of the sequence
     double logLikelihood = -(log(normalizer) + log(2.0) * normalizerExponent);

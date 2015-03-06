@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../HighOrderCRF/FeatureTemplateGenerator.h"
+#include "SegmenterOptions.h"
 
 namespace HighOrderCRF {
     template <typename T>
@@ -25,13 +26,12 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 
-struct TrainingOptions;
 class UnicodeCharacter;
 
 class SegmenterClass {
 
 public:
-    SegmenterClass(const TrainingOptions &trainingOptions);
+    SegmenterClass(const SegmenterOptions &segmenterOptions);
     shared_ptr<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>> readData(const string &fileName, bool hasValidLabels);
     void train(const string &trainingFilename, const string &modelFilename);
     string segment(const string &line) const;
@@ -41,6 +41,7 @@ public:
 private:
     shared_ptr<FeatureTemplateGenerator<UnicodeCharacter>> featureGenerator;
     shared_ptr<HighOrderCRFProcessor<UnicodeCharacter>> CRFProcessor;
+    SegmenterOptions options;
 };
 
 }
