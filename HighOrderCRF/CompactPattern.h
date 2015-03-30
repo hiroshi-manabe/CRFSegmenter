@@ -1,5 +1,5 @@
-#ifndef HOCRF_COMPACT_PATTERN_H_
-#define HOCRF_COMPACT_PATTERN_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_COMPACT_PATTERN_H_
+#define HOCRF_HIGH_ORDER_CRF_COMPACT_PATTERN_H_
 
 #include "types.h"
 
@@ -35,4 +35,4 @@ private:
 
 }  // namespace HighOrderCRF
 
-#endif  // HOCRF_COMPACT_PATTERN_H
+#endif  // HOCRF_HIGH_ORDER_CRF_COMPACT_PATTERN_H

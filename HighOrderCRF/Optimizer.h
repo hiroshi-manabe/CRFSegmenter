@@ -1,5 +1,5 @@
-#ifndef HOCRF_OPTIMIZER_H
-#define HOCRF_OPTIMIZER_H
+#ifndef HOCRF_HIGH_ORDER_CRF_OPTIMIZER_H
+#define HOCRF_HIGH_ORDER_CRF_OPTIMIZER_H
 
 #include "types.h"
 
@@ -36,4 +36,4 @@ private:
 };
 
 }  // namespace HighOrderCRF
-#endif  // HOCRF_OPTIMIZER_H
+#endif  // HOCRF_HIGH_ORDER_CRF_OPTIMIZER_H

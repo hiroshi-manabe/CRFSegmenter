@@ -1,4 +1,4 @@
-#include "Dictionary.h"
+#include "DictionaryClass.h"
 
 #include "../libmarisa/marisa.h"
 
@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-namespace Segmenter {
+namespace Dictionary {
 
 using std::cerr;
 using std::endl;
@@ -38,7 +38,7 @@ vector<string> splitStringByTabs(const string &s) {
     return elems;
 }
 
-Dictionary::Dictionary(const string &filename) {
+DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
     ifstream ifs(filename);
 
     if (!ifs.is_open()) {
@@ -88,10 +88,15 @@ Dictionary::Dictionary(const string &filename) {
         }
         
         auto &featureIdSet = it->second;
-        for (size_t i = 1; i < elementCount; ++i) {
-            string elem = prefixList[i] + elems[i];
+        for (size_t i = 0; i < elementCount; ++i) {
+            string elem;
+            if (addPrefix) {
+                elem = prefixList[i] + elems[i + 1];
+            } else {
+                elem = elems[i + 1];
+            }
              
-            const auto &it = stringToFeatureIdMap.find(elem);
+            const auto it = stringToFeatureIdMap.find(elem);
             size_t featureId;
             if (it == stringToFeatureIdMap.end()) {
                 featureId = stringToFeatureIdMap.size();
@@ -125,7 +130,7 @@ Dictionary::Dictionary(const string &filename) {
     }
 }
 
-vector<pair<size_t, vector<string>>> Dictionary::lookup(const string &str) {
+vector<pair<size_t, vector<string>>> DictionaryClass::commonPrefixSearch(const string &str) {
     vector<pair<size_t, vector<string>>> ret;
     marisa::Agent agent;
     agent.set_query(str.c_str(), str.length());
@@ -142,4 +147,20 @@ vector<pair<size_t, vector<string>>> Dictionary::lookup(const string &str) {
     return ret;
 }
 
-}  // namespace Segmenter
+vector<string> DictionaryClass::lookup(const string &str) {
+    vector<string> ret;
+    marisa::Agent agent;
+    agent.set_query(str.c_str(), str.length());
+    if (trie.lookup(agent)) {
+        size_t marisaId = agent.key().id();
+        size_t keyLen = agent.key().length();
+        const auto &featureIdList = marisaIdToFeatureIdListList[marisaId];
+        vector<string> FeatureList;
+        for (const auto &featureId : featureIdList) {
+            ret.push_back(featureIdToStringList[featureId]);
+        }
+    }
+    return ret;
+}
+
+}  // namespace Dictionary

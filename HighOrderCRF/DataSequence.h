@@ -1,5 +1,5 @@
-#ifndef HOCRF_DATA_SEQUENCE_H
-#define HOCRF_DATA_SEQUENCE_H
+#ifndef HOCRF_HIGH_ORDER_CRF_DATA_SEQUENCE_H
+#define HOCRF_HIGH_ORDER_CRF_DATA_SEQUENCE_H
 
 #include "types.h"
 
@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace HighOrderCRF {
@@ -16,6 +17,7 @@ namespace HighOrderCRF {
 using std::make_shared;
 using std::shared_ptr;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 class CompactPatternSetSequence;
@@ -23,8 +25,10 @@ class CompactPatternSetSequence;
 class DataSequence
 {
 public:
-    DataSequence(const shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList,
-                 const shared_ptr<vector<label_t>> labels, bool hasValidLabels);
+    DataSequence(shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList,
+                 shared_ptr<vector<label_t>> labels,
+                 shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList,
+                 bool hasValidLabels);
     size_t length() const;
     shared_ptr<LabelSequence> getLabelSequence(size_t pos, size_t length) const;
     void accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_ptr<Feature>, size_t>> featureCountMap) const;
@@ -33,8 +37,8 @@ private:
     shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList;
     shared_ptr<vector<label_t>> labels;
     bool hasValidLabels;
+    shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList;
 };
 
 }  // namespace HighOrderCRF
-#endif  // HOCRF_DATA_SEQUENCE_H
-
+#endif  // HOCRF_HIGH_ORDER_CRF_DATA_SEQUENCE_H

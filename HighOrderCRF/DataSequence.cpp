@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -22,15 +23,19 @@ using std::min;
 using std::pair;
 using std::shared_ptr;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
-DataSequence::DataSequence(const shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList,
-    const shared_ptr<vector<label_t>> labels,
-    bool hasValidLabels) {
+DataSequence::DataSequence(shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList,
+                           shared_ptr<vector<label_t>> labels,
+                           shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList,
+                           bool hasValidLabels) {
     this->labels = labels;
     this->featureTemplateListList = featureTemplateListList;
+    this->possibleLabelTypeSetList = possibleLabelTypeSetList;
     this->hasValidLabels = hasValidLabels;
 }
+
 
 size_t DataSequence::length() const {
     return featureTemplateListList->size();
@@ -112,7 +117,16 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                     continue;
                 }
 #endif
-
+                bool labelsOK = true;
+                for (size_t i = 0; i < seq->getLength(); ++i) {
+                    if (!(*possibleLabelTypeSetList)[pos - i].empty() && (*possibleLabelTypeSetList)[pos - i].find(seq->getLabelAt(i)) == (*possibleLabelTypeSetList)[pos - i].end()) {
+                        labelsOK = false;
+                        break;
+                    }
+                }
+                if (!labelsOK) {
+                    continue;
+                }
                 if (curMap->find(seq) == curMap->end()) {
                     curMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(seq, make_shared<Pattern>(seq->getLastLabel())));
                 }

@@ -1,5 +1,5 @@
-#ifndef SEGMENTER_SEGMENTER_H_
-#define SEGMENTER_SEGMENTER_H_
+#ifndef HOCRF_SEGMENTER_SEGMENTER_CLASS_H_
+#define HOCRF_SEGMENTER_SEGMENTER_CLASS_H_
 
 #include <memory>
 #include <string>
@@ -9,10 +9,12 @@
 #include "SegmenterOptions.h"
 
 namespace HighOrderCRF {
-    template <typename T>
-    class ObservationSequence;
-    template <typename T>
-    class HighOrderCRFProcessor;
+
+template <typename T>
+class ObservationSequence;
+template <typename T>
+class HighOrderCRFProcessor;
+
 }
 
 
@@ -46,4 +48,4 @@ private:
 
 }
 
-#endif  // SEGMENTER_SEGMENTER_H_
+#endif  // HOCRF_SEGMENTER_SEGMENTER_CLASS_H_

@@ -1,9 +1,11 @@
 #include "DictionaryFeatureGenerator.h"
 
+#include "../Dictionary/DictionaryClass.h"
 #include "UnicodeCharacter.h"
 
 #include <algorithm>
 #include <cassert>
+#include <unordered_map>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -20,11 +22,16 @@ using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::stringstream;
+using std::unordered_map;
 using std::vector;
 
+using Dictionary::DictionaryClass;
+using HighOrderCRF::FeatureTemplate;
+using HighOrderCRF::FeatureTemplateGenerator;
+
 DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile) {
-    dictionary = make_shared<Dictionary>(dictionaryFile);
-    resultCache = make_shared<map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
+    dictionary = make_shared<DictionaryClass>(dictionaryFile, true);
+    resultCache = make_shared<unordered_map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
 }
 
 shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::generateFeatureTemplatesAt(shared_ptr<vector<UnicodeCharacter>> observationList, size_t pos) const {
@@ -51,7 +58,7 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
         for (size_t i = 0; i < startPosList.size(); ++i) {
             size_t startUtf8Pos = startPosList[i];
             // Looks up the words
-            auto results = dictionary->lookup(string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
+            auto results = dictionary->commonPrefixSearch(string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
             for (const auto &p : results) {
                 const auto &charLength = p.first;
                 const auto &featureList = p.second;

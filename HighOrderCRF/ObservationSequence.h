@@ -1,5 +1,5 @@
-#ifndef HOCRF_OBSERVATION_SEQUENCE_H_
-#define HOCRF_OBSERVATION_SEQUENCE_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_OBSERVATION_SEQUENCE_H_
+#define HOCRF_HIGH_ORDER_CRF_OBSERVATION_SEQUENCE_H_
 
 #include "types.h"
 #include "DataSequence.h"
@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -15,17 +16,20 @@ namespace HighOrderCRF {
 
 using std::make_pair;
 using std::make_shared;
+using std::move;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 template<typename T> class ObservationSequence
 {
 public:
-    ObservationSequence(shared_ptr<vector<T>> observationList, shared_ptr<vector<string>> labelList, bool hasValidLabels) {
+    ObservationSequence(shared_ptr<vector<T>> observationList, shared_ptr<vector<string>> labelList, shared_ptr<vector<unordered_set<string>>> possibleLabelSetList, bool hasValidLabels) {
         this->observationList = observationList;
         this->labelList = labelList;
+        this->possibleLabelSetList = possibleLabelSetList;
         this->hasValidLabels = hasValidLabels;
     }
 
@@ -41,12 +45,21 @@ public:
         shared_ptr<unordered_map<string, label_t>> labelMap) {
         auto featureTemplateListList = make_shared<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>();
         auto labels = make_shared<vector<label_t>>();
+        featureTemplateListList->reserve(observationList->size());
+        labels->reserve(observationList->size());
+        auto possibleLabelTypeSetList = make_shared<vector<unordered_set<label_t>>>();
+        
         for (size_t pos = 0; pos < observationList->size(); ++pos) {
             featureTemplateListList->push_back(featureTemplateGenerator->generateFeatureTemplatesAt(observationList, pos));
             labels->push_back(hasValidLabels ? labelMap->at(labelList->at(pos)) : 0);
+            unordered_set<label_t> possibleLabelTypeSet;
+            for (const auto &label : (*possibleLabelSetList)[pos]) {
+                possibleLabelTypeSet.insert(labelMap->at(label));
+            }
+            possibleLabelTypeSetList->push_back(move(possibleLabelTypeSet));
         }
-        return make_shared<DataSequence>(featureTemplateListList, labels, hasValidLabels);
-    }
+        return make_shared<DataSequence>(featureTemplateListList, labels, possibleLabelTypeSetList, hasValidLabels);
+   }
 
     string generateCRFSuiteData(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
         string ret;
@@ -71,8 +84,9 @@ public:
 private:
     shared_ptr<vector<T>> observationList;
     shared_ptr<vector<string>> labelList;
+    shared_ptr<vector<unordered_set<string>>> possibleLabelSetList;
     bool hasValidLabels;
 };
 
 }  // namespace HighOrderCRF
-#endif  // HOCRF_OBSERVATION_SEQUENCE_H_
+#endif  // HOCRF_HIGH_ORDER_CRF_OBSERVATION_SEQUENCE_H_

@@ -1,5 +1,5 @@
-#ifndef HOCRF_HIGH_ORDER_CRF_DATA_H_
-#define HOCRF_HIGH_ORDER_CRF_DATA_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_DATA_H_
+#define HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_DATA_H_
 
 #include "types.h"
 #include "Feature.h"
@@ -37,4 +37,4 @@ private:
 
 }  // namespace HighOrderCRF
 
-#endif  // HOCRF_HIGH_ORDER_CRF_DATA_H_
+#endif  // HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_DATA_H_

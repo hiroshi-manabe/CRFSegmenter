@@ -1,5 +1,5 @@
-#ifndef HOCRF_HIGH_ORDER_CRF_H_
-#define HOCRF_HIGH_ORDER_CRF_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
+#define HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
 
 #include "types.h"
 #include "../task/task_queue.hpp"
@@ -10,13 +10,13 @@
 #include "LabelSequence.h"
 #include "Optimizer.h"
 #include "ObservationSequence.h"
-#include "ObservationSet.h"
 
 #include <cmath>
 #include <cstdio>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -29,12 +29,14 @@ using std::ofstream;
 namespace HighOrderCRF {
 
 using std::future;
+using std::make_pair;
 using std::make_shared;
 using std::move;
 using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 template<typename T> class FeatureTemplateGenerator;
@@ -46,14 +48,19 @@ public:
     HighOrderCRFProcessor() : modelData(new HighOrderCRFData) {}
     void train(shared_ptr<vector<shared_ptr<ObservationSequence<T>>>> observationSequenceList,
                shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
+               shared_ptr<unordered_set<string>> labelSet,
                size_t concurrency,
                size_t maxIters,
                bool useL1Regularization,
                double regularizationCoefficient,
                double epsilonForConvergence) {
 
-        auto observationSet = make_shared<ObservationSet<T>>(observationSequenceList);
-        auto labelMap = observationSet->generateLabelMap();
+        auto labelMap = make_shared<unordered_map<string, label_t>>();
+        label_t labelNum = 0;
+        for (const auto &label : *labelSet) {
+            labelMap->insert(make_pair(label, labelNum));
+            ++labelNum;
+        }
         auto dataSequenceList = make_shared<vector<shared_ptr<DataSequence>>>();
         for (auto &observationSequence : *observationSequenceList) {
             dataSequenceList->push_back(observationSequence->generateDataSequence(featureTemplateGenerator, labelMap));
@@ -109,11 +116,13 @@ public:
 #ifdef CRFSUITE_OUTPUT
         modelData->dumpFeatures("features.txt", false);
 #endif
+        modelData->dumpFeatures("features.txt", true);
         prepare();
     }
 
     shared_ptr<vector<string>> tag(shared_ptr<ObservationSequence<T>> observationSequence,
-        shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+                                   shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+        auto labelMap = modelData->getLabelMap();
         auto labelList = tagLabelType(observationSequence, featureTemplateGenerator);
         auto ret = make_shared<vector<string>>();
         for (auto label : *labelList) {
@@ -202,7 +211,7 @@ public:
 
 private:
     shared_ptr<vector<label_t>> tagLabelType(shared_ptr<ObservationSequence<T>> observationSequence,
-        shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+                                             shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
         auto dataSequence = observationSequence->generateDataSequence(featureTemplateGenerator, modelData->getLabelMap());
         auto compactPatternSetSequence = dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap);
         return compactPatternSetSequence->decode(expWeightList.get()->data());
@@ -232,5 +241,5 @@ private:
 
 } // namespace HighOrderCRF
 
-#endif // HOCRF_HIGH_ORDER_CRF_H_
+#endif // HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
 

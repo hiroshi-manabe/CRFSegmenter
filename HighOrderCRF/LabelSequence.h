@@ -1,5 +1,5 @@
-#ifndef HOCRF_LABEL_SEQUENCE_H_
-#define HOCRF_LABEL_SEQUENCE_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H_
+#define HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H_
 
 #include "types.h"
 
@@ -44,4 +44,4 @@ struct less<std::shared_ptr<HighOrderCRF::LabelSequence>> {
 
 }
 
-#endif  // HOCRF_LABEL_SEQUENCE_H
+#endif  // HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H

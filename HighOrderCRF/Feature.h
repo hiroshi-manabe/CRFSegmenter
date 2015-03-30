@@ -1,5 +1,5 @@
-#ifndef HOCRF_FEATURE_H_
-#define HOCRF_FEATURE_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_FEATURE_H_
+#define HOCRF_HIGH_ORDER_CRF_FEATURE_H_
 
 #include "types.h"
 
@@ -54,4 +54,4 @@ struct equal_to<std::shared_ptr<HighOrderCRF::Feature>> {
 
 }
 
-#endif  // HOCRF_FEATURE_H
+#endif  // HOCRF_HIGH_ORDER_CRF_FEATURE_H

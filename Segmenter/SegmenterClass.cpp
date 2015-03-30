@@ -9,7 +9,7 @@
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
 #include "DictionaryFeatureGenerator.h"
-#include "optionparser.h"
+#include "../optionparser/optionparser.h"
 #include "SegmenterOptions.h"
 #include "UnicodeCharacter.h"
 
@@ -20,7 +20,7 @@
 #include <memory>
 #include <queue>
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -40,6 +40,7 @@ using std::ifstream;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
+using std::unordered_set;
 using std::vector;
 
 shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels) {
@@ -82,7 +83,14 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
     observationList->push_back(UnicodeCharacter(0));
     labelList->push_back("__BOS_EOS__");
 #endif
-    return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, hasValidLabels);
+    auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>(observationList->size());
+    for (size_t i = 0; i < possibleLabelSetList->size(); ++i) {
+        (*possibleLabelSetList)[i].insert("1");
+        if (i > 0) {
+            (*possibleLabelSetList)[i].insert("0");
+        }
+    }
+    return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
 
 SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
@@ -120,7 +128,10 @@ void SegmenterClass::train(const string &trainingFilename,
     const string &modelFilename) {
     auto observationSequenceList = readData(trainingFilename, true);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
-    CRFProcessor->train(observationSequenceList, featureGenerator, options.numThreads, 10000, false, 10.0, 0.00001);
+    auto labelSet = make_shared<unordered_set<string>>();
+    labelSet->insert("0");
+    labelSet->insert("1");
+    CRFProcessor->train(observationSequenceList, featureGenerator, labelSet, options.numThreads, 10000, false, 10.0, 0.00001);
     CRFProcessor->writeModel(modelFilename);
 }
 
@@ -158,13 +169,11 @@ enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS };
 
 struct Arg : public option::Arg
 {
-
     static option::ArgStatus Required(const option::Option& option, bool msg)
     {
         if (option.arg != 0) {
             return option::ARG_OK;
         }
-
         return option::ARG_ILLEGAL;
     }
 };
