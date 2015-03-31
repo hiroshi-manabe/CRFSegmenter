@@ -222,7 +222,7 @@ const option::Descriptor usage[] =
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNK, 0, "", "unk", Arg::Required, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
+    { UNK, 0, "", "unk", Arg::None, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
     "  Tagger --train train.txt --model model.dat\n"
     "  Tagger --test test.txt --model model.dat\n"
