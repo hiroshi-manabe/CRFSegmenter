@@ -161,15 +161,19 @@ void TaggerClass::train(const string &trainingFilename,
     CRFProcessor->writeModel(modelFilename);
 }
 
-string TaggerClass::tag(const string &line) const {
+string TaggerClass::tag(const string &line, bool tagUnknown) const {
     auto observationSequence = convertLineToObservationSequence(line, dictionary, false);
     auto tagList = CRFProcessor->tag(observationSequence, featureGenerator);
     auto wordList = observationSequence->getObservationList();
+    auto possibleLabelSetList = observationSequence->getPossibleLabelSetList();
     string ret;
     for (size_t i = 0; i < wordList->size(); ++i) {
         ret += (*wordList)[i];
         ret += '/';
         ret += (*tagList)[i];
+        if (tagUnknown && (*possibleLabelSetList)[i].empty()) {
+            ret += '?';
+        }
         if (i < wordList->size() - 1) {
             ret += ' ';
         }
@@ -193,7 +197,7 @@ void TaggerClass::readModel(const string &modelFilename) {
 
 }  // namespace Tagger
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TAGSET, TEST, MODEL, DICT, THREADS };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, UNK, TAGSET, TEST, MODEL, DICT, THREADS };
 
 struct Arg : public option::Arg
 {
@@ -218,6 +222,7 @@ const option::Descriptor usage[] =
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { UNK, 0, "", "unk", Arg::Required, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
     "  Tagger --train train.txt --model model.dat\n"
     "  Tagger --test test.txt --model model.dat\n"
@@ -300,7 +305,7 @@ int main(int argc, char **argv) {
     std::queue<std::future<std::string>> futureQueue;
     
     while (std::getline(std::cin, line)) {
-        std::future<std::string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line);
+        std::future<std::string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, options[UNK]);
         futureQueue.push(std::move(f));
         while (futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             std::cout << futureQueue.front().get() << std::endl;

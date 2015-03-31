@@ -41,6 +41,10 @@ public:
         return labelList;
     }
 
+    shared_ptr<vector<unordered_set<string>>> getPossibleLabelSetList() {
+        return possibleLabelSetList;
+    }
+
     shared_ptr<DataSequence> generateDataSequence(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
         shared_ptr<unordered_map<string, label_t>> labelMap) {
         auto featureTemplateListList = make_shared<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>();

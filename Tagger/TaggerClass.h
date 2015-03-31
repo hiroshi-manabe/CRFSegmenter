@@ -37,7 +37,7 @@ class TaggerClass {
 public:
     TaggerClass(const TaggerOptions &taggerOptions);
     void train(const string &trainingFilename, const string &modelFilename, shared_ptr<unordered_set<string>> tagSet);
-    string tag(const string &line) const;
+    string tag(const string &line, bool tagUnknown) const;
     void test(const string &testFilename);
     void readModel(const string &modelFilename);
 
