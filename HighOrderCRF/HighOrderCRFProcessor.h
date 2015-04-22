@@ -51,7 +51,6 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t conc
     vector<future<double>> futureList;
 
     for (auto &sequence : **sequenceList) {
-        sequence->accumulateFeatureExpectations(x, g);
         future<double> f = tq.enqueue([](shared_ptr<CompactPatternSetSequence> pat, const double* expWeightArray, double* expectationArray) -> double {
                 return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
             },
