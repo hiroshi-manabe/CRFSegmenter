@@ -350,7 +350,6 @@ int mainProc(int argc, char **argv) {
     while (!futureQueue.empty()) {
         const auto result = futureQueue.front().get();
         for (size_t i = 0; i < result.size(); ++i) {
-            cout << sentence[i];
             for (size_t j = 0; j < result[i].size(); ++j) {
                 if (j > 0) {
                     cout << "\t";
