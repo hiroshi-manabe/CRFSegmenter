@@ -21,8 +21,8 @@ using std::vector;
 class DictionaryClass {
 public:
     DictionaryClass(const string &filename, bool addPrefix);
-    vector<pair<size_t, vector<string>>> commonPrefixSearch(const string &str);
-    vector<string> lookup(const string &str);
+    vector<pair<size_t, vector<string>>> commonPrefixSearch(const string &str) const;
+    vector<string> lookup(const string &str) const;
 
 private:
     vector<vector<size_t>> marisaIdToFeatureIdListList;

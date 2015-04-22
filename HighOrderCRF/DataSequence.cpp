@@ -67,7 +67,7 @@ void DataSequence::accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_
             auto f = make_shared<Feature>(featureTemplate->getObservation(), getLabelSequence(pos, featureTemplate->getLabelLength()));
             auto it = featureCountMap->find(f);
             if (it == featureCountMap->end()) {
-                featureCountMap->insert(pair<shared_ptr<Feature>, int32_t>(f, 1));
+                featureCountMap->insert(make_pair(f, 1));
             } else {
                 it->second += 1;
             }

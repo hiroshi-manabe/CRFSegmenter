@@ -1,5 +1,5 @@
-#ifndef HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
-#define HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
+#ifndef HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_PROCESSOR_H_
+#define HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_PROCESSOR_H_
 
 #include "types.h"
 #include "../task/task_queue.hpp"
@@ -8,11 +8,12 @@
 #include "Feature.h"
 #include "HighOrderCRFData.h"
 #include "LabelSequence.h"
-#include "Optimizer.h"
+#include "../Optimizer/OptimizerClass.h"
 #include "ObservationSequence.h"
 
 #include <cmath>
 #include <cstdio>
+#include <future>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -32,15 +33,41 @@ using std::future;
 using std::make_pair;
 using std::make_shared;
 using std::move;
-using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+using Optimizer::OptimizerClass;
+
 template<typename T> class FeatureTemplateGenerator;
 class HighOrderCRFData;
+
+double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t concurrency) {
+    auto sequenceList = static_cast<shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> *>(updateData);
+    
+    hwm::task_queue tq(concurrency);
+    vector<future<double>> futureList;
+
+    for (auto &sequence : **sequenceList) {
+        sequence->accumulateFeatureExpectations(x, g);
+        future<double> f = tq.enqueue([](shared_ptr<CompactPatternSetSequence> pat, const double* expWeightArray, double* expectationArray) -> double {
+                return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
+            },
+            sequence,
+            x,
+            g);
+        futureList.push_back(move(f));
+    }
+    tq.wait();
+
+    double logLikelihood = 0.0;
+    for (auto &f : futureList) {
+        logLikelihood += f.get();
+    }
+    return logLikelihood;
+}
 
 template<typename T> class HighOrderCRFProcessor
 {
@@ -82,7 +109,7 @@ public:
             ++featureIndex;
             auto ft = feature->createFeatureTemplate();
             if (featureTemplateToFeatureListMap->find(ft) == featureTemplateToFeatureListMap->end()) {
-                featureTemplateToFeatureListMap->insert(pair<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>(ft, make_shared<vector<shared_ptr<Feature>>>()));
+                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<shared_ptr<Feature>>>()));
             }
             featureTemplateToFeatureListMap->at(ft)->push_back(feature);
         }
@@ -98,21 +125,12 @@ public:
         for (auto &dataSequence : *dataSequenceList) {
             compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
         }
-        auto optimizer = make_shared<Optimizer>(compactPatternSetSequenceList, featureCountList, concurrency, 0, false, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, 0, false, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
         
-        auto featureListToSave = make_shared<vector<shared_ptr<Feature>>>();
-        auto bestWeightListToSave = make_shared<vector<double>>();
-        for (size_t i = 0; i < featureList->size(); ++i) {
-            auto &feature = (*featureList)[i];
-            if (1 || (*bestWeightList)[i] != 0.0 || (feature->getObservation().empty() && feature->getLabelSequence()->getLength() == 1)) {
-                featureListToSave->push_back(feature);
-                bestWeightListToSave->push_back((*bestWeightList)[i]);
-            }
-        }
-        modelData = make_shared<HighOrderCRFData>(featureListToSave, bestWeightListToSave, labelMap);
+        modelData = make_shared<HighOrderCRFData>(featureList, bestWeightList, labelMap);
 #ifdef CRFSUITE_OUTPUT
         modelData->dumpFeatures("features.txt", false);
 #endif
@@ -227,7 +245,7 @@ private:
         for (auto &feature : *modelData->getFeatureList()) {
             auto ft = feature->createFeatureTemplate();
             if (featureTemplateToFeatureListMap->find(ft) == featureTemplateToFeatureListMap->end()) {
-                featureTemplateToFeatureListMap->insert(pair<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>(ft, make_shared<vector<shared_ptr<Feature>>>()));
+                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<shared_ptr<Feature>>>()));
             }
             featureTemplateToFeatureListMap->at(ft)->push_back(feature);
         }
@@ -241,5 +259,4 @@ private:
 
 } // namespace HighOrderCRF
 
-#endif // HOCRF_HIGH_ORDER_CRF_PROCESSOR_H_
-
+#endif // HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_PROCESSOR_H_

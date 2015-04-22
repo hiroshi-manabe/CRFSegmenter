@@ -33,11 +33,14 @@ using HighOrderCRF::ObservationSequence;
 using HighOrderCRF::UnconditionalFeatureTemplateGenerator;
 
 using std::endl;
+using std::cin;
 using std::cout;
 using std::cerr;
+using std::future;
 using std::getline;
 using std::ifstream;
 using std::make_shared;
+using std::queue;
 using std::shared_ptr;
 using std::string;
 using std::unordered_set;
@@ -91,6 +94,125 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         }
     }
     return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
+}
+
+
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS };
+
+struct Arg : public option::Arg
+{
+    static option::ArgStatus Required(const option::Option& option, bool msg)
+    {
+        if (option.arg != 0) {
+            return option::ARG_OK;
+        }
+        return option::ARG_ILLEGAL;
+    }
+};
+
+const option::Descriptor usage[] =
+{
+    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
+    "Options:" },
+    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
+    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
+    "  Segmenter --train train.txt --model model.dat\n"
+    "  Segmenter --test test.txt --model model.dat\n"
+    "  Segmenter --segment < input_file > output_file"
+    },
+    { 0, 0, 0, 0, 0, 0 }
+};
+
+
+int mainProc(int argc, char **argv) {
+    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1, "" };
+
+    argv += (argc > 0);
+    argc -= (argc > 0);
+
+    option::Stats stats(usage, argc, argv);
+    vector<option::Option> options(stats.options_max);
+    vector<option::Option> buffer(stats.buffer_max);
+    option::Parser parse(usage, argc, argv, options.data(), buffer.data());
+
+    if (parse.error()) {
+        return 1;
+    }
+
+    if (options[HELP]) {
+        option::printUsage(cout, usage);
+        return 0;
+    }
+
+    string modelFilename;
+    if (options[MODEL]) {
+        modelFilename = options[MODEL].arg;
+    }
+    else {
+        option::printUsage(cerr, usage);
+        return 0;
+    }
+
+    string dictFilename;
+    if (options[DICT]) {
+        dictFilename = options[DICT].arg;
+        op.dictionaryFilename = dictFilename;
+    }
+
+    op.numThreads = 1;
+    if (options[THREADS]) {
+        char* endptr;
+        int num = strtol(options[THREADS].arg, &endptr, 10);
+        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
+            cerr << "Illegal number of threads" << endl;
+            exit(1);
+        }
+        op.numThreads = num;
+    }
+
+    if (options[TRAIN]) {
+        string trainingFilename = options[TRAIN].arg;
+        Segmenter::SegmenterClass s(op);
+        s.train(trainingFilename, modelFilename);
+        return 0;
+    }
+
+    if (options[TEST]) {
+        string testFilename = options[TEST].arg;
+        Segmenter::SegmenterClass s(op);
+        s.readModel(modelFilename);
+        s.test(testFilename);
+        return 0;
+    }
+
+    // segments the inputs
+    Segmenter::SegmenterClass s(op);
+    s.readModel(modelFilename);
+    
+    string line;
+    hwm::task_queue tq(op.numThreads);
+    queue<future<string>> futureQueue;
+    
+    while (getline(cin, line)) {
+        future<string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, &s, line);
+        futureQueue.push(move(f));
+        while (futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            cout << futureQueue.front().get() << endl;
+            futureQueue.pop();
+        }
+    }
+    while (!futureQueue.empty()) {
+        cout << futureQueue.front().get() << endl;
+        futureQueue.pop();
+    }
+
+    return 0;
 }
 
 SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
@@ -165,121 +287,6 @@ void SegmenterClass::readModel(const string &modelFilename) {
 
 }  // namespace Segmenter
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS };
-
-struct Arg : public option::Arg
-{
-    static option::ArgStatus Required(const option::Option& option, bool msg)
-    {
-        if (option.arg != 0) {
-            return option::ARG_OK;
-        }
-        return option::ARG_ILLEGAL;
-    }
-};
-
-const option::Descriptor usage[] =
-{
-    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
-    "Options:" },
-    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
-    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
-    { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
-    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
-    "  Segmenter --train train.txt --model model.dat\n"
-    "  Segmenter --test test.txt --model model.dat\n"
-    "  Segmenter --segment < input_file > output_file"
-    },
-    { 0, 0, 0, 0, 0, 0 }
-};
-
-
 int main(int argc, char **argv) {
-    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1, "" };
-
-    argv += (argc > 0);
-    argc -= (argc > 0);
-
-    option::Stats stats(usage, argc, argv);
-    std::vector<option::Option> options(stats.options_max);
-    std::vector<option::Option> buffer(stats.buffer_max);
-    option::Parser parse(usage, argc, argv, options.data(), buffer.data());
-
-    if (parse.error()) {
-        return 1;
-    }
-
-    if (options[HELP]) {
-        option::printUsage(std::cout, usage);
-        return 0;
-    }
-
-    std::string modelFilename;
-    if (options[MODEL]) {
-        modelFilename = options[MODEL].arg;
-    }
-    else {
-        option::printUsage(std::cerr, usage);
-        return 0;
-    }
-
-    std::string dictFilename;
-    if (options[DICT]) {
-        dictFilename = options[DICT].arg;
-        op.dictionaryFilename = dictFilename;
-    }
-
-    op.numThreads = 1;
-    if (options[THREADS]) {
-        char* endptr;
-        int num = strtol(options[THREADS].arg, &endptr, 10);
-        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
-            std::cerr << "Illegal number of threads" << std::endl;
-            exit(1);
-        }
-        op.numThreads = num;
-    }
-
-    if (options[TRAIN]) {
-        std::string trainingFilename = options[TRAIN].arg;
-        Segmenter::SegmenterClass s(op);
-        s.train(trainingFilename, modelFilename);
-        return 0;
-    }
-
-    if (options[TEST]) {
-        std::string testFilename = options[TEST].arg;
-        Segmenter::SegmenterClass s(op);
-        s.readModel(modelFilename);
-        s.test(testFilename);
-        return 0;
-    }
-
-    // segments the inputs
-    Segmenter::SegmenterClass s(op);
-    s.readModel(modelFilename);
-    
-    std::string line;
-    hwm::task_queue tq(op.numThreads);
-    std::queue<std::future<std::string>> futureQueue;
-    
-    while (std::getline(std::cin, line)) {
-        std::future<std::string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, &s, line);
-        futureQueue.push(std::move(f));
-        while (futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            std::cout << futureQueue.front().get() << std::endl;
-            futureQueue.pop();
-        }
-    }
-    while (!futureQueue.empty()) {
-        std::cout << futureQueue.front().get() << std::endl;
-        futureQueue.pop();
-    }
-
-    return 0;
+    return Segmenter::mainProc(argc, argv);
 }
-

@@ -130,7 +130,7 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
     }
 }
 
-vector<pair<size_t, vector<string>>> DictionaryClass::commonPrefixSearch(const string &str) {
+vector<pair<size_t, vector<string>>> DictionaryClass::commonPrefixSearch(const string &str) const {
     vector<pair<size_t, vector<string>>> ret;
     marisa::Agent agent;
     agent.set_query(str.c_str(), str.length());
@@ -147,7 +147,7 @@ vector<pair<size_t, vector<string>>> DictionaryClass::commonPrefixSearch(const s
     return ret;
 }
 
-vector<string> DictionaryClass::lookup(const string &str) {
+vector<string> DictionaryClass::lookup(const string &str) const {
     vector<string> ret;
     marisa::Agent agent;
     agent.set_query(str.c_str(), str.length());

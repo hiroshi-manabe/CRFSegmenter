@@ -1,8 +1,7 @@
-#include "Optimizer.h"
+#include "OptimizerClass.h"
 
 #include "../liblbfgs/lbfgs.h"
 #include "../task/task_queue.hpp"
-#include "CompactPatternSetSequence.h"
 
 #include <cmath>
 #include <iostream>
@@ -10,13 +9,12 @@
 #include <thread>
 #include <vector>
 
-namespace HighOrderCRF {
+namespace Optimizer {
 
 using std::cout;
 using std::endl;
 using std::future;
 using std::make_shared;
-using std::move;
 using std::shared_ptr;
 using std::vector;
 
@@ -25,7 +23,7 @@ double lbfgsEvaluate(void *instance,
                               double *g,
                               const int n,
                               const double step) {
-    return ((Optimizer*)instance)->evaluate(x, g);
+    return ((OptimizerClass*)instance)->evaluate(x, g);
 }
 
 int lbfgsProgress(void *instance,
@@ -38,12 +36,13 @@ int lbfgsProgress(void *instance,
                    int n,
                    int k,
                    int ls) {
-    return ((Optimizer*)instance)->progress(x, g, fx, xnorm, gnorm, step, n, k, ls);
+    return ((OptimizerClass*)instance)->progress(x, g, fx, xnorm, gnorm, step, n, k, ls);
 }
 
-Optimizer::Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> sequenceList, shared_ptr<vector<double>> featureCountList,
+OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, shared_ptr<vector<double>> featureCountList,
     size_t concurrency, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
-    this->sequenceList = sequenceList;
+    this->updateProc = updateProc;
+    this->updateData = updateData;
     this->featureCountList = featureCountList;
     this->concurrency = concurrency;
     this->maxIters = maxIters;
@@ -52,7 +51,7 @@ Optimizer::Optimizer(shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> s
     this->epsilonForConvergence = epsilonForConvergence;
 }
 
-void Optimizer::optimize(const double* featureWeights) {
+void OptimizerClass::optimize(const double* featureWeights) {
     lbfgs_parameter_t lbfgsParam;
     lbfgs_parameter_init(&lbfgsParam);
     lbfgsParam.max_linesearch = 20;
@@ -88,7 +87,7 @@ void Optimizer::optimize(const double* featureWeights) {
     }
 };
 
-double Optimizer::evaluate(const double *x, double *g) {
+double OptimizerClass::evaluate(const double *x, double *g) {
     size_t featureListSize = featureCountList->size();
     vector<double> expWeights(featureListSize);
 
@@ -98,24 +97,7 @@ double Optimizer::evaluate(const double *x, double *g) {
         g[i] = -(*featureCountList)[i];
     }
 
-    hwm::task_queue tq(concurrency);
-    vector<future<double>> futureList;
-
-    for (auto &sequence : *sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<CompactPatternSetSequence> pat, double* expWeightArray, double* expectationArray) -> double {
-                return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
-            },
-            sequence,
-            expWeights.data(),
-            g);
-        futureList.push_back(move(f));
-    }
-    tq.wait();
-
-    double logLikelihood = 0.0;
-    for (auto &f : futureList) {
-        logLikelihood += f.get();
-    }
+    double logLikelihood = updateProc(updateData, expWeights.data(), g, concurrency);
 
     if (!useL1Optimization) {
         double sigma2inv = 1.0 / (regularizationCoefficient * regularizationCoefficient);
@@ -128,7 +110,7 @@ double Optimizer::evaluate(const double *x, double *g) {
     return -logLikelihood;
 }
 
-int Optimizer::progress(const double *x,
+int OptimizerClass::progress(const double *x,
                         const double *g,
                         const double fx,
                         const double xnorm,
@@ -154,8 +136,8 @@ int Optimizer::progress(const double *x,
     return 0;
 }
 
-shared_ptr<vector<double>> Optimizer::getBestWeightList() {
+shared_ptr<vector<double>> OptimizerClass::getBestWeightList() {
     return bestWeightList;
 }
 
-}  // namespace HighOrderCRF
+}  // namespace Optimizer

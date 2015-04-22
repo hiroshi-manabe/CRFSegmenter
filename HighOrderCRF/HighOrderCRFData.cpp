@@ -18,9 +18,9 @@ namespace HighOrderCRF {
 using std::endl;
 using std::ios;
 using std::ifstream;
+using std::make_pair;
 using std::make_shared;
 using std::ofstream;
-using std::pair;
 using std::string;
 using std::unordered_map;
 using std::vector;
@@ -134,7 +134,7 @@ void HighOrderCRFData::read(const string &filename) {
         label_t labelNum;
         readNumber<label_t>(&in, &labelNum);
 
-        labelMap->insert(pair<string, label_t>(labelString, labelNum));
+        labelMap->insert(make_pair(labelString, labelNum));
     }
     this->featureList = featureList;
     this->bestWeightList = bestWeightList;
@@ -189,6 +189,5 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
     }
     out.close();
 }
-
 
 }  // namespace HighOrderCRF

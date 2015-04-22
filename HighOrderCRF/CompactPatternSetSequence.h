@@ -21,8 +21,8 @@ public:
         shared_ptr<vector<pattern_index_t>> longestMatchIndexList) :
         compactPatternListList(compactPatternListList), longestMatchIndexList(longestMatchIndexList) {};
     void accumulateFeatureCounts(double *counts) const;
-    double accumulateFeatureExpectations(double *expWeights, double *expectations) const;
-    shared_ptr<vector<label_t>> decode(double *expWeights) const;
+    double accumulateFeatureExpectations(const double *expWeights, double *expectations) const;
+    shared_ptr<vector<label_t>> decode(const double *expWeights) const;
     double calcLogLikelihood() const;
     
 private:

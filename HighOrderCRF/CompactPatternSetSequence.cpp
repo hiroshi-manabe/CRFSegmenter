@@ -18,7 +18,7 @@ using std::shared_ptr;
 using std::swap;
 using std::vector;
 
-shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vector<vector<CompactPattern>>> compactPatternListList, double *expWeights) {
+shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vector<vector<CompactPattern>>> compactPatternListList, const double *expWeights) {
     auto ret = make_shared<vector<vector<double>>>(0);
     
     // accumulates weights
@@ -54,10 +54,9 @@ void CompactPatternSetSequence::accumulateFeatureCounts(double *counts) const {
     }
 }
 
-mutex expectationMutex;
-
+static mutex expectationMutex;
 // returns log likelihood of the sequence
-double CompactPatternSetSequence::accumulateFeatureExpectations(double *expWeights, double *expectations) const {
+double CompactPatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = compactPatternListList->size();
     vector<vector<double>> scoreListList(0);
@@ -202,7 +201,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(double *expWeigh
     return logLikelihood;
 }
 
-shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(double *expWeights) const {
+shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expWeights) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = compactPatternListList->size();
 
