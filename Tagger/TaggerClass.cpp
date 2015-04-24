@@ -231,7 +231,7 @@ int mainProc(int argc, char **argv) {
     while (getline(cin, line)) {
         future<string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, options[UNK]);
         futureQueue.push(move(f));
-        while (futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             cout << futureQueue.front().get() << endl;
             futureQueue.pop();
         }
