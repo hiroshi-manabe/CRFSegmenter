@@ -1,13 +1,11 @@
 #ifndef HOCRF_MAX_ENT_COMPILED_DATA_H_
 #define HOCRF_MAX_ENT_COMPILED_DATA_H_
 
-#include <memory>
 #include <string>
 #include <vector>
 
 namespace MaxEnt {
 
-using std::shared_ptr;
 using std::string;
 using std::vector;
 

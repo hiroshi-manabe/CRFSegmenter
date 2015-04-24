@@ -1,7 +1,6 @@
 #include "SegmenterClass.h"
 
 #include "../HighOrderCRF/AggregatedFeatureTemplateGenerator.h"
-#include "../HighOrderCRF/FeatureTemplateGenerator.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../HighOrderCRF/ObservationSequence.h"
 #include "../HighOrderCRF/UnconditionalFeatureTemplateGenerator.h"

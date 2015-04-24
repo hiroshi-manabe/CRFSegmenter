@@ -2,7 +2,6 @@
 
 #include "../Dictionary/DictionaryClass.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
-#include "../HighOrderCRF/FeatureTemplateGenerator.h"
 
 #include <algorithm>
 #include <cassert>
@@ -16,18 +15,12 @@ namespace Tagger {
 
 using std::make_shared;
 using std::make_pair;
-using std::max;
-using std::min;
-using std::pair;
 using std::shared_ptr;
 using std::string;
-using std::stringstream;
-using std::unordered_map;
 using std::vector;
 
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
-using HighOrderCRF::FeatureTemplateGenerator;
 
 DictionaryFeatureGenerator::DictionaryFeatureGenerator(shared_ptr<DictionaryClass> dictionary) {
     this->dictionary = dictionary;

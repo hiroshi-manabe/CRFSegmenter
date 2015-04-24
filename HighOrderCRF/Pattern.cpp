@@ -3,14 +3,12 @@
 #include "Feature.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace HighOrderCRF {
 
 using std::make_shared;
 using std::shared_ptr;
-using std::string;
 using std::vector;
 
 shared_ptr<Pattern> Pattern::DUMMY_PATTERN = make_shared<Pattern>(INVALID_LABEL);

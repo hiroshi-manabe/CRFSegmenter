@@ -19,10 +19,8 @@
 namespace MaxEnt {
 
 using std::future;
-using std::make_pair;
 using std::make_shared;
 using std::move;
-using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;

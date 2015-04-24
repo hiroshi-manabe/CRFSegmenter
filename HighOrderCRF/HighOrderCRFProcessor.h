@@ -23,7 +23,6 @@
 
 #ifdef CRFSUITE_OUTPUT
 #include <fstream>
-using std::endl;
 using std::ofstream;
 #endif
 

@@ -4,7 +4,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <memory>
+#include <unordered_map>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -19,9 +19,7 @@ using std::exit;
 using std::getline;
 using std::ifstream;
 using std::make_pair;
-using std::make_shared;
 using std::move;
-using std::shared_ptr;
 using std::string;
 using std::stringstream;
 using std::unordered_map;

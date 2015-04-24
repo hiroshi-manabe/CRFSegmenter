@@ -5,13 +5,11 @@
 #include "Feature.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace HighOrderCRF {
 
 using std::shared_ptr;
-using std::string;
 using std::vector;
 
 class Pattern

@@ -2,9 +2,7 @@
 #define HOCRF_DICTIONARY_DICTIONARY_CLASS_H_
 
 #include <cstdlib>
-#include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -13,9 +11,7 @@
 namespace Dictionary {
 
 using std::pair;
-using std::shared_ptr;
 using std::string;
-using std::unordered_map;
 using std::vector;
 
 class DictionaryClass {

@@ -2,7 +2,6 @@
 
 #include "../Dictionary/DictionaryClass.h"
 #include "../HighOrderCRF/AggregatedFeatureTemplateGenerator.h"
-#include "../HighOrderCRF/FeatureTemplateGenerator.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../HighOrderCRF/ObservationSequence.h"
 #include "../HighOrderCRF/UnconditionalFeatureTemplateGenerator.h"
@@ -28,7 +27,6 @@ namespace Tagger {
 
 using Dictionary::DictionaryClass;
 using HighOrderCRF::AggregatedFeatureTemplateGenerator;
-using HighOrderCRF::FeatureTemplateGenerator;
 using HighOrderCRF::HighOrderCRFProcessor;
 using HighOrderCRF::ObservationSequence;
 using HighOrderCRF::UnconditionalFeatureTemplateGenerator;

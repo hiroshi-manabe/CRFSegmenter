@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace HighOrderCRF {
@@ -10,7 +9,6 @@ namespace HighOrderCRF {
 using std::make_shared;
 using std::min;
 using std::shared_ptr;
-using std::string;
 using std::vector;
 
 LabelSequence::LabelSequence(shared_ptr<vector<label_t>> labels) {

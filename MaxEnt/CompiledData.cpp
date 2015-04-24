@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
-#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -15,7 +14,6 @@ namespace MaxEnt {
 
 using std::mutex;
 using std::numeric_limits;
-using std::shared_ptr;
 using std::string;
 using std::vector;
 
