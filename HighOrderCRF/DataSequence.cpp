@@ -90,7 +90,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
         mapList->push_back(make_shared<map<shared_ptr<LabelSequence>, shared_ptr<Pattern>>>());
         const auto &curMap = mapList->at(pos);
         auto emptyPattern = make_shared<Pattern>(INVALID_LABEL);
-        curMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(emptyLabelSequence, emptyPattern));
+        curMap->insert(make_pair(emptyLabelSequence, emptyPattern));
 
         for (const auto &featureTemplate : *curFeatureTemplateList) {
             if (featureTemplate->getLabelLength() > pos + 1) {
@@ -128,7 +128,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                     continue;
                 }
                 if (curMap->find(seq) == curMap->end()) {
-                    curMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(seq, make_shared<Pattern>(seq->getLastLabel())));
+                    curMap->insert(make_pair(seq, make_shared<Pattern>(seq->getLastLabel())));
                 }
 
                 auto pat = curMap->at(seq);
@@ -145,7 +145,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                         
                         bool prevMapContainsKey = prevMap->find(prefix) != prevMap->end();
                         if (!prevMapContainsKey) {
-                            prevMap->insert(pair<shared_ptr<LabelSequence>, shared_ptr<Pattern>>(prefix, make_shared<Pattern>(prefix->getLastLabel())));
+                            prevMap->insert(make_pair(prefix, make_shared<Pattern>(prefix->getLastLabel())));
                         }
                         tempMap->at(seq)->setPrevPattern(prevMap->at(prefix));
                         if (prevMapContainsKey) {
