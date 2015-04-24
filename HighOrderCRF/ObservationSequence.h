@@ -5,6 +5,7 @@
 #include "DataSequence.h"
 #include "FeatureTemplateGenerator.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,8 @@
 
 namespace HighOrderCRF {
 
+using std::cerr;
+using std::endl;
 using std::make_pair;
 using std::make_shared;
 using std::move;
@@ -55,9 +58,16 @@ public:
         
         for (size_t pos = 0; pos < observationList->size(); ++pos) {
             featureTemplateListList->push_back(featureTemplateGenerator->generateFeatureTemplatesAt(observationList, pos));
+            if (hasValidLabels && labelMap->find(labelList->at(pos)) == labelMap->end()) {
+                cerr << "Unknown label: " << labelList->at(pos) << endl;
+                exit(1);
+            }
             labels->push_back(hasValidLabels ? labelMap->at(labelList->at(pos)) : 0);
             unordered_set<label_t> possibleLabelTypeSet;
             for (const auto &label : (*possibleLabelSetList)[pos]) {
+                if (labelMap->find(label) == labelMap->end()) {
+                    cerr << "Unknown label: " << label << endl;
+                }
                 possibleLabelTypeSet.insert(labelMap->at(label));
             }
             possibleLabelTypeSetList->push_back(move(possibleLabelTypeSet));
