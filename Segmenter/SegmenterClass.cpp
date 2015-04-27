@@ -207,6 +207,7 @@ int mainProc(int argc, char **argv) {
         }
     }
     while (!futureQueue.empty()) {
+        futureQueue.front().wait();
         cout << futureQueue.front().get() << endl;
         futureQueue.pop();
     }
@@ -257,6 +258,9 @@ void SegmenterClass::train(const string &trainingFilename,
 }
 
 string SegmenterClass::segment(const string &line) const {
+    if (line.empty()) {
+        return "";
+    }
     auto observationSequence = convertLineToObservationSequence(line, false);
     auto spaceList = CRFProcessor->tag(observationSequence, featureGenerator);
     auto unicodeList = observationSequence->getObservationList();

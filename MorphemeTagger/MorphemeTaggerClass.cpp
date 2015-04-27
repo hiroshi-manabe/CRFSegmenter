@@ -348,6 +348,7 @@ int mainProc(int argc, char **argv) {
         }
     }
     while (!futureQueue.empty()) {
+        futureQueue.front().wait();
         const auto result = futureQueue.front().get();
         for (size_t i = 0; i < result.size(); ++i) {
             for (size_t j = 0; j < result[i].size(); ++j) {
@@ -401,11 +402,14 @@ void MorphemeTaggerClass::train(const string &trainingFilename,
 }
 
 vector<vector<string>> MorphemeTaggerClass::tag(vector<string> sentence) const {
+    vector<vector<string>> ret;
+    if (sentence.empty()) {
+        return ret;
+    }
     auto dictResultListList = lookupSentence(sentence, *dictionary);
     auto commonAttributeSetList = convertSentenceToCommonAttributeSetList(sentence, dictResultListList, options);
     assert(sentence.size() == dictResultListList.size() &&
            sentence.size() == commonAttributeSetList.size());
-    vector<vector<string>> ret;
     for (size_t i = 0; i < sentence.size(); ++i) {
         vector<string> result = { sentence[i] };
         if (dictResultListList[i]->size() != 0) {

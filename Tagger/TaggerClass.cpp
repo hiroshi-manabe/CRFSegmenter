@@ -237,6 +237,7 @@ int mainProc(int argc, char **argv) {
         }
     }
     while (!futureQueue.empty()) {
+        futureQueue.front().wait();
         cout << futureQueue.front().get() << endl;
         futureQueue.pop();
     }
@@ -283,6 +284,9 @@ void TaggerClass::train(const string &trainingFilename,
 }
 
 string TaggerClass::tag(string line, bool tagUnknown) const {
+    if (line.empty()) {
+        return "";
+    }
     auto observationSequence = convertLineToObservationSequence(line, dictionary, false);
     auto tagList = CRFProcessor->tag(observationSequence, featureGenerator);
     auto wordList = observationSequence->getObservationList();
