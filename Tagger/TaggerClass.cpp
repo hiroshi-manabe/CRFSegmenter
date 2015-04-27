@@ -121,7 +121,7 @@ shared_ptr<unordered_set<string>> readTagSet(const string &filename) {
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, UNK, TAGSET, TEST, MODEL, DICT, THREADS };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS };
 
 struct Arg : public option::Arg
 {
@@ -142,6 +142,7 @@ const option::Descriptor usage[] =
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { NEWLINE, 0, "", "newline", Arg::None, "  --newline  \tOutputs newline-separated tags. Valid only with --tag option. Use this option to feed the morpheme tagger." },
     { TAGSET, 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -229,7 +230,7 @@ int mainProc(int argc, char **argv) {
     queue<future<string>> futureQueue;
     
     while (getline(cin, line)) {
-        future<string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, options[UNK]);
+        future<string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, options[UNK], options[NEWLINE]);
         futureQueue.push(move(f));
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             cout << futureQueue.front().get() << endl;
@@ -283,7 +284,7 @@ void TaggerClass::train(const string &trainingFilename,
     CRFProcessor->writeModel(modelFilename);
 }
 
-string TaggerClass::tag(string line, bool tagUnknown) const {
+string TaggerClass::tag(string line, bool tagUnknown, bool delimitByNewline) const {
     if (line.empty()) {
         return "";
     }
@@ -299,7 +300,10 @@ string TaggerClass::tag(string line, bool tagUnknown) const {
         if (tagUnknown && (*possibleLabelSetList)[i].empty()) {
             ret += '?';
         }
-        if (i < wordList->size() - 1) {
+        if (delimitByNewline) {
+            ret += '\n';
+        }
+        else if (i < wordList->size() - 1) {
             ret += ' ';
         }
     }
