@@ -39,6 +39,7 @@ static vector<string> splitStringByTabs(const string &s) {
         else {
             elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
         }
+        lastPos = pos + 1;
     }
     return elems;
 }

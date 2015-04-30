@@ -60,6 +60,7 @@ static vector<string> splitStringByTabs(const string &s) {
         else {
             elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
         }
+        lastPos = pos + 1;
     }
     return elems;
 }
@@ -99,9 +100,9 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             continue;
         }
         
-        for (int j = -opt.maxBagOffset; j <= opt.maxBagOffset; ++j) {
+        for (int j = -(int)opt.maxBagOffset; j <= (int)opt.maxBagOffset; ++j) {
             int pos = i + j;
-            if (j == 0 || pos < 0 || pos >= sentence.size()) {
+            if (j == 0 || pos < 0 || pos >= (int)sentence.size()) {
                 continue;
             }
             if (dictResultListList[pos]->empty()) {
@@ -123,13 +124,13 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             for (int sign : { -1, +1 }) {
                 for (int startOffset : {0, 1}) {
                     stringstream ss;
-                    for (int j = startOffset; j < (wordOrLabel == 0 ? opt.maxWordOffset : opt.maxLabelOffset); ++j) {
+                    for (int j = startOffset; j < (int)(wordOrLabel == 0 ? opt.maxWordOffset : opt.maxLabelOffset); ++j) {
                         int startPos = i + (sign * startOffset);
                         if (j == 0 && sign == -1) {
                             continue;
                         }
                         int pos = i + j * sign;
-                        if (pos < 0 || pos >= sentence.size()) {
+                        if (pos < 0 || pos >= (int)sentence.size()) {
                             continue;
                         }
                         ss << "-" << wordAndLabelList[pos][wordOrLabel];
@@ -221,7 +222,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
             break;
         }
         vector<string> elems = splitStringByTabs(line);
-        if (elems.size() < (hasCorrectResults ? 2 : 1)) {
+        if (elems.size() < (size_t)(hasCorrectResults ? 2 : 1)) {
             cerr << "Not properly tagged: " << line << endl;
         }
         sentence->push_back(elems[0]);
