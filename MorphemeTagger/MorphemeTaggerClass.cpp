@@ -109,11 +109,11 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
                 continue;
             }
             stringstream posPrefix;
-            posPrefix << "P" << showpos << pos << "-";
+            posPrefix << "P" << showpos << j << "-";
             for (const auto &dictResult : *dictResultListList[pos]) {
                 for (size_t k = 0; k < dictResult.size(); ++k) {
                     stringstream fieldPrefix;
-                    fieldPrefix << "F" << k << "-";
+                    fieldPrefix << "F" << k << ":";
                     commonAttributeSet.insert(fieldPrefix.str() + dictResult[k]);
                     commonAttributeSet.insert(posPrefix.str() + fieldPrefix.str() + dictResult[k]);
                 }
@@ -133,9 +133,9 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
                         if (pos < 0 || pos >= (int)sentence.size()) {
                             continue;
                         }
-                        ss << "-" << wordAndLabelList[pos][wordOrLabel];
+                        ss << (j == startOffset ? ":" : "-") << wordAndLabelList[pos][wordOrLabel];
                         stringstream attr;
-                        attr << (wordOrLabel == 0 ? "W" : "L") << (sign == -1 ? "-" : "+") << startOffset << ":" << j << ss.str();
+                        attr << (wordOrLabel == 0 ? "W" : "L") << (sign == -1 ? "-" : "+") << startOffset << "-" << j << ss.str();
                         commonAttributeSet.insert(attr.str());
                     }
                 }
@@ -156,6 +156,7 @@ vector<Observation> generateTrainingObservationList(const vector<vector<string>>
     for (size_t i = 0; i < dictResultList.size(); ++i) {
         survivors.insert(i);
     }
+    unordered_set<string> attributeSet(commonAttributeSet);
     for (size_t i = 0; i < correctResult.size(); ++i) {
         unordered_set<size_t> nextSurvivors;
         for (size_t j : survivors) {
@@ -163,20 +164,25 @@ vector<Observation> generateTrainingObservationList(const vector<vector<string>>
                 nextSurvivors.insert(j);
             }
         }
-        if (nextSurvivors.size() < survivors.size() && !nextSurvivors.empty()) {
+        if (nextSurvivors.empty()) {
+            break;
+        }
+        stringstream ss;
+        ss << "E" << i << ":";
+        string prefix(ss.str());
+        if (nextSurvivors.size() < survivors.size()) {
             unordered_set<string> possibleLabelSet;
             for (size_t j : survivors) {
-                possibleLabelSet.insert(dictResultList[j][i]);
-            }
-            unordered_set<string> attributeSet(commonAttributeSet);
-            for (size_t j = 0; j < i; ++j) {
                 stringstream ss;
-                ss << "E" << j << ":" << correctResult[j];
-                attributeSet.insert(ss.str());
+                possibleLabelSet.insert(prefix + dictResultList[j][i]);
             }
-            ret.emplace_back(move(attributeSet), correctResult[i], move(possibleLabelSet));
+            ret.emplace_back(attributeSet, prefix + correctResult[i], move(possibleLabelSet));
             survivors = nextSurvivors;
+            if (survivors.size() == 1) {
+                break;
+            }
         }
+        attributeSet.insert(prefix + correctResult[i]);
     }
     return ret;
 }
@@ -189,27 +195,32 @@ size_t inferCorrectResult(const vector<vector<string>> &dictResultList, const un
     for (size_t i = 0; i < dictResultList.size(); ++i) {
         survivors.insert(i);
     }
+    unordered_set<string> attributeSet(commonAttributeSet);
     for (size_t i = 0; i < dictResultList[0].size(); ++i) {
         unordered_set<string> possibleLabelSet;
+        stringstream ss;
+        ss << "E" << i << ":";
+        string prefix(ss.str());
         for (size_t j : survivors) {
-            possibleLabelSet.insert(dictResultList[j][i]);
+            possibleLabelSet.insert(prefix + dictResultList[j][i]);
         }
         if (possibleLabelSet.size() > 1) {
             const vector<string> &result = dictResultList[*(survivors.begin())];
-            unordered_set<string> attributeSet(commonAttributeSet);
-            for (size_t j = 0; j < i; ++j) {
-                stringstream ss;
-                ss << "E" << j << ":" << result[j];
-                attributeSet.insert(ss.str());
-            }
-            string inferredLabel = maxEntProcessor.inferLabel(Observation(move(attributeSet), string(), move(possibleLabelSet)));
+            string inferredLabel = maxEntProcessor.inferLabel(Observation(attributeSet, string(), move(possibleLabelSet)));
             unordered_set<size_t> nextSurvivors;
             for (size_t j : survivors) {
-                if (dictResultList[j][i] == inferredLabel || survivors.size() == 1) {
+                if (prefix + dictResultList[j][i] == inferredLabel) {
                     nextSurvivors.insert(j);
                 }
             }
+            if (nextSurvivors.empty()) {
+                break;
+            }
             survivors = nextSurvivors;
+            if (survivors.size() == 1) {
+                break;
+            }
+            attributeSet.insert(prefix + dictResultList[*(survivors.begin())][i]);
         }
     }
     return *(survivors.begin());
