@@ -5,7 +5,7 @@ use utf8;
 
 use Getopt::Long;
 
-my @possible_output_types = qw(segment postag analyze);
+my @possible_output_types = qw(segment postag analyze full);
 my $pos_table;
 my $unidic_lex_path;
 my $output_type_str;
@@ -13,7 +13,8 @@ my $output_dir;
 my %converter_dict = (
     'segment' => \&convert_to_segment,
     'postag' => \&convert_to_postag,
-    'analyze' => \&convert_to_analyze
+    'analyze' => \&convert_to_analyze,
+    'full' => \&convert_to_full
     );
 
 my $options = GetOptions('unidic_lex_path=s' => \$unidic_lex_path,
@@ -41,7 +42,7 @@ if ($pos_table) {
 }
 
 for my $type(@output_types) {
-    if (($type eq 'postag' or $type eq 'analyze') and scalar(keys(%pos_dict)) == 0) {
+    if (($type eq 'postag' or $type eq 'analyze' or $type eq 'full') and scalar(keys(%pos_dict)) == 0) {
         die "POS table not provided: cannot convert POS tags.";
     }
     open my $unidic_in, '<:utf8', $unidic_lex_path or die "Cannot open: $unidic_lex_path";
@@ -97,6 +98,16 @@ sub convert_to_postag
 # 4..7: pos
 # 10, 11, 16: goiso
 sub convert_to_analyze
+{
+    my ($fields, $pos_dict) = @_;
+    my $pos = get_pos($fields);
+    $fields->[11] =~ s{\-.+$}{}; # truncate sublemma
+    return join("\t", $fields->[12]."/".$pos_dict->{$pos}, $pos, @{$fields}[9, 8], get_goiso($fields), @{$fields}[18, 13]);
+}
+
+# 4..7: pos
+# 10, 11, 16: goiso
+sub convert_to_full
 {
     my ($fields, $pos_dict) = @_;
     my $pos = get_pos($fields);
