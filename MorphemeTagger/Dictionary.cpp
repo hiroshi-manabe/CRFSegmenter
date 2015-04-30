@@ -25,12 +25,20 @@ using std::stringstream;
 using std::unordered_map;
 using std::vector;
 
-vector<string> splitStringByTabs(const string &s) {
+static vector<string> splitStringByTabs(const string &s) {
     vector<string> elems;
-    stringstream ss(s);
-    string item;
-    while (getline(ss, item, '\t')) {
-        elems.push_back(item);
+    size_t pos;
+    size_t lastPos = 0;
+    while (true) {
+        pos = s.find_first_of('\t', lastPos);
+        if (pos == string::npos) {
+            pos = s.length();
+            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+            break;
+        }
+        else {
+            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+        }
     }
     return elems;
 }

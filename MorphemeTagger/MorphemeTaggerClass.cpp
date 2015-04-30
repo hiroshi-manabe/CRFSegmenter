@@ -46,15 +46,24 @@ using std::stringstream;
 using std::unordered_set;
 using std::vector;
 
-vector<string> splitStringByTab(const string &s) {
+static vector<string> splitStringByTabs(const string &s) {
     vector<string> elems;
-    stringstream ss(s);
-    string item;
-    while (getline(ss, item, '\t')) {
-        elems.push_back(item);
+    size_t pos;
+    size_t lastPos = 0;
+    while (true) {
+        pos = s.find_first_of('\t', lastPos);
+        if (pos == string::npos) {
+            pos = s.length();
+            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+            break;
+        }
+        else {
+            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+        }
     }
     return elems;
 }
+
 
 vector<string> rsplit2BySlash(const string &s) {
     vector<string> elems;
@@ -211,7 +220,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
         if (line.empty()) {
             break;
         }
-        vector<string> elems = splitStringByTab(line);
+        vector<string> elems = splitStringByTabs(line);
         if (elems.size() < (hasCorrectResults ? 2 : 1)) {
             cerr << "Not properly tagged: " << line << endl;
         }
@@ -343,7 +352,7 @@ int mainProc(int argc, char **argv) {
             }
             sentence.clear();
         } else {
-            auto split = splitStringByTab(line);
+            auto split = splitStringByTabs(line);
             sentence.push_back(split[0]);
         }
     }
