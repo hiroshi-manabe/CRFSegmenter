@@ -121,7 +121,7 @@ shared_ptr<unordered_set<string>> readTagSet(const string &filename) {
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS, WORD_N, WORD_W, WORD_L };
 
 struct Arg : public option::Arg
 {
@@ -143,6 +143,9 @@ const option::Descriptor usage[] =
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { NEWLINE, 0, "", "newline", Arg::None, "  --newline  \tOutputs newline-separated tags. Valid only with --tag option. Use this option to feed the morpheme tagger." },
+    { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words (for training)." },
+    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words (for training)." },
+    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximux label length of words (for training)." },
     { TAGSET, 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -202,12 +205,23 @@ int mainProc(int argc, char **argv) {
         op.numThreads = num;
     }
         
+    if (options[WORD_N]) {
+        op.wordMaxNgram = atoi(options[WORD_N].arg);
+    }
+    if (options[WORD_W]) {
+        op.wordMaxWindow = atoi(options[WORD_W].arg);
+    }
+    if (options[WORD_L]) {
+        op.wordMaxLabelLength = atoi(options[WORD_L].arg);
+    }
+        
     if (options[TRAIN]) {
         if (!options[TAGSET]) {
             cerr << "Tag set was not designated." << endl;
         }
         auto tagSet = Tagger::readTagSet(options[TAGSET].arg);
         string trainingFilename = options[TRAIN].arg;
+        
         Tagger::TaggerClass s(op);
         s.train(trainingFilename, modelFilename, tagSet);
         return 0;

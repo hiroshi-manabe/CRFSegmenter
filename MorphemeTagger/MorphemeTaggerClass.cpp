@@ -14,7 +14,9 @@
 #include <iostream>
 #include <istream>
 #include <memory>
+#include <ostream>
 #include <queue>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -38,7 +40,9 @@ using std::ifstream;
 using std::istream;
 using std::make_shared;
 using std::move;
+using std::ofstream;
 using std::queue;
+using std::set;
 using std::shared_ptr;
 using std::showpos;
 using std::string;
@@ -100,7 +104,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             continue;
         }
         
-        for (int j = -(int)opt.maxBagOffset; j <= (int)opt.maxBagOffset; ++j) {
+        for (int j = -(int)opt.columnMaxWindow; j <= (int)opt.columnMaxWindow; ++j) {
             int pos = i + j;
             if (j == 0 || pos < 0 || pos >= (int)sentence.size()) {
                 continue;
@@ -112,6 +116,9 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             posPrefix << "P" << showpos << j << "-";
             for (const auto &dictResult : *dictResultListList[pos]) {
                 for (size_t k = 0; k < dictResult.size(); ++k) {
+                    if (opt.featureColumnSet.find(k) == opt.featureColumnSet.end()) {
+                        continue;
+                    }
                     stringstream fieldPrefix;
                     fieldPrefix << "F" << k << ":";
                     commonAttributeSet.insert(fieldPrefix.str() + dictResult[k]);
@@ -124,7 +131,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             for (int sign : { -1, +1 }) {
                 for (int startOffset : {0, 1}) {
                     stringstream ss;
-                    for (int j = startOffset; j < (int)(wordOrLabel == 0 ? opt.maxWordOffset : opt.maxLabelOffset); ++j) {
+                    for (int j = startOffset; j <= (int)(wordOrLabel == 0 ? opt.wordMaxWindow : opt.labelMaxWindow); ++j) {
                         int startPos = i + (sign * startOffset);
                         if (j == 0 && sign == -1) {
                             continue;
@@ -152,6 +159,7 @@ vector<Observation> generateTrainingObservationList(const vector<vector<string>>
     if (dictResultList.size() < 2 || correctResult.empty()) {
         return ret;
     }
+
     unordered_set<size_t> survivors;
     for (size_t i = 0; i < dictResultList.size(); ++i) {
         survivors.insert(i);
@@ -171,7 +179,7 @@ vector<Observation> generateTrainingObservationList(const vector<vector<string>>
         ss << "E" << i << ":";
         string prefix(ss.str());
         if (nextSurvivors.size() < survivors.size()) {
-            unordered_set<string> possibleLabelSet;
+            set<string> possibleLabelSet;
             for (size_t j : survivors) {
                 stringstream ss;
                 possibleLabelSet.insert(prefix + dictResultList[j][i]);
@@ -197,7 +205,7 @@ size_t inferCorrectResult(const vector<vector<string>> &dictResultList, const un
     }
     unordered_set<string> attributeSet(commonAttributeSet);
     for (size_t i = 0; i < dictResultList[0].size(); ++i) {
-        unordered_set<string> possibleLabelSet;
+        set<string> possibleLabelSet;
         stringstream ss;
         ss << "E" << i << ":";
         string prefix(ss.str());
@@ -220,8 +228,8 @@ size_t inferCorrectResult(const vector<vector<string>> &dictResultList, const un
             if (survivors.size() == 1) {
                 break;
             }
-            attributeSet.insert(prefix + dictResultList[*(survivors.begin())][i]);
         }
+        attributeSet.insert(prefix + dictResultList[*(survivors.begin())][i]);
     }
     return *(survivors.begin());
 }
@@ -242,7 +250,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN };
 
 struct Arg : public option::Arg
 {
@@ -262,6 +270,10 @@ const option::Descriptor usage[] =
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words." },
+    { LABEL_W, 0, "", "labelw", Arg::Required, "  --labelw  <number>\tWindow width for words." },
+    { COLUMN_W, 0, "", "columnw", Arg::Required, "  --columnw  <number>\tWindow width for columns." },
+    { FCOLUMN, 0, "", "fcolumn", Arg::Required, "  --fcolumn  <number> [number ...]\tDesignates the columns to use as features." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -275,7 +287,7 @@ const option::Descriptor usage[] =
 };
 
 int mainProc(int argc, char **argv) {
-    MorphemeTagger::MorphemeTaggerOptions op = { 3, 3, 3, 1, "" };
+    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1, {}, 1, "" };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -320,9 +332,25 @@ int mainProc(int argc, char **argv) {
         op.numThreads = num;
     }
         
+
+    if (options[WORD_W]) {
+        op.wordMaxWindow = atoi(options[WORD_W].arg);
+    }
+    if (options[LABEL_W]) {
+        op.labelMaxWindow = atoi(options[LABEL_W].arg);
+    }
+    if (options[COLUMN_W]) {
+        op.columnMaxWindow = atoi(options[COLUMN_W].arg);
+    }
+    for (option::Option* opt = options[FCOLUMN]; opt; opt = opt->next()) {
+        op.featureColumnSet.insert((size_t)atoi(opt->arg));
+    }
+        
     if (options[TRAIN]) {
         string trainingFilename = options[TRAIN].arg;
+        
         MorphemeTagger::MorphemeTaggerClass s(op);
+
         s.train(trainingFilename, modelFilename);
         return 0;
     }

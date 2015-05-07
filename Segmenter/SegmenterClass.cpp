@@ -96,7 +96,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L };
 
 struct Arg : public option::Arg
 {
@@ -116,6 +116,12 @@ const option::Descriptor usage[] =
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { CHAR_N, 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters (for training)." },
+    { CHAR_W, 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters (for training)." },
+    { CHAR_L, 0, "", "charl", Arg::Required, "  --charl  <number>\tMaximux label length of characters (for training)." },
+    { TYPE_N, 0, "", "typen", Arg::Required, "  --typen  <number>\tN-gram length of character types (for training)." },
+    { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types (for training)." },
+    { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximux label length of character types (for training)." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -175,8 +181,28 @@ int mainProc(int argc, char **argv) {
         op.numThreads = num;
     }
 
+    if (options[CHAR_N]) {
+        op.charMaxNgram = atoi(options[CHAR_N].arg);
+    }
+    if (options[CHAR_W]) {
+        op.charMaxWindow = atoi(options[CHAR_W].arg);
+    }
+    if (options[CHAR_L]) {
+        op.charMaxLabelLength = atoi(options[CHAR_L].arg);
+    }
+    if (options[TYPE_N]) {
+        op.charMaxNgram = atoi(options[TYPE_N].arg);
+    }
+    if (options[TYPE_W]) {
+        op.charMaxWindow = atoi(options[TYPE_W].arg);
+    }
+    if (options[TYPE_L]) {
+        op.charMaxLabelLength = atoi(options[TYPE_L].arg);
+    }
+        
     if (options[TRAIN]) {
         string trainingFilename = options[TRAIN].arg;
+
         Segmenter::SegmenterClass s(op);
         s.train(trainingFilename, modelFilename);
         return 0;
