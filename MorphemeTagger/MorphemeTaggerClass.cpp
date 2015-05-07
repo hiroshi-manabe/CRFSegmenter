@@ -287,7 +287,8 @@ const option::Descriptor usage[] =
 };
 
 int mainProc(int argc, char **argv) {
-    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1, {}, 1, "" };
+    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1 };
+    op.numThreads = 1;
 
     argv += (argc > 0);
     argc -= (argc > 0);
