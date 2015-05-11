@@ -52,6 +52,6 @@ struct equal_to<std::shared_ptr<HighOrderCRF::Feature>> {
     }
 };
 
-}
+}  // namespace std
 
 #endif  // HOCRF_HIGH_ORDER_CRF_FEATURE_H

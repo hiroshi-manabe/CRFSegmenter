@@ -4,10 +4,12 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace MaxEnt {
 
+using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
@@ -17,15 +19,21 @@ class MaxEntData
 {
 public:
     MaxEntData();
-    MaxEntData(shared_ptr<unordered_map<string, size_t>> strToIndexMap, shared_ptr<vector<double>> bestWeightList);
+    MaxEntData(shared_ptr<unordered_map<string, uint32_t>> labelToIndexMap,
+               shared_ptr<unordered_map<string, uint32_t>> attrToIndexMap,
+               shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> indexPairToFeatureIndexMap,
+               shared_ptr<vector<double>> bestWeightList);
     void read(const string &filename);
     void write(const string &filename) const;
     const shared_ptr<vector<double>> getBestWeightList() const;
-    shared_ptr<unordered_map<string, size_t>> getStrToIndexMap();
-    void dumpFeatures(const string &filename, bool outputWeights) const;
+    shared_ptr<unordered_map<string, uint32_t>> getLabelToIndexMap();
+    shared_ptr<unordered_map<string, uint32_t>> getAttrToIndexMap();
+    shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> getIndexPairToFeatureIndexMap();
     
 private:
-    shared_ptr<unordered_map<string, size_t>> strToIndexMap;
+    shared_ptr<unordered_map<string, uint32_t>> labelToIndexMap;
+    shared_ptr<unordered_map<string, uint32_t>> attrToIndexMap;
+    shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> indexPairToFeatureIndexMap;
     shared_ptr<vector<double>> bestWeightList;
 };
 

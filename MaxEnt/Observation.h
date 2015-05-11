@@ -11,6 +11,7 @@
 namespace MaxEnt {
 
 using std::ostream;
+using std::pair;
 using std::set;
 using std::shared_ptr;
 using std::string;
@@ -22,7 +23,10 @@ class Observation
 {
 public:
     Observation(unordered_set<string> attributeSet, string correctLabel, set<string> possibleLabelSet);
-    shared_ptr<CompiledData> compile(shared_ptr<unordered_map<string, size_t>> strToIndexMap, bool extendMap) const;
+    shared_ptr<CompiledData> compile(shared_ptr<unordered_map<string, size_t>> labelToIndexMap,
+                                     shared_ptr<unordered_map<string, size_t>> attrToIndexMap,
+                                     shared_ptr<unordered_map<pair<size_t, size_t>, size_t>> indexPairToFeatureIndexMap,
+                                     bool extendMap) const;
     void output(ostream &os);
     
 private:
@@ -32,4 +36,16 @@ private:
 };
 
 }  // namespace MaxEnt
+
+namespace std {
+
+template<> 
+struct hash<pair<size_t, size_t>> {
+    size_t operator()(const pair<size_t, size_t> &p) const {
+        return p.first ^ p.second;
+    }
+};
+ 
+}  // namespace std
+
 #endif  // HOCRF_MAX_ENT_OBSERVATION_H_

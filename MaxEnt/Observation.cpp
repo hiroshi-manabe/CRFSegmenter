@@ -46,7 +46,7 @@ void Observation::output(ostream &os) {
     os << endl << endl;
 }
 
-shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, size_t>> strToIndexMap, bool extendMap) const {
+shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, size_t>> labelToIndexMap, shared_ptr<unordered_map<string, size_t>> attrToIndexMap, shared_ptr<unordered_map<pair<size_t, size_t>, size_t>> indexPairToFeatureIndexMap, bool extendMaps) const {
     vector<vector<size_t>> featureIndexListList;
     vector<string> labelStringList;
     
@@ -64,24 +64,43 @@ shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, s
     }
     string setStr = ss.str();
     for (const auto &label : possibleLabelSet) {
-        labelStringList.push_back(label);
         if (!correctLabel.empty() && label == correctLabel) {
             correctLabelIndex = index;
         }
         vector<size_t> v;
+        string labelAndLabelSetStr = label + "/" + setStr;
+        auto itLabel = labelToIndexMap->find(labelAndLabelSetStr);
+        if (itLabel == labelToIndexMap->end()) {
+            if (!extendMaps) {
+                continue; // FIXME
+            }
+            itLabel = labelToIndexMap->insert(make_pair(labelAndLabelSetStr, labelToIndexMap->size())).first;
+        }
+        labelStringList.push_back(label);
         for (const auto &attr : attributeSet) {
-            string labelAndAttr = label + "/" + setStr + "\t" + attr;
-            auto it = strToIndexMap->find(labelAndAttr);
-            if (it == strToIndexMap->end()) {
-                if (!extendMap) {
+            auto itAttr = attrToIndexMap->find(attr);
+            if (itAttr == attrToIndexMap->end()) {
+                if (!extendMaps) {
                     continue;
                 }
-                it = strToIndexMap->insert(make_pair(labelAndAttr, strToIndexMap->size())).first;
+                itAttr = attrToIndexMap->insert(make_pair(attr, attrToIndexMap->size())).first;
             }
-            v.push_back(it->second);
+            auto indexPair = make_pair(itLabel->second, itAttr->second);
+            auto itIndexPair = indexPairToFeatureIndexMap->find(indexPair);
+            if (itIndexPair == indexPairToFeatureIndexMap->end()) {
+                if (!extendMaps) {
+                    continue;
+                }
+                itIndexPair = indexPairToFeatureIndexMap->insert(make_pair(indexPair, indexPairToFeatureIndexMap->size())).first;
+            }
+            v.push_back(itIndexPair->second);
         }
         featureIndexListList.push_back(move(v));
         ++index;
+    }
+    if (labelStringList.empty()) {
+        labelStringList.push_back(*(possibleLabelSet.begin()));
+        featureIndexListList.push_back(vector<size_t>());
     }
     return make_shared<CompiledData>(move(featureIndexListList), move(labelStringList), correctLabelIndex);
 }

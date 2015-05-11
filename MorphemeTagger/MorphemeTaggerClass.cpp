@@ -122,7 +122,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
                     stringstream fieldPrefix;
                     fieldPrefix << "F" << k << ":";
                     commonAttributeSet.insert(fieldPrefix.str() + dictResult[k]);
-                    commonAttributeSet.insert(posPrefix.str() + fieldPrefix.str() + dictResult[k]);
+//                    commonAttributeSet.insert(posPrefix.str() + fieldPrefix.str() + dictResult[k]);
                 }
             }
         }

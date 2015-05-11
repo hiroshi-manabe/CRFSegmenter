@@ -15,12 +15,12 @@
 #include <utility>
 #include <vector>
 
-
 namespace MaxEnt {
 
 using std::future;
 using std::make_shared;
 using std::move;
+using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
@@ -64,13 +64,15 @@ public:
                double epsilonForConvergence) {
 
         auto compiledDataList = make_shared<vector<shared_ptr<CompiledData>>>();
-        auto strToIndexMap = make_shared<unordered_map<string, size_t>>();
+        auto labelToIndexMap = make_shared<unordered_map<string, size_t>>();
+        auto attrToIndexMap = make_shared<unordered_map<string, size_t>>();
+        auto indexPairToFeatureIndexMap = make_shared<unordered_map<pair<size_t, size_t>, size_t>>();
         compiledDataList->reserve(observationList.size());
         
         for (auto &obs : observationList) {
-            compiledDataList->push_back(obs.compile(strToIndexMap, true));
+            compiledDataList->push_back(obs.compile(labelToIndexMap, attrToIndexMap, indexPairToFeatureIndexMap, true));
         }
-        auto featureCountList = make_shared<vector<double>>(strToIndexMap->size());
+        auto featureCountList = make_shared<vector<double>>(indexPairToFeatureIndexMap->size());
         for (auto &data : (*compiledDataList)) {
             data->accumulateFeatureCounts(featureCountList->data());
         }
@@ -80,12 +82,11 @@ public:
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
         
-        modelData = make_shared<MaxEntData>(strToIndexMap, bestWeightList);
-        modelData->dumpFeatures("features.txt", true);
+        modelData = make_shared<MaxEntData>(labelToIndexMap, attrToIndexMap, indexPairToFeatureIndexMap, bestWeightList);
     }
 
     string inferLabel(const Observation &obs) const {
-        return obs.compile(modelData->getStrToIndexMap(), false)->inferLabel(modelData->getBestWeightList()->data());
+        return obs.compile(modelData->getLabelToIndexMap(), modelData->getAttrToIndexMap(), modelData->getIndexPairToFeatureIndexMap(), false)->inferLabel(modelData->getBestWeightList()->data());
     }
 
     void writeModel(const string &filename) {
