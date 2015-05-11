@@ -65,17 +65,9 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         pos += charCount;
         if (uchar.getCodePoint() == ' ') {
             prevIsSpace = true;
-            isAfterSlash = false;
-            continue;
-        }
-        else if (uchar.getCodePoint() == '/') {
-            isAfterSlash = true;
             continue;
         }
         else {
-            if (isAfterSlash) {
-                continue;
-            }
             observationList->push_back(uchar);
             labelList->push_back(prevIsSpace ? "1" : "0");
             prevIsSpace = false;
