@@ -1,6 +1,7 @@
 #include "MaxEntData.h"
 #include "Observation.h"
 
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -178,7 +179,7 @@ void MaxEntData::write(const string &filename) const {
     }
 
     {
-        vector<pair<size_t, size_t>> v(indexPairToFeatureIndexMap->size());
+        vector<pair<uint32_t, uint32_t>> v(indexPairToFeatureIndexMap->size());
 
         for (const auto &e : *indexPairToFeatureIndexMap) {
             v[e.second] = e.first;
@@ -186,8 +187,8 @@ void MaxEntData::write(const string &filename) const {
     
         writeNumber<uint32_t>(&out, (uint32_t)v.size());
         for (uint32_t i = 0; i < v.size(); ++i) {
-            writeNumber<size_t>(&out, v[i].first);
-            writeNumber<size_t>(&out, v[i].second);
+            writeNumber<uint32_t>(&out, v[i].first);
+            writeNumber<uint32_t>(&out, v[i].second);
         }
     }
 

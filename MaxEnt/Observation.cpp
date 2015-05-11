@@ -46,11 +46,11 @@ void Observation::output(ostream &os) {
     os << endl << endl;
 }
 
-shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, size_t>> labelToIndexMap, shared_ptr<unordered_map<string, size_t>> attrToIndexMap, shared_ptr<unordered_map<pair<size_t, size_t>, size_t>> indexPairToFeatureIndexMap, bool extendMaps) const {
-    vector<vector<size_t>> featureIndexListList;
+shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, uint32_t>> labelToIndexMap, shared_ptr<unordered_map<string, uint32_t>> attrToIndexMap, shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> indexPairToFeatureIndexMap, bool extendMaps) const {
+    vector<vector<uint32_t>> featureIndexListList;
     vector<string> labelStringList;
     
-    size_t index = 0;
+    uint32_t index = 0;
     size_t correctLabelIndex = 0;
     stringstream ss;
 
@@ -67,7 +67,7 @@ shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, s
         if (!correctLabel.empty() && label == correctLabel) {
             correctLabelIndex = index;
         }
-        vector<size_t> v;
+        vector<uint32_t> v;
         string labelAndLabelSetStr = label + "/" + setStr;
         auto itLabel = labelToIndexMap->find(labelAndLabelSetStr);
         if (itLabel == labelToIndexMap->end()) {
@@ -100,7 +100,7 @@ shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, s
     }
     if (labelStringList.empty()) {
         labelStringList.push_back(*(possibleLabelSet.begin()));
-        featureIndexListList.push_back(vector<size_t>());
+        featureIndexListList.push_back(vector<uint32_t>());
     }
     return make_shared<CompiledData>(move(featureIndexListList), move(labelStringList), correctLabelIndex);
 }

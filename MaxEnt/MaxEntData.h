@@ -1,6 +1,7 @@
 #ifndef HOCRF_MAX_ENT_MAX_ENT_DATA_H_
 #define HOCRF_MAX_ENT_MAX_ENT_DATA_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>

@@ -8,6 +8,7 @@
 #include "Observation.h"
 
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -64,9 +65,9 @@ public:
                double epsilonForConvergence) {
 
         auto compiledDataList = make_shared<vector<shared_ptr<CompiledData>>>();
-        auto labelToIndexMap = make_shared<unordered_map<string, size_t>>();
-        auto attrToIndexMap = make_shared<unordered_map<string, size_t>>();
-        auto indexPairToFeatureIndexMap = make_shared<unordered_map<pair<size_t, size_t>, size_t>>();
+        auto labelToIndexMap = make_shared<unordered_map<string, uint32_t>>();
+        auto attrToIndexMap = make_shared<unordered_map<string, uint32_t>>();
+        auto indexPairToFeatureIndexMap = make_shared<unordered_map<pair<uint32_t, uint32_t>, uint32_t>>();
         compiledDataList->reserve(observationList.size());
         
         for (auto &obs : observationList) {

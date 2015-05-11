@@ -1,6 +1,7 @@
 #ifndef HOCRF_MAX_ENT_COMPILED_DATA_H_
 #define HOCRF_MAX_ENT_COMPILED_DATA_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -12,7 +13,7 @@ using std::vector;
 class CompiledData
 {
 public:
-    CompiledData(vector<vector<size_t>> featureIndexListList,
+    CompiledData(vector<vector<uint32_t>> featureIndexListList,
                  vector<string> labelStringList,
                  size_t correctLabelIndex);
     void accumulateFeatureCounts(double *counts) const;
@@ -20,7 +21,7 @@ public:
     const string &inferLabel(const double *expWeights) const;
     
 private:
-    vector<vector<size_t>> featureIndexListList;
+    vector<vector<uint32_t>> featureIndexListList;
     vector<string> labelStringList;
     size_t correctLabelIndex;
 };

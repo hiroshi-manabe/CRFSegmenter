@@ -1,6 +1,7 @@
 #ifndef HOCRF_MAX_ENT_OBSERVATION_H_
 #define HOCRF_MAX_ENT_OBSERVATION_H_
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <set>
@@ -23,9 +24,9 @@ class Observation
 {
 public:
     Observation(unordered_set<string> attributeSet, string correctLabel, set<string> possibleLabelSet);
-    shared_ptr<CompiledData> compile(shared_ptr<unordered_map<string, size_t>> labelToIndexMap,
-                                     shared_ptr<unordered_map<string, size_t>> attrToIndexMap,
-                                     shared_ptr<unordered_map<pair<size_t, size_t>, size_t>> indexPairToFeatureIndexMap,
+    shared_ptr<CompiledData> compile(shared_ptr<unordered_map<string, uint32_t>> labelToIndexMap,
+                                     shared_ptr<unordered_map<string, uint32_t>> attrToIndexMap,
+                                     shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> indexPairToFeatureIndexMap,
                                      bool extendMap) const;
     void output(ostream &os);
     
@@ -40,8 +41,8 @@ private:
 namespace std {
 
 template<> 
-struct hash<pair<size_t, size_t>> {
-    size_t operator()(const pair<size_t, size_t> &p) const {
+struct hash<pair<uint32_t, uint32_t>> {
+    size_t operator()(const pair<uint32_t, uint32_t> &p) const {
         return p.first ^ p.second;
     }
 };

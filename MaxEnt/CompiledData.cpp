@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <mutex>
 #include <string>
@@ -17,7 +18,7 @@ using std::numeric_limits;
 using std::string;
 using std::vector;
 
-CompiledData::CompiledData(vector<vector<size_t>> featureIndexListList,
+CompiledData::CompiledData(vector<vector<uint32_t>> featureIndexListList,
                            vector<string> labelStringList,
                            size_t correctLabelIndex) {
     assert(featureIndexListList.size() == labelStringList.size());
@@ -41,7 +42,7 @@ double CompiledData::accumulateFeatureExpectations(const double *expWeights, dou
     vector<double> scoreList(labelCount);
     for (size_t labelIndex = 0; labelIndex < featureIndexListList.size(); ++labelIndex) {
         scoreList[labelIndex] = 1.0;
-        for (size_t featureIndex : featureIndexListList[labelIndex]) {
+        for (uint32_t featureIndex : featureIndexListList[labelIndex]) {
             scoreList[labelIndex] *= expWeights[featureIndex];
         }
         sum += scoreList[labelIndex];
@@ -49,7 +50,7 @@ double CompiledData::accumulateFeatureExpectations(const double *expWeights, dou
     for (size_t labelIndex = 0; labelIndex < featureIndexListList.size(); ++labelIndex) {
         double prob = scoreList[labelIndex] / sum;
         expectationMutex.lock();
-        for (size_t featureIndex : featureIndexListList[labelIndex]) {
+        for (uint32_t featureIndex : featureIndexListList[labelIndex]) {
             expectations[featureIndex] += prob;
         }
         expectationMutex.unlock();
@@ -63,7 +64,7 @@ const string &CompiledData::inferLabel(const double *weights) const {
     for (size_t labelIndex = 0; labelIndex < featureIndexListList.size(); ++labelIndex) {
         auto &featureIndexList = featureIndexListList[labelIndex];
         double score = 0.0;
-        for (size_t featureIndex : featureIndexList) {
+        for (uint32_t featureIndex : featureIndexList) {
             score += weights[featureIndex];
         }
         if (score > maxScore) {
