@@ -203,7 +203,7 @@ public:
 
         printf("Performance by label (#match, #model, #ref) (precision, recall, F1):\n");
         for (size_t i = 0; i < labelCount; ++i) {
-            printf("    %s: (%d, %d, %d) (%1.4f, %1.4f, %1.4f\n",
+            printf("    %s: (%d, %d, %d) (%1.4f, %1.4f, %1.4f)\n",
                 labelStringList->at(i).c_str(),
                 correctLabelCounts[i], inferredLabelCounts[i], observationLabelCounts[i],
                 precisionByLabel[i], recallByLabel[i], fMeasureByLabel[i]);
