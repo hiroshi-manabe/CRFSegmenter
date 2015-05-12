@@ -123,7 +123,7 @@ public:
         for (auto &dataSequence : *dataSequenceList) {
             compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
         }
-        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, 0, false, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, 0, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
