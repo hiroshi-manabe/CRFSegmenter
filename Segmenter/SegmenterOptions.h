@@ -15,6 +15,10 @@ struct SegmenterOptions {
     size_t charTypeMaxWindow;
     size_t charTypeMaxLabelLength;
     size_t numThreads;
+    double coeff;
+    double epsilon;
+    size_t maxIter;
+    string regType;
     string dictionaryFilename;
 };
 

@@ -25,7 +25,7 @@ private:
     shared_ptr<vector<double>> buffer;
     shared_ptr<vector<double>> bestWeightList;
     size_t concurrency;
-    size_t maxIters;
+    size_t maxIter;
     bool useL1Optimization;
     double regularizationCoefficient;
     double epsilonForConvergence;

@@ -12,6 +12,10 @@ struct TaggerOptions {
     size_t wordMaxWindow;
     size_t wordMaxLabelLength;
     size_t numThreads;
+    double coeff;
+    double epsilon;
+    size_t maxIter;
+    string regType;
     string dictionaryFilename;
 };
 

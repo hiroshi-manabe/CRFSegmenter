@@ -75,7 +75,7 @@ public:
                shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
                shared_ptr<unordered_set<string>> labelSet,
                size_t concurrency,
-               size_t maxIters,
+               size_t maxIter,
                bool useL1Regularization,
                double regularizationCoefficient,
                double epsilonForConvergence) {
@@ -123,7 +123,7 @@ public:
         for (auto &dataSequence : *dataSequenceList) {
             compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
         }
-        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, 0, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, maxIter, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
@@ -132,7 +132,6 @@ public:
 #ifdef CRFSUITE_OUTPUT
         modelData->dumpFeatures("features.txt", false);
 #endif
-        modelData->dumpFeatures("features.txt", true);
         prepare();
     }
 

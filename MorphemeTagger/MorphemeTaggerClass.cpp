@@ -250,7 +250,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -277,6 +277,10 @@ const option::Descriptor usage[] =
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
     "  MorphemeTagger --train train.txt --model model.dat\n"
@@ -287,8 +291,7 @@ const option::Descriptor usage[] =
 };
 
 int mainProc(int argc, char **argv) {
-    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1 };
-    op.numThreads = 1;
+    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -349,6 +352,19 @@ int mainProc(int argc, char **argv) {
         
     if (options[TRAIN]) {
         string trainingFilename = options[TRAIN].arg;
+        
+        if (options[COEFF]) {
+            op.coeff = atof(options[COEFF].arg);
+        }
+        if (options[EPSILON]) {
+            op.epsilon = atof(options[EPSILON].arg);
+        }
+        if (options[MAXITER]) {
+            op.epsilon = atoi(options[MAXITER].arg);
+        }
+        if (options[REGTYPE]) {
+            op.regType = options[REGTYPE].arg;
+        }
         
         MorphemeTagger::MorphemeTaggerClass s(op);
 

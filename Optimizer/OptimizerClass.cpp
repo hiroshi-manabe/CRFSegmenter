@@ -39,12 +39,12 @@ int lbfgsProgress(void *instance,
 }
 
 OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, shared_ptr<vector<double>> featureCountList,
-    size_t concurrency, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
+    size_t concurrency, size_t maxIter, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
     this->updateProc = updateProc;
     this->updateData = updateData;
     this->featureCountList = featureCountList;
     this->concurrency = concurrency;
-    this->maxIters = maxIters;
+    this->maxIter = maxIter;
     this->useL1Optimization = useL1Optimization;
     this->regularizationCoefficient = regularizationCoefficient;
     this->epsilonForConvergence = epsilonForConvergence;
@@ -61,11 +61,14 @@ void OptimizerClass::optimize(const double* featureWeights) {
     bestWeightList = make_shared<vector<double>>(featureListSize);
     buffer = make_shared<vector<double>>(featureListSize);
     
-    if (maxIters != 0) {
-        lbfgsParam.max_iterations = maxIters;
+    if (maxIter != 0) {
+        lbfgsParam.max_iterations = maxIter;
     }
     if (epsilonForConvergence != 0.0) {
         lbfgsParam.epsilon = epsilonForConvergence;
+    }
+    if (regularizationCoefficient == 0.0) {
+        regularizationCoefficient = 1.0;
     }
     if (useL1Optimization) {
         lbfgsParam.orthantwise_c = 1.0 / regularizationCoefficient;

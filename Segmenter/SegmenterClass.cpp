@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -88,7 +89,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -108,15 +109,19 @@ const option::Descriptor usage[] =
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
-    { CHAR_N, 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters (for training)." },
-    { CHAR_W, 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters (for training)." },
-    { CHAR_L, 0, "", "charl", Arg::Required, "  --charl  <number>\tMaximux label length of characters (for training)." },
-    { TYPE_N, 0, "", "typen", Arg::Required, "  --typen  <number>\tN-gram length of character types (for training)." },
-    { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types (for training)." },
-    { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximux label length of character types (for training)." },
+    { CHAR_N, 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters." },
+    { CHAR_W, 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters." },
+    { CHAR_L, 0, "", "charl", Arg::Required, "  --charl  <number>\tMaximux label length of characters." },
+    { TYPE_N, 0, "", "typen", Arg::Required, "  --typen  <number>\tN-gram length of character types." },
+    { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
+    { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximux label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
     "  Segmenter --train train.txt --model model.dat\n"
@@ -128,7 +133,7 @@ const option::Descriptor usage[] =
 
 
 int mainProc(int argc, char **argv) {
-    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1, "" };
+    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -194,6 +199,19 @@ int mainProc(int argc, char **argv) {
         
     if (options[TRAIN]) {
         string trainingFilename = options[TRAIN].arg;
+
+        if (options[COEFF]) {
+            op.coeff = atof(options[COEFF].arg);
+        }
+        if (options[EPSILON]) {
+            op.epsilon = atof(options[EPSILON].arg);
+        }
+        if (options[MAXITER]) {
+            op.epsilon = atoi(options[MAXITER].arg);
+        }
+        if (options[REGTYPE]) {
+            op.regType = options[REGTYPE].arg;
+        }
 
         Segmenter::SegmenterClass s(op);
         s.train(trainingFilename, modelFilename);
@@ -265,13 +283,18 @@ shared_ptr<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>> SegmenterC
 }
 
 void SegmenterClass::train(const string &trainingFilename,
-    const string &modelFilename) {
+                           const string &modelFilename) {
     auto observationSequenceList = readData(trainingFilename, true);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
     auto labelSet = make_shared<unordered_set<string>>();
     labelSet->insert("0");
     labelSet->insert("1");
-    CRFProcessor->train(observationSequenceList, featureGenerator, labelSet, options.numThreads, 10000, false, 10.0, 0.00001);
+    bool isL1 = false;
+    if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
+        cerr << "Unsupported regularization type: " << options.regType;
+    }
+    isL1 = (options.regType == "L1");
+    CRFProcessor->train(observationSequenceList, featureGenerator, labelSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     CRFProcessor->writeModel(modelFilename);
 }
 

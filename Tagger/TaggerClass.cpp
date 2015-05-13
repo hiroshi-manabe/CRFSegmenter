@@ -121,7 +121,7 @@ shared_ptr<unordered_set<string>> readTagSet(const string &filename) {
 }
 
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS, WORD_N, WORD_W, WORD_L };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS, WORD_N, WORD_W, WORD_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -149,6 +149,10 @@ const option::Descriptor usage[] =
     { TAGSET, 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { UNK, 0, "", "unk", Arg::None, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
     { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
@@ -160,7 +164,7 @@ const option::Descriptor usage[] =
 };
 
 int mainProc(int argc, char **argv) {
-    Tagger::TaggerOptions op = { 2, 2, 4, 1, "" };
+    Tagger::TaggerOptions op = { 2, 2, 4, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -222,6 +226,19 @@ int mainProc(int argc, char **argv) {
         auto tagSet = Tagger::readTagSet(options[TAGSET].arg);
         string trainingFilename = options[TRAIN].arg;
         
+        if (options[COEFF]) {
+            op.coeff = atof(options[COEFF].arg);
+        }
+        if (options[EPSILON]) {
+            op.epsilon = atof(options[EPSILON].arg);
+        }
+        if (options[MAXITER]) {
+            op.epsilon = atoi(options[MAXITER].arg);
+        }
+        if (options[REGTYPE]) {
+            op.regType = options[REGTYPE].arg;
+        }
+
         Tagger::TaggerClass s(op);
         s.train(trainingFilename, modelFilename, tagSet);
         return 0;
@@ -293,8 +310,12 @@ void TaggerClass::train(const string &trainingFilename,
                         const string &modelFilename,
                         shared_ptr<unordered_set<string>> tagSet) {
     auto observationSequenceList = readData(trainingFilename, true);
+    bool isL1 = false;
+    if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
+        cerr << "Unsupported regularization type: " << options.regType;
+    }
     CRFProcessor = make_shared<HighOrderCRFProcessor<string>>();
-    CRFProcessor->train(observationSequenceList, featureGenerator, tagSet, options.numThreads, 10000, false, 10.0, 0.00001);
+    CRFProcessor->train(observationSequenceList, featureGenerator, tagSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     CRFProcessor->writeModel(modelFilename);
 }
 

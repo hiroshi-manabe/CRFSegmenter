@@ -13,8 +13,12 @@ struct MorphemeTaggerOptions {
     size_t wordMaxWindow;
     size_t labelMaxWindow;
     size_t columnMaxWindow;
-    unordered_set<size_t> featureColumnSet;
     size_t numThreads;
+    double coeff;
+    double epsilon;
+    size_t maxIter;
+    string regType;
+    unordered_set<size_t> featureColumnSet;
     string dictionaryFilename;
 };
 
