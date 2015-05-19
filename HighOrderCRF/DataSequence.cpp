@@ -1,14 +1,13 @@
 #include "DataSequence.h"
 
+#include "CompactPattern.h"
 #include "CompactPatternSetSequence.h"
 #include "Feature.h"
 #include "FeatureTemplate.h"
 #include "LabelSequence.h"
-#include "Pattern.h"
-#include "PatternSetSequence.h"
+#include "Trie.h"
 
 #include <algorithm>
-#include <map>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -17,9 +16,13 @@
 
 namespace HighOrderCRF {
 
+using std::back_inserter;
+using std::make_pair;
 using std::make_shared;
-using std::map;
 using std::min;
+using std::move;
+using std::pair;
+using std::reverse_copy;
 using std::shared_ptr;
 using std::unordered_map;
 using std::unordered_set;
@@ -34,7 +37,6 @@ DataSequence::DataSequence(shared_ptr<vector<shared_ptr<vector<shared_ptr<Featur
     this->possibleLabelTypeSetList = possibleLabelTypeSetList;
     this->hasValidLabels = hasValidLabels;
 }
-
 
 size_t DataSequence::length() const {
     return featureTemplateListList->size();
@@ -79,24 +81,50 @@ void DataSequence::accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_
     }
 }
 
-shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const {
-    size_t maxLabelLength = 0;
-    auto mapList = make_shared<vector<shared_ptr<map<shared_ptr<LabelSequence>, shared_ptr<Pattern>>>>>();
-    auto emptyLabelSequence = LabelSequence::createEmptyLabelSequence();
+struct PatternData {
+    vector<feature_index_t> featureIndexList;
+    pattern_index_t patternIndex;
+};
 
+template<typename L>
+struct PatternGenerationData {
+    vector<PatternData> *patternDataList;
+    vector<CompactPattern> *patternList;
+    Trie<L> *prevTrie;
+    pattern_index_t currentIndex;
+};
+
+void generateCompactPatternSetProc(label_t *labels, size_t size, int dataIndex, int parentDataIndex, void *data) {
+    auto generationData = static_cast<PatternGenerationData<label_t> *>(data);
+    pattern_index_t prevPatternIndex = 0;
+    if (generationData->prevTrie && size > 0) {
+        prevPatternIndex = (*generationData->patternDataList)[generationData->prevTrie->find(labels + 1, size - 1)].patternIndex;
+    }
+    PatternData &thisPatternData = (*generationData->patternDataList)[dataIndex];
+    thisPatternData.patternIndex = generationData->currentIndex;
+    ++generationData->currentIndex;
+    PatternData &suffixPatternData = (*generationData->patternDataList)[parentDataIndex];
+    pattern_index_t suffixPatternIndex = suffixPatternData.patternIndex;
+    generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[size - 1] : INVALID_LABEL, make_shared<vector<feature_index_t>>(move(thisPatternData.featureIndexList)));
+}
+
+shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const {
+    
+    vector<Trie<label_t>> trieList(this->length());
+    vector<PatternData> patternDataList;
+    auto emptyLabelSequence = LabelSequence::createEmptyLabelSequence();
+    
     for (size_t pos = 0; pos < this->length(); ++pos) {
-        const auto &curFeatureTemplateList = featureTemplateListList->at(pos);
-        mapList->push_back(make_shared<map<shared_ptr<LabelSequence>, shared_ptr<Pattern>>>());
-        const auto &curMap = mapList->at(pos);
-        auto emptyPattern = make_shared<Pattern>(INVALID_LABEL);
-        curMap->insert(make_pair(emptyLabelSequence, emptyPattern));
+        const auto &curFeatureTemplateList = (*featureTemplateListList)[pos];
+        auto &curTrie = trieList[pos];
+        int dataIndex = curTrie.findOrInsert(emptyLabelSequence->getLabelData(), emptyLabelSequence->getLength(), patternDataList.size());
+        if (dataIndex == patternDataList.size()) {
+            patternDataList.emplace_back();
+        }
 
         for (const auto &featureTemplate : *curFeatureTemplateList) {
             if (featureTemplate->getLabelLength() > pos + 1) {
                 continue;
-            }
-            if (featureTemplate->getLabelLength() > maxLabelLength) {
-                maxLabelLength = featureTemplate->getLabelLength();
             }
             auto featureList = featureTemplateToFeatureListMap->find(featureTemplate);
             if (featureList == featureTemplateToFeatureListMap->end()) {
@@ -105,17 +133,6 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
             for (auto &feature : *featureList->second) {
                 auto seq = feature->getLabelSequence();
 
-#ifdef EMULATE_BOS_EOS
-                if (seq->getLabelAt(seq->getLength() - 1) == 0 && !(pos == seq->getLength() - 1 || seq->getLength() == 1 && pos == this->length() - 1)) {
-                    continue;
-                }
-                if (seq->getLastLabel() == 0 && !(pos == this->length() - 1 || seq->getLength() == 1 && pos == 0)) {
-                    continue;
-                }
-                if ((pos == 0 || pos == this->length() - 1) && (seq->getLength() != 1 || seq->getLastLabel() != 0)) {
-                    continue;
-                }
-#endif
                 bool labelsOK = true;
                 for (size_t i = 0; i < seq->getLength(); ++i) {
                     if (!(*possibleLabelTypeSetList)[pos - i].empty() && (*possibleLabelTypeSetList)[pos - i].find(seq->getLabelAt(i)) == (*possibleLabelTypeSetList)[pos - i].end()) {
@@ -126,82 +143,54 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                 if (!labelsOK) {
                     continue;
                 }
-                if (curMap->find(seq) == curMap->end()) {
-                    curMap->insert(make_pair(seq, make_shared<Pattern>(seq->getLastLabel())));
+                int dataIndex = curTrie.findOrInsert(seq->getLabelData(), seq->getLength(), patternDataList.size());
+                if (dataIndex == patternDataList.size()) {
+                    patternDataList.emplace_back();
                 }
 
-                auto pat = curMap->at(seq);
-                pat->addFeature(feature);
+                patternDataList[dataIndex].featureIndexList.push_back(feature->getIndex());
 
-                if (pos == 0) {
-                    pat->setPrevPattern(Pattern::getDummyPattern());
-                } else {
+                if (pos > 0) {
                     size_t labelLength = seq->getLength();
-                    auto tempMap = mapList->at(pos);
-                    for (size_t i = 1; i <= labelLength; ++i) {
-                        auto prevMap = mapList->at(pos - i);
-                        auto prefix = seq->createPrefix();
-                        
-                        bool prevMapContainsKey = prevMap->find(prefix) != prevMap->end();
-                        if (!prevMapContainsKey) {
-                            prevMap->insert(make_pair(prefix, make_shared<Pattern>(prefix->getLastLabel())));
-                        }
-                        tempMap->at(seq)->setPrevPattern(prevMap->at(prefix));
-                        if (prevMapContainsKey) {
+                    for (size_t i = 1; i <= min(labelLength - 1, pos); ++i) {
+                        auto &prevTrie = trieList[pos - i];
+                        int prevDataIndex = curTrie.findOrInsert(seq->getLabelData() + i, seq->getLength() - i, patternDataList.size());
+                        if (prevDataIndex == patternDataList.size()) {
+                            patternDataList.emplace_back();
+                        } else {
                             break;
                         }
-                        seq = prefix;
-                        tempMap = prevMap;
                     }
                 }
             }
         }
     }
-    auto patternListList = make_shared<vector<shared_ptr<vector<shared_ptr<Pattern>>>>>();
-    auto longestMatchPatternList = make_shared<vector<shared_ptr<Pattern>>>();
-    for (size_t pos = 0; pos < length(); ++pos) {
-        const auto &curMap = mapList->at(pos);
-        auto longestSuffixCandidateList = make_shared<vector<shared_ptr<Pattern>>>();
-        const auto &emptyPattern = curMap->at(emptyLabelSequence);
-        for (size_t i = 0; i < maxLabelLength + 1; ++i) {
-            longestSuffixCandidateList->push_back(emptyPattern);
-        }
 
-        auto prevLabelSequence = emptyLabelSequence;
-        for (const auto &entry : *curMap) {
-            const auto &curLabelSequence = entry.first;
-            const auto &curPattern = entry.second;
-            if (curLabelSequence == emptyLabelSequence) {
-                continue;
-            }
-            size_t diffPos = curLabelSequence->getDifferencePosition(prevLabelSequence);
-            curPattern->setLongestSuffixPattern(longestSuffixCandidateList->at(diffPos));
-            for (size_t i = diffPos + 1; i < curLabelSequence->getLength(); ++i) {
-                longestSuffixCandidateList->at(i) = longestSuffixCandidateList->at(diffPos);
-            }
-            longestSuffixCandidateList->at(curLabelSequence->getLength()) = curPattern;
-            prevLabelSequence = curLabelSequence;
-        }
+    auto compactPatternListList = make_shared<vector<vector<CompactPattern>>>();
+    auto longestMatchIndexList = make_shared<vector<pattern_index_t>>();
+    vector<label_t> reversedLabels;
+    reverse_copy(labels->begin(), labels->end(), back_inserter(reversedLabels));
+    
+    for (size_t pos = 0; pos < this->length(); ++pos) {
+        Trie<label_t> &curTrie = trieList[pos];
 
-        auto patternList = make_shared<vector<shared_ptr<Pattern>>>();
-        for (const auto &entry : *mapList->at(pos)) {
-            patternList->push_back(entry.second);
-        }
-        auto longestMatchPattern = patternList->at(0);
+        vector<CompactPattern> patternList;
+        PatternGenerationData<label_t> d;
+        d.patternDataList = &patternDataList;
+        d.patternList = &patternList;
+        d.prevTrie = pos ? &trieList[pos - 1] : 0;
+        d.currentIndex = 0;
+        
+        curTrie.visitValidNodes(generateCompactPatternSetProc, (void *)&d);
+        compactPatternListList->push_back(move(patternList));
+
+        pattern_index_t longestMatchIndex = 0;
         if (hasValidLabels) {
-            const auto& prevMap = mapList->at(pos);
-            for (size_t length = min(maxLabelLength, pos + 1); length > 0; --length) {
-                const auto &key = getLabelSequence(pos, length);
-                if (prevMap->find(key) != prevMap->end()) {
-                    longestMatchPattern = prevMap->at(key);
-                    break;
-                }
-            }
+            longestMatchIndex = patternDataList[curTrie.findLongestMatch(reversedLabels.data() + this->length() - pos - 1, pos + 1)].patternIndex;
         }
-        patternListList->push_back(patternList);
-        longestMatchPatternList->push_back(longestMatchPattern);
+        longestMatchIndexList->push_back(longestMatchIndex);
     }
-    return PatternSetSequence(patternListList, longestMatchPatternList).generateCompactPatternSetSequence();
+    return make_shared<CompactPatternSetSequence>(compactPatternListList, longestMatchIndexList);
 }
 
 }  // namespace HighOrderCRF

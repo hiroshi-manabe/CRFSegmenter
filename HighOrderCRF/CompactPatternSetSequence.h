@@ -17,8 +17,8 @@ class CompactPatternSetSequence
 {
 public:
     CompactPatternSetSequence(shared_ptr<vector<vector<CompactPattern>>> &compactPatternListList,
-        shared_ptr<vector<pattern_index_t>> longestMatchIndexList) :
-        compactPatternListList(compactPatternListList), longestMatchIndexList(longestMatchIndexList) {};
+                              shared_ptr<vector<pattern_index_t>> longestMatchIndexList) :
+    compactPatternListList(compactPatternListList), longestMatchIndexList(longestMatchIndexList) {};
     void accumulateFeatureCounts(double *counts) const;
     double accumulateFeatureExpectations(const double *expWeights, double *expectations) const;
     shared_ptr<vector<label_t>> decode(const double *expWeights) const;

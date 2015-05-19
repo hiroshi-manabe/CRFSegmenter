@@ -46,11 +46,6 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
     }
     const auto it = *resultCache->find(observationList);
     const auto cachedTemplateListList = it.second;
-#ifdef EMULATE_BOS_EOS
-    if (pos == 0 || pos == observationList->size() - 1) {
-        return make_shared<vector<shared_ptr<FeatureTemplate>>>();
-    }
-#endif
     if ((*cachedTemplateListList)[pos]) {
         return (*cachedTemplateListList)[pos];
     } else {

@@ -177,11 +177,6 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
     // accumulates expectations
     expectationMutex.lock();
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
-#ifdef EMULATE_BOS_EOS
-        if (pos == 0 || pos == sequenceLength - 1) {
-            continue;
-        }
-#endif
         auto &curPatternList = (*compactPatternListList)[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
             for (auto &featureIndex : *curPatternList[index].getFeatureIndexList()) {

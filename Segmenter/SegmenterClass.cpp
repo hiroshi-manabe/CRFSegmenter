@@ -53,11 +53,6 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
     auto observationList = make_shared<vector<UnicodeCharacter>>();
     auto labelList = make_shared<vector<string>>();
 
-#ifdef EMULATE_BOS_EOS
-    observationList->push_back(UnicodeCharacter(0));
-    labelList->push_back("__BOS_EOS__");
-#endif
-
     size_t pos = 0;
     bool isAfterSlash = false;
     while (pos < len) {
@@ -74,10 +69,6 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
             prevIsSpace = false;
         }
     }
-#ifdef EMULATE_BOS_EOS
-    observationList->push_back(UnicodeCharacter(0));
-    labelList->push_back("__BOS_EOS__");
-#endif
     auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>(observationList->size());
     for (size_t i = 0; i < possibleLabelSetList->size(); ++i) {
         (*possibleLabelSetList)[i].insert("1");

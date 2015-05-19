@@ -26,6 +26,10 @@ label_t LabelSequence::getLabelAt(size_t pos) const {
     return labels->at(pos);
 }
 
+label_t *LabelSequence::getLabelData() const {
+    return labels->data();
+}
+
 label_t LabelSequence::getLastLabel() const {
     return getLabelAt(0);
 }

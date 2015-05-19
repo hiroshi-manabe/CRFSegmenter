@@ -1,4 +1,5 @@
 #ifndef HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H_
+
 #define HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H_
 
 #include "types.h"
@@ -17,6 +18,7 @@ public:
     LabelSequence(shared_ptr<vector<label_t>> labels);
     size_t getLength() const;
     label_t getLabelAt(size_t pos) const;
+    label_t *getLabelData() const;
     label_t getLastLabel() const;
     shared_ptr<LabelSequence> createPrefix() const;
     size_t getDifferencePosition(const shared_ptr<LabelSequence> &that) const;

@@ -37,6 +37,7 @@ private:
     shared_ptr<vector<label_t>> labels;
     bool hasValidLabels;
     shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList;
+private:
 };
 
 }  // namespace HighOrderCRF

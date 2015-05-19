@@ -39,11 +39,6 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> CharacterTypeFeatureGenerator::g
         stringstream prefix;
         prefix << "T" << showpos << curPosOffset << "/";
         for (size_t n = 1; n <= maxN; ++n) {
-#ifdef EMULATE_BOS_EOS
-            if (curPos == 0 || pos == observationList->size() - 1 || curPos + n == observationList->size()) {
-                continue;
-            }
-#endif
             if (curPos + n < pos || curPos > pos) {
                 continue;
             }

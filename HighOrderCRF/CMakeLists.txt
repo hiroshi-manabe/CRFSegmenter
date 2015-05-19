@@ -6,8 +6,6 @@ add_library(
     FeatureTemplate.cpp
     HighOrderCRFData.cpp
     LabelSequence.cpp
-    Pattern.cpp
-    PatternSetSequence.cpp
 )
 set_property(TARGET HighOrderCRF PROPERTY CXX_STANDARD 11)
 target_link_libraries(HighOrderCRF Optimizer)
