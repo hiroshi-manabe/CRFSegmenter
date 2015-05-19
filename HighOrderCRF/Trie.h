@@ -18,11 +18,11 @@ struct TrieNode {
     vector<TrieNode> children;
     int value;
 
-    TrieNode::TrieNode(L label) : label(label) {
+    TrieNode(L label) : label(label) {
         value = -1;
     }
     
-    size_t TrieNode::getChildIndex(L label) const {
+    size_t getChildIndex(L label) const {
         size_t index = 0;
         if (children.size() < 32) {
             for (index = 0; index < children.size() && label > children[index].label; ++index);
@@ -42,7 +42,7 @@ struct TrieNode {
         }
     }
 
-    TrieNode *TrieNode::getChild(size_t index, L label) const {
+    TrieNode *getChild(size_t index, L label) const {
         if (index < children.size() && children[index].label == label) {
             return const_cast<TrieNode *>(&children[index]);
         }
@@ -74,13 +74,13 @@ void visitValidNodesRec(vector<L> &labels, TrieNode<L> *node, TrieNode<L> *valid
 template<typename L>
 class Trie {
 public:
-    Trie::Trie() : rootNode(-1) {
+    Trie() : rootNode(-1) {
     }
 
-    Trie::~Trie() {
+    ~Trie() {
     }
 
-    int Trie::findOrInsert(const L *data, size_t size, int value) {
+    int findOrInsert(const L *data, size_t size, int value) {
         TrieNode<L> *node = &rootNode;
         for (size_t i = 0; i < size; ++i) {
             size_t index = node->getChildIndex(data[i]);
@@ -96,7 +96,7 @@ public:
         return node->value;
     }
 
-    int Trie::find(const L *data, size_t size) const {
+    int find(const L *data, size_t size) const {
         const TrieNode<L> *node = &rootNode;
         for (size_t i = 0; i < size; ++i) {
             node = node->getChild(node->getChildIndex(data[i]), data[i]);
@@ -105,7 +105,7 @@ public:
         return node->value;
     }
 
-    int Trie::findLongestMatch(const L *data, size_t size) const {
+    int findLongestMatch(const L *data, size_t size) const {
         const TrieNode<L> *node = &rootNode;
         for (size_t i = 0; i < size; ++i) {
             TrieNode<L> *nextNode = node->getChild(node->getChildIndex(data[i]), data[i]);
@@ -117,7 +117,7 @@ public:
         return node->value;
     }
 
-    void Trie::visitValidNodes(void (*proc)(L *, size_t, int, int, void *), void *data) {
+    void visitValidNodes(void (*proc)(L *, size_t, int, int, void *), void *data) {
         vector<L> v;
         visitValidNodesRec(v, &rootNode, &rootNode, proc, data);
     }
