@@ -154,7 +154,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
                     size_t labelLength = seq->getLength();
                     for (size_t i = 1; i <= min(labelLength - 1, pos); ++i) {
                         auto &prevTrie = trieList[pos - i];
-                        int prevDataIndex = curTrie.findOrInsert(seq->getLabelData() + i, seq->getLength() - i, patternDataList.size());
+                        int prevDataIndex = prevTrie.findOrInsert(seq->getLabelData() + i, seq->getLength() - i, patternDataList.size());
                         if (prevDataIndex == patternDataList.size()) {
                             patternDataList.emplace_back();
                         } else {
