@@ -28,6 +28,7 @@ public:
 private:
     string obs;
     size_t labelLength;
+    size_t hashValue;
 };
 
 }  // namespace HighOrderCRF
