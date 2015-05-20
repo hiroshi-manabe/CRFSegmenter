@@ -1,6 +1,6 @@
-#include "CompactPatternSetSequence.h"
+#include "PatternSetSequence.h"
 
-#include "CompactPattern.h"
+#include "Pattern.h"
 #include "Feature.h"
 
 #include <algorithm>
@@ -18,12 +18,12 @@ using std::shared_ptr;
 using std::swap;
 using std::vector;
 
-shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vector<vector<CompactPattern>>> compactPatternListList, const double *expWeights) {
+shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vector<vector<Pattern>>> patternListList, const double *expWeights) {
     auto ret = make_shared<vector<vector<double>>>(0);
     
     // accumulates weights
-    for (size_t pos = 0; pos < compactPatternListList->size(); ++pos) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+    for (size_t pos = 0; pos < patternListList->size(); ++pos) {
+        auto &curPatternList = (*patternListList)[pos];
         ret->push_back(vector<double>(curPatternList.size()));
         auto &curWeightList = ret->back();
         curWeightList[0] = 1.0;
@@ -41,29 +41,29 @@ shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vecto
     return ret;
 }
 
-void CompactPatternSetSequence::accumulateFeatureCounts(double *counts) const {
-    for (size_t pos = 0; pos < compactPatternListList->size(); ++pos) {
-        auto &compactPatternList = (*compactPatternListList)[pos];
+void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
+    for (size_t pos = 0; pos < patternListList->size(); ++pos) {
+        auto &patternList = (*patternListList)[pos];
         pattern_index_t index = (*longestMatchIndexList)[pos];
         while (index != 0) {
-            for (auto featureIndex : *compactPatternList[index].getFeatureIndexList()) {
+            for (auto featureIndex : *patternList[index].getFeatureIndexList()) {
                 counts[featureIndex] += 1.0;
             }
-            index = compactPatternList[index].getLongestSuffixIndex();
+            index = patternList[index].getLongestSuffixIndex();
         }
     }
 }
 
 static mutex expectationMutex;
 // returns log likelihood of the sequence
-double CompactPatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
+double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
     size_t maxPatternSetSize = 0;
-    size_t sequenceLength = compactPatternListList->size();
+    size_t sequenceLength = patternListList->size();
     vector<vector<double>> scoreListList(0);
     vector<int> exponents(sequenceLength);
 
-    for (auto &compactPatternList : *compactPatternListList) {
-        size_t size = compactPatternList.size();
+    for (auto &patternList : *patternListList) {
+        size_t size = patternList.size();
         if (size > maxPatternSetSize) {
             maxPatternSetSize = size;
         }
@@ -76,7 +76,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
     vector<double> *curTempScoreList = &tempScoreList1;
     vector<double> *prevTempScoreList = &tempScoreList2;
 
-    auto weightListList = getAccumulatedWeightListList(compactPatternListList, expWeights);
+    auto weightListList = getAccumulatedWeightListList(patternListList, expWeights);
 
     // forward calculations
 
@@ -85,7 +85,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
     exponents[0] = 0;
 
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+        auto &curPatternList = (*patternListList)[pos];
         auto &scoreList = scoreListList[pos];
         auto &weightList = (*weightListList)[pos];
         size_t listSize = curPatternList.size();
@@ -122,18 +122,18 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
 
     // backward calculations
 
-    size_t lastListLength = (*compactPatternListList)[sequenceLength - 1].size();
+    size_t lastListLength = (*patternListList)[sequenceLength - 1].size();
     // clears deltas
     fill(curTempScoreList->begin(), curTempScoreList->begin() + lastListLength, 0.0);
     // delta for the empty pattern
     (*curTempScoreList)[0] = 1;
 
     for (size_t pos = sequenceLength; pos-- > 0; ) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+        auto &curPatternList = (*patternListList)[pos];
         auto &scoreList = scoreListList[pos];
         auto &weightList = (*weightListList)[pos];
         size_t listSize = curPatternList.size();
-        size_t prevListSize = (pos > 0) ? (*compactPatternListList)[pos - 1].size() : 1;
+        size_t prevListSize = (pos > 0) ? (*patternListList)[pos - 1].size() : 1;
 
         fill(prevTempScoreList->begin(), prevTempScoreList->begin() + prevListSize, 0.0);
         double scale = ldexp(1.0, (pos > 0) ? (exponents[pos - 1] - exponents[pos]) : 0);
@@ -177,7 +177,7 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
     // accumulates expectations
     expectationMutex.lock();
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+        auto &curPatternList = (*patternListList)[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
             for (auto &featureIndex : *curPatternList[index].getFeatureIndexList()) {
                 expectations[featureIndex] += scoreListList[pos][index];
@@ -196,15 +196,15 @@ double CompactPatternSetSequence::accumulateFeatureExpectations(const double *ex
     return logLikelihood;
 }
 
-shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expWeights) const {
+shared_ptr<vector<label_t>> PatternSetSequence::decode(const double *expWeights) const {
     size_t maxPatternSetSize = 0;
-    size_t sequenceLength = compactPatternListList->size();
+    size_t sequenceLength = patternListList->size();
 
     vector<vector<pattern_index_t>> bestIndexListList(0);
     bestIndexListList.reserve(sequenceLength);
 
-    for (auto &compactPatternList : *compactPatternListList) {
-        size_t size = compactPatternList.size();
+    for (auto &patternList : *patternListList) {
+        size_t size = patternList.size();
         if (size > maxPatternSetSize) {
             maxPatternSetSize = size;
         }
@@ -219,18 +219,18 @@ shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expW
     vector<double> *prevTempScoreList = &tempScoreList2;
     vector<double> prevTempScoreListForLabel(maxPatternSetSize);
 
-    auto weightListList = getAccumulatedWeightListList(compactPatternListList, expWeights);
+    auto weightListList = getAccumulatedWeightListList(patternListList, expWeights);
     int exponentDiff = 0;
     double scale = 1.0;
 
     (*prevTempScoreList)[0] = 1.0;
 
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+        auto &curPatternList = (*patternListList)[pos];
         auto &bestIndexList = bestIndexListList[pos];
         auto &weightList = (*weightListList)[pos];
         size_t listSize = curPatternList.size();
-        size_t prevListSize = (pos > 0) ? (*compactPatternListList)[pos - 1].size() : 1;
+        size_t prevListSize = (pos > 0) ? (*patternListList)[pos - 1].size() : 1;
         
         fill(curTempScoreList->begin(), curTempScoreList->begin() + listSize, 0);
 
@@ -250,7 +250,7 @@ shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expW
             prevLabel = curPattern.getLastLabel();
             --prevIndex;
             for (; prevIndex > curPattern.getPrevPatternIndex(); --prevIndex) {
-                auto longestSuffixIndex = (*compactPatternListList)[pos - 1][prevIndex].getLongestSuffixIndex();
+                auto longestSuffixIndex = (*patternListList)[pos - 1][prevIndex].getLongestSuffixIndex();
                 if (prevTempScoreListForLabel[prevIndex] > prevTempScoreListForLabel[longestSuffixIndex]) {
                     prevTempScoreListForLabel[longestSuffixIndex] = prevTempScoreListForLabel[prevIndex];
                     bestPrefixIndexList[longestSuffixIndex] = bestPrefixIndexList[prevIndex];
@@ -273,7 +273,7 @@ shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expW
     double lastBestScore = 0.0;
     size_t bestIndex = 0;
 
-    for (size_t index = 1; index < compactPatternListList->back().size(); ++index) {
+    for (size_t index = 1; index < patternListList->back().size(); ++index) {
         if ((*prevTempScoreList)[index] > lastBestScore) {
             lastBestScore = (*prevTempScoreList)[index];
             bestIndex = index;
@@ -282,7 +282,7 @@ shared_ptr<vector<label_t>> CompactPatternSetSequence::decode(const double *expW
 
     auto bestLabelList = make_shared<vector<label_t>>(sequenceLength);
     for (size_t pos = sequenceLength; pos-- > 0;) {
-        auto &curPatternList = (*compactPatternListList)[pos];
+        auto &curPatternList = (*patternListList)[pos];
         auto &bestIndexList = bestIndexListList[pos];
         
         (*bestLabelList)[pos] = curPatternList[bestIndex].getLastLabel();

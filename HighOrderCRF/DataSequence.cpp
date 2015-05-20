@@ -1,7 +1,7 @@
 #include "DataSequence.h"
 
-#include "CompactPattern.h"
-#include "CompactPatternSetSequence.h"
+#include "Pattern.h"
+#include "PatternSetSequence.h"
 #include "Feature.h"
 #include "FeatureTemplate.h"
 #include "LabelSequence.h"
@@ -89,12 +89,12 @@ struct PatternData {
 template<typename L>
 struct PatternGenerationData {
     vector<PatternData> *patternDataList;
-    vector<CompactPattern> *patternList;
+    vector<Pattern> *patternList;
     Trie<L> *prevTrie;
     pattern_index_t currentIndex;
 };
 
-void generateCompactPatternSetProc(label_t *labels, size_t size, int dataIndex, int parentDataIndex, void *data) {
+void generatePatternSetProc(label_t *labels, size_t size, int dataIndex, int parentDataIndex, void *data) {
     auto generationData = static_cast<PatternGenerationData<label_t> *>(data);
     pattern_index_t prevPatternIndex = 0;
     if (generationData->prevTrie && size > 0) {
@@ -108,7 +108,7 @@ void generateCompactPatternSetProc(label_t *labels, size_t size, int dataIndex, 
     generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[0] : INVALID_LABEL, make_shared<vector<feature_index_t>>(move(thisPatternData.featureIndexList)));
 }
 
-shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const {
+shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const {
     
     vector<Trie<label_t>> trieList(this->length());
     vector<PatternData> patternDataList;
@@ -166,7 +166,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
         }
     }
 
-    auto compactPatternListList = make_shared<vector<vector<CompactPattern>>>();
+    auto patternListList = make_shared<vector<vector<Pattern>>>();
     auto longestMatchIndexList = make_shared<vector<pattern_index_t>>();
     vector<label_t> reversedLabels;
     reverse_copy(labels->begin(), labels->end(), back_inserter(reversedLabels));
@@ -174,15 +174,15 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
     for (size_t pos = 0; pos < this->length(); ++pos) {
         Trie<label_t> &curTrie = trieList[pos];
 
-        vector<CompactPattern> patternList;
+        vector<Pattern> patternList;
         PatternGenerationData<label_t> d;
         d.patternDataList = &patternDataList;
         d.patternList = &patternList;
         d.prevTrie = pos ? &trieList[pos - 1] : 0;
         d.currentIndex = 0;
         
-        curTrie.visitValidNodes(generateCompactPatternSetProc, (void *)&d);
-        compactPatternListList->push_back(move(patternList));
+        curTrie.visitValidNodes(generatePatternSetProc, (void *)&d);
+        patternListList->push_back(move(patternList));
 
         pattern_index_t longestMatchIndex = 0;
         if (hasValidLabels) {
@@ -190,7 +190,7 @@ shared_ptr<CompactPatternSetSequence> DataSequence::generateCompactPatternSetSeq
         }
         longestMatchIndexList->push_back(longestMatchIndex);
     }
-    return make_shared<CompactPatternSetSequence>(compactPatternListList, longestMatchIndexList);
+    return make_shared<PatternSetSequence>(patternListList, longestMatchIndexList);
 }
 
 }  // namespace HighOrderCRF

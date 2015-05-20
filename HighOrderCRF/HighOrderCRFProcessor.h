@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "../task/task_queue.hpp"
-#include "CompactPatternSetSequence.h"
+#include "PatternSetSequence.h"
 #include "DataSequence.h"
 #include "Feature.h"
 #include "HighOrderCRFData.h"
@@ -39,13 +39,13 @@ template<typename T> class FeatureTemplateGenerator;
 class HighOrderCRFData;
 
 double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t concurrency) {
-    auto sequenceList = static_cast<shared_ptr<vector<shared_ptr<CompactPatternSetSequence>>> *>(updateData);
+    auto sequenceList = static_cast<shared_ptr<vector<shared_ptr<PatternSetSequence>>> *>(updateData);
     
     hwm::task_queue tq(concurrency);
     vector<future<double>> futureList;
 
     for (auto &sequence : **sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<CompactPatternSetSequence> pat, const double* expWeightArray, double* expectationArray) -> double {
+        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double* expWeightArray, double* expectationArray) -> double {
                 return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
             },
             sequence,
@@ -107,11 +107,11 @@ public:
             featureTemplateToFeatureListMap->at(ft)->push_back(feature);
         }
 
-        auto compactPatternSetSequenceList = make_shared<vector<shared_ptr<CompactPatternSetSequence>>>();
+        auto patternSetSequenceList = make_shared<vector<shared_ptr<PatternSetSequence>>>();
         for (auto &dataSequence : *dataSequenceList) {
-            compactPatternSetSequenceList->push_back(dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap));
+            patternSetSequenceList->push_back(dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap));
         }
-        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&compactPatternSetSequenceList, featureCountList, concurrency, maxIter, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
         optimizer->optimize(initialWeightList->data());
         auto bestWeightList = optimizer->getBestWeightList();
@@ -213,8 +213,8 @@ private:
     shared_ptr<vector<label_t>> tagLabelType(shared_ptr<ObservationSequence<T>> observationSequence,
                                              shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
         auto dataSequence = observationSequence->generateDataSequence(featureTemplateGenerator, modelData->getLabelMap());
-        auto compactPatternSetSequence = dataSequence->generateCompactPatternSetSequence(featureTemplateToFeatureListMap);
-        return compactPatternSetSequence->decode(expWeightList.get()->data());
+        auto patternSetSequence = dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap);
+        return patternSetSequence->decode(expWeightList.get()->data());
     }
 
     void prepare() {

@@ -19,7 +19,7 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-class CompactPatternSetSequence;
+class PatternSetSequence;
 
 class DataSequence
 {
@@ -31,7 +31,7 @@ public:
     size_t length() const;
     shared_ptr<LabelSequence> getLabelSequence(size_t pos, size_t length) const;
     void accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_ptr<Feature>, size_t>> featureCountMap) const;
-    shared_ptr<CompactPatternSetSequence> generateCompactPatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const;
+    shared_ptr<PatternSetSequence> generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const;
 private:
     shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList;
     shared_ptr<vector<label_t>> labels;

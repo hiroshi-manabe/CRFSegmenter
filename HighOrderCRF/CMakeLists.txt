@@ -1,6 +1,6 @@
 add_library(
     HighOrderCRF
-    CompactPatternSetSequence.cpp
+    PatternSetSequence.cpp
     DataSequence.cpp
     Feature.cpp
     FeatureTemplate.cpp
