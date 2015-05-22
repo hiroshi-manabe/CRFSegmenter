@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cassert>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -19,13 +20,14 @@ using std::make_pair;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 
 DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile) {
-    dictionary = make_shared<DictionaryClass>(dictionaryFile, true);
+    dictionary = make_shared<DictionaryClass>(dictionaryFile);
     resultCache = make_shared<unordered_map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
 }
 
@@ -56,7 +58,13 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
             auto results = dictionary->commonPrefixSearch(string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
             for (const auto &p : results) {
                 const auto &charLength = p.first;
-                const auto &featureList = p.second;
+                const auto &featureListList = p.second;
+                unordered_set<const string *> featureSet;
+                for (const auto &featureList : featureListList) {
+                    for (const auto &feature : featureList) {
+                        featureSet.insert(feature);
+                    }
+                }
                 
                 size_t endCharPos = utf8PosToCharPosList[startUtf8Pos + charLength];
                 if (endCharPos == 0) {  // This cannot happen if everything is in well-formed utf-8
@@ -75,8 +83,8 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
                 if (!leftTemplateList) {
                     leftTemplateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
                 }
-                for (const auto &featureStr : featureList) {
-                    leftTemplateList->push_back(make_shared<FeatureTemplate>(string("Rw-") + featureStr, 1));
+                for (const auto &featureStr : featureSet) {
+                    leftTemplateList->push_back(make_shared<FeatureTemplate>(string("Rw-") + *featureStr, 1));
                 }
 
                 if (endCharPos >= observationList->size()) {
@@ -87,9 +95,9 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
                 if (!rightTemplateList) {
                     rightTemplateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
                 }
-                for (const auto &featureStr : featureList) {
-                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("Lw-") + featureStr, 1));
-                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("LW-") + featureStr, labelLength));
+                for (const auto &featureStr : featureSet) {
+                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("Lw-") + *featureStr, 1));
+                    rightTemplateList->push_back(make_shared<FeatureTemplate>(string("LW-") + *featureStr, labelLength));
                 }
             }
         }

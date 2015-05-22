@@ -16,12 +16,12 @@ using std::vector;
 
 class DictionaryClass {
 public:
-    DictionaryClass(const string &filename, bool addPrefix);
-    vector<pair<size_t, vector<string>>> commonPrefixSearch(const string &str) const;
-    vector<string> lookup(const string &str) const;
+    DictionaryClass(const string &filename);
+    vector<pair<size_t, vector<vector<const string *>>>> commonPrefixSearch(const string &str) const;
+    vector<vector<const string *>> lookup(const string &str) const;
 
 private:
-    vector<vector<size_t>> marisaIdToFeatureIdListList;
+    vector<vector<vector<size_t>>> marisaIdToFeatureIdListListList;
     vector<string> featureIdToStringList;
     marisa::Trie trie;
 };

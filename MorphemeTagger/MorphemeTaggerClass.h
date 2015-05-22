@@ -2,7 +2,7 @@
 #define MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_
 
 #include "../MaxEnt/MaxEntProcessor.h"
-#include "Dictionary.h"
+#include "../Dictionary/DictionaryClass.h"
 #include "MorphemeTaggerOptions.h"
 
 #include <memory>
@@ -15,6 +15,8 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 
+using Dictionary::DictionaryClass;
+
 class MorphemeTaggerClass {
 
 public:
@@ -25,7 +27,7 @@ public:
     void readModel(const string &modelFilename);
 
 private:
-    shared_ptr<Dictionary> dictionary;
+    shared_ptr<DictionaryClass> dictionary;
     shared_ptr<MaxEnt::MaxEntProcessor> maxEntProcessor;
     MorphemeTaggerOptions options;
 };

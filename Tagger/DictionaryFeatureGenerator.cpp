@@ -35,11 +35,12 @@ shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::gene
         
         for (size_t i = 0; i < templateListList->size(); ++i) {
             // Looks up the words
-            auto results = dictionary->lookup((*observationList)[i]);
-            for (const auto &s : results) {
+            auto resultListList = dictionary->lookup((*observationList)[i]);
+            for (const auto &resultList : resultListList) {
+                assert(resultList.size() == 1);
                 auto &templateList = (*templateListList)[i];
                 templateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
-                templateList->push_back(make_shared<FeatureTemplate>(string("D-") + s, 1));
+                templateList->push_back(make_shared<FeatureTemplate>(string("D-") + *resultList[0], 1));
             }
         }
         resultCache->insert(make_pair(observationList, templateListList));

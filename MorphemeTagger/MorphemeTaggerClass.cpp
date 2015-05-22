@@ -1,9 +1,9 @@
 #include "MorphemeTaggerClass.h"
 
+#include "../Dictionary/DictionaryClass.h"
 #include "../MaxEnt/MaxEntProcessor.h"
-#include "../task/task_queue.hpp"
 #include "../optionparser/optionparser.h"
-#include "Dictionary.h"
+#include "../task/task_queue.hpp"
 #include "MorphemeTaggerOptions.h"
 
 #include <algorithm>
@@ -25,6 +25,7 @@
 
 namespace MorphemeTagger {
 
+using Dictionary::DictionaryClass;
 using MaxEnt::MaxEntProcessor;
 using MaxEnt::Observation;
 
@@ -80,15 +81,26 @@ vector<string> rsplit2BySlash(const string &s) {
     return elems;
 }
 
-vector<shared_ptr<vector<vector<string>>>> lookupSentence(const vector<string> &sentence, const Dictionary &dictionary) {
-    vector<shared_ptr<vector<vector<string>>>> ret;
+vector<vector<vector<string>>> lookupSentence(const vector<string> &sentence, const DictionaryClass &dictionary) {
+    vector<vector<vector<string>>> ret;
     for (const auto &str : sentence) {
-        ret.push_back(dictionary.lookup(str));
+        auto result = dictionary.lookup(str);
+        vector<vector<string>> ll;
+        ll.reserve(result.size());
+        for (const auto &entry : result) {
+            vector<string> l;
+            l.reserve(entry.size());
+            for (const auto &element : entry) {
+                l.push_back(*element);
+            }
+            ll.push_back(move(l));
+        }
+        ret.push_back(move(ll));
     }
     return ret;
 }
 
-vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vector<string> &sentence, const vector<shared_ptr<vector<vector<string>>>> &dictResultListList, const MorphemeTaggerOptions &opt) {
+vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vector<string> &sentence, const vector<vector<vector<string>>> &dictResultListList, const MorphemeTaggerOptions &opt) {
     assert(sentence.size() == dictResultListList.size());
     vector<vector<string>> wordAndLabelList;
     
@@ -100,7 +112,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
     vector<unordered_set<string>> ret(sentence.size());
     for (size_t i = 0; i < sentence.size(); ++i) {
         unordered_set<string> commonAttributeSet;
-        if (dictResultListList[i]->size() < 2) {
+        if (dictResultListList[i].size() < 2) {
             continue;
         }
         
@@ -109,12 +121,12 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
             if (j == 0 || pos < 0 || pos >= (int)sentence.size()) {
                 continue;
             }
-            if (dictResultListList[pos]->empty()) {
+            if (dictResultListList[pos].empty()) {
                 continue;
             }
             stringstream posPrefix;
             posPrefix << "P" << showpos << j << "-";
-            for (const auto &dictResult : *dictResultListList[pos]) {
+            for (const auto &dictResult : dictResultListList[pos]) {
                 for (size_t k = 0; k < dictResult.size(); ++k) {
                     if (opt.featureColumnSet.find(k) == opt.featureColumnSet.end()) {
                         continue;
@@ -436,7 +448,7 @@ int mainProc(int argc, char **argv) {
 MorphemeTaggerClass::MorphemeTaggerClass(const MorphemeTaggerOptions &options) {
     this->options = options;
     assert(!options.dictionaryFilename.empty());
-    dictionary = make_shared<Dictionary>(options.dictionaryFilename);
+    dictionary = make_shared<DictionaryClass>(options.dictionaryFilename);
 };
 
 void MorphemeTaggerClass::train(const string &trainingFilename,
@@ -456,7 +468,7 @@ void MorphemeTaggerClass::train(const string &trainingFilename,
         assert(sentence.size() == dictResultListList.size() &&
                sentence.size() == commonAttributeSetList.size());
         for (size_t i = 0; i < sentence.size(); ++i) {
-            auto o = generateTrainingObservationList(*dictResultListList[i], commonAttributeSetList[i], correctResultList[i]);
+            auto o = generateTrainingObservationList(dictResultListList[i], commonAttributeSetList[i], correctResultList[i]);
             move(o.begin(), o.end(), back_inserter(observationList));
         }
     }
@@ -478,9 +490,9 @@ vector<vector<string>> MorphemeTaggerClass::tag(vector<string> sentence) const {
            sentence.size() == commonAttributeSetList.size());
     for (size_t i = 0; i < sentence.size(); ++i) {
         vector<string> result = { sentence[i] };
-        if (dictResultListList[i]->size() != 0) {
-            size_t j = inferCorrectResult(*dictResultListList[i], commonAttributeSetList[i], *maxEntProcessor);
-            auto &inferredResult = (*dictResultListList[i])[j];
+        if (dictResultListList[i].size() != 0) {
+            size_t j = inferCorrectResult(dictResultListList[i], commonAttributeSetList[i], *maxEntProcessor);
+            auto &inferredResult = (dictResultListList[i])[j];
             result.insert(result.end(), inferredResult.begin(), inferredResult.end());
         }
         ret.push_back(move(result));

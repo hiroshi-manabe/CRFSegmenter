@@ -36,7 +36,7 @@ vector<string> splitStringByTabs(const string &s) {
     return elems;
 }
 
-DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
+DictionaryClass::DictionaryClass(const string &filename) {
     ifstream ifs(filename);
 
     if (!ifs.is_open()) {
@@ -49,8 +49,7 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
     size_t lineNum = 0;
     
     unordered_map<string, size_t> stringToFeatureIdMap;
-    unordered_map<string, unordered_set<size_t>> wordToFeatureIdSetMap;
-    vector<string> prefixList;
+    unordered_map<string, vector<vector<size_t>>> wordToFeatureIdListListMap;
     
     marisa::Keyset keyset;
     
@@ -63,12 +62,6 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
                 exit(1);
             }
             elementCount = elems.size() - 1;
-            prefixList.reserve(elementCount);
-            for (size_t i = 0; i < elementCount; ++i) {
-                stringstream ss;
-                ss << i << "-";
-                prefixList.push_back(ss.str());
-            }
         }
         if (elementCount != elems.size() - 1) {
             cerr << "Element numbers not consistent in " << filename << ", line number " << lineNum << "." << endl;
@@ -80,20 +73,16 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
         }
         keyset.push_back(word.c_str());
         
-        auto it = wordToFeatureIdSetMap.find(word);
-        if (it == wordToFeatureIdSetMap.end()) {
-            it = wordToFeatureIdSetMap.insert(make_pair(word, unordered_set<size_t>())).first;
+        auto it = wordToFeatureIdListListMap.find(word);
+        if (it == wordToFeatureIdListListMap.end()) {
+            it = wordToFeatureIdListListMap.insert(make_pair(word, vector<vector<size_t>>())).first;
         }
         
-        auto &featureIdSet = it->second;
+        auto &featureIdListList = it->second;
+        vector<size_t> t;
+        t.reserve(elementCount);
         for (size_t i = 0; i < elementCount; ++i) {
-            string elem;
-            if (addPrefix) {
-                elem = prefixList[i] + elems[i + 1];
-            } else {
-                elem = elems[i + 1];
-            }
-             
+            const string &elem = elems[i + 1];
             const auto it = stringToFeatureIdMap.find(elem);
             size_t featureId;
             if (it == stringToFeatureIdMap.end()) {
@@ -102,23 +91,24 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
             } else {
                 featureId = it->second;
             }
-            featureIdSet.insert(featureId);
+            t.push_back(featureId);
         }
+        featureIdListList.push_back(move(t));
     }
     // builds trie
     trie.build(keyset);
 
-    // builds marisaIdToFeatureIdListList
+    // builds marisaIdToFeatureIdListListList
     size_t numKeys = trie.num_keys();
-    marisaIdToFeatureIdListList.clear();
-    marisaIdToFeatureIdListList.reserve(numKeys);
+    marisaIdToFeatureIdListListList.clear();
+    marisaIdToFeatureIdListListList.reserve(numKeys);
     marisa::Agent agent;
     for (size_t i = 0; i < numKeys; ++i) {
         agent.set_query(i);
         trie.reverse_lookup(agent);
         string key(agent.key().ptr(), agent.key().length());
-        const auto &featureIdSet = wordToFeatureIdSetMap.at(key);
-        marisaIdToFeatureIdListList.push_back(vector<size_t>(featureIdSet.begin(), featureIdSet.end()));
+        auto &featureIdListList = wordToFeatureIdListListMap.at(key);
+        marisaIdToFeatureIdListListList.push_back(move(featureIdListList));
     }
 
     // builds featureIdToStringList
@@ -128,37 +118,44 @@ DictionaryClass::DictionaryClass(const string &filename, bool addPrefix) {
     }
 }
 
-vector<pair<size_t, vector<string>>> DictionaryClass::commonPrefixSearch(const string &str) const {
-    vector<pair<size_t, vector<string>>> ret;
+vector<vector<const string *>> convertIdListListToStringListList(const vector<vector<size_t>> &idListList, const vector<string> &idToStringList) {
+    vector<vector<const string *>> ret;
+    ret.reserve(idListList.size());
+    for (const auto &idList : idListList) {
+        vector<const string *> t;
+        t.reserve(idList.size());
+        for (const auto &id : idList) {
+            t.push_back(&idToStringList[id]);
+        }
+        ret.push_back(move(t));
+    }
+    return ret;
+}
+
+vector<pair<size_t, vector<vector<const string *>>>> DictionaryClass::commonPrefixSearch(const string &str) const {
+    vector<pair<size_t, vector<vector<const string *>>>> ret;
     marisa::Agent agent;
     agent.set_query(str.c_str(), str.length());
     while (trie.common_prefix_search(agent)) {
         size_t marisaId = agent.key().id();
         size_t keyLen = agent.key().length();
-        const auto &featureIdList = marisaIdToFeatureIdListList[marisaId];
-        vector<string> featureList;
-        for (const auto &featureId : featureIdList) {
-            featureList.push_back(featureIdToStringList[featureId]);
-        }
-        ret.push_back(make_pair(keyLen, move(featureList)));
+        const auto &featureIdListList = marisaIdToFeatureIdListListList[marisaId];
+        auto featureListList = convertIdListListToStringListList(featureIdListList, featureIdToStringList);
+        ret.push_back(make_pair(keyLen, move(featureListList)));
     }
     return ret;
 }
 
-vector<string> DictionaryClass::lookup(const string &str) const {
-    vector<string> ret;
+vector<vector<const string *>> DictionaryClass::lookup(const string &str) const {
     marisa::Agent agent;
     agent.set_query(str.c_str(), str.length());
     if (trie.lookup(agent)) {
         size_t marisaId = agent.key().id();
         size_t keyLen = agent.key().length();
-        const auto &featureIdList = marisaIdToFeatureIdListList[marisaId];
-        vector<string> FeatureList;
-        for (const auto &featureId : featureIdList) {
-            ret.push_back(featureIdToStringList[featureId]);
-        }
+        const auto &featureIdListList = marisaIdToFeatureIdListListList[marisaId];
+        return convertIdListListToStringListList(featureIdListList, featureIdToStringList);
     }
-    return ret;
+    return vector<vector<const string *>>();
 }
 
 }  // namespace Dictionary

@@ -84,7 +84,9 @@ sub get_goiso
 sub convert_to_segment
 {
     my ($fields, $pos_dict) = @_;
-    return join("\t", $fields->[12], '単語', length($fields->[12]),
+    my $count = 0;
+    return join("\t", $fields->[12], map { $count++ . "-" . $_ }
+                '単語', length($fields->[12]),
                 get_pos($fields),
                 @{$fields}[9, 16], get_char_type($fields->[12]));
 }

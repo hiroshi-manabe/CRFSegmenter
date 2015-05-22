@@ -11,6 +11,7 @@
 #include "TaggerOptions.h"
 #include "WordFeatureGenerator.h"
 
+#include <cassert>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
@@ -85,9 +86,12 @@ shared_ptr<ObservationSequence<string>> convertLineToObservationSequence(const s
         
         unordered_set<string> possibleLabelSet;
         if (dictionary) {
-            vector<string> labels = dictionary->lookup(wordAndLabel[0]);
-            if (!labels.empty()) {
-                possibleLabelSet.insert(labels.begin(), labels.end());
+            vector<vector<const string *>> labelListList = dictionary->lookup(wordAndLabel[0]);
+            if (!labelListList.empty()) {
+                for (const auto &labelList : labelListList) {
+                    assert(labelList.size() == 1);
+                    possibleLabelSet.insert(*labelList[0]);
+                }
                 if (hasValidLabels) {
                     possibleLabelSet.insert(wordAndLabel[1]);
                 }
@@ -285,7 +289,7 @@ TaggerClass::TaggerClass(const TaggerOptions &options) {
                                                                        options.wordMaxWindow,
                                                                        options.wordMaxLabelLength));
     if (!options.dictionaryFilename.empty()) {
-        dictionary = make_shared<DictionaryClass>(options.dictionaryFilename, false);
+        dictionary = make_shared<DictionaryClass>(options.dictionaryFilename);
         gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(dictionary));
     }
     featureGenerator = gen;
