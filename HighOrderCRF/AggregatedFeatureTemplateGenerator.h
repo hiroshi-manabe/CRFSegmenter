@@ -6,12 +6,15 @@
 #include "FeatureTemplate.h"
 #include "FeatureTemplateGenerator.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
 namespace HighOrderCRF {
 
+using std::back_inserter;
 using std::make_shared;
+using std::move;
 using std::shared_ptr;
 using std::vector;
 
@@ -23,13 +26,15 @@ public:
         generatorList = make_shared<vector<shared_ptr<FeatureTemplateGenerator<T>>>>();
     }
     
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<T>> observationList, size_t pos) const {
-        auto templateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<T>> observationList) const {
+        auto templateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
         for (auto &generator : *generatorList) {
-            auto generatedList = generator->generateFeatureTemplatesAt(observationList, pos);
-            templateList->insert(templateList->end(), generatedList->begin(), generatedList->end());
+            auto generatedListList = generator->generateFeatureTemplates(observationList);
+            for (size_t i = 0; i < observationList->size(); ++i) {
+                move((*generatedListList)[i].begin(), (*generatedListList)[i].end(), back_inserter((*templateListList)[i]));
+            }
         }
-        return templateList;
+        return templateListList;
     }
 
     void addFeatureTemplateGenerator(shared_ptr<FeatureTemplateGenerator<T>> generator) {

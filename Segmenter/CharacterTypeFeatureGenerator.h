@@ -20,7 +20,7 @@ class UnicodeCharacter;
 class CharacterTypeFeatureGenerator : public FeatureTemplateGenerator<UnicodeCharacter> {
 public:
     CharacterTypeFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength);
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<UnicodeCharacter>> observationList, size_t pos) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const;
 
 private:
     size_t maxNgram;

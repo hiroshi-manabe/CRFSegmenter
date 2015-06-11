@@ -17,7 +17,7 @@ template <typename T>
 class FeatureTemplateGenerator
 {
 public:
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<T>> observationList, size_t pos) const = 0;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<T>> observationList) const = 0;
 };
 
 }  // namespace HighOrderCRF

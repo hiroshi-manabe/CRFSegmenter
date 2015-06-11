@@ -50,14 +50,11 @@ public:
 
     shared_ptr<DataSequence> generateDataSequence(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
         shared_ptr<unordered_map<string, label_t>> labelMap) {
-        auto featureTemplateListList = make_shared<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>();
         auto labels = make_shared<vector<label_t>>();
-        featureTemplateListList->reserve(observationList->size());
         labels->reserve(observationList->size());
         auto possibleLabelTypeSetList = make_shared<vector<unordered_set<label_t>>>();
-        
+        auto featureTemplateListList = featureTemplateGenerator->generateFeatureTemplates(observationList);
         for (size_t pos = 0; pos < observationList->size(); ++pos) {
-            featureTemplateListList->push_back(featureTemplateGenerator->generateFeatureTemplatesAt(observationList, pos));
             if (hasValidLabels && labelMap->find(labelList->at(pos)) == labelMap->end()) {
                 cerr << "Unknown label: " << labelList->at(pos) << endl;
                 exit(1);
@@ -74,26 +71,6 @@ public:
         }
         return make_shared<DataSequence>(featureTemplateListList, labels, possibleLabelTypeSetList, hasValidLabels);
    }
-
-    string generateCRFSuiteData(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
-        string ret;
-        for (size_t i = 0; i < observationList->size(); ++i) {
-            ret += (*labelList)[i];
-            auto templateList = featureTemplateGenerator->generateFeatureTemplatesAt(observationList, i);
-            auto tempMap = unordered_map<string, bool>();
-            for (auto &ft : *templateList) {
-                auto &obs = ft->getObservation();
-                if (tempMap.find(obs) == tempMap.end()) {
-                    ret += "\t";
-                    ret += (obs.empty() ? "LABEL" : obs);
-                    tempMap.insert(make_pair(ft->getObservation(), true));
-                }
-            }
-            ret += "\n";
-        }
-        ret += "__BOS_EOS__\n\n";
-        return ret;
-    }
 
 private:
     shared_ptr<vector<T>> observationList;

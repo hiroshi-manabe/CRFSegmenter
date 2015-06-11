@@ -27,7 +27,7 @@ class UnicodeCharacter;
 class DictionaryFeatureGenerator : public FeatureTemplateGenerator<UnicodeCharacter> {
 public:
     DictionaryFeatureGenerator(const string &dictionaryFile);
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<UnicodeCharacter>> observationList, size_t pos) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const;
 
 private:
     shared_ptr<DictionaryClass> dictionary;

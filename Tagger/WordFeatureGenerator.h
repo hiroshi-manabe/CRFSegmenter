@@ -20,7 +20,7 @@ using HighOrderCRF::FeatureTemplateGenerator;
 class WordFeatureGenerator : public FeatureTemplateGenerator<string> {
 public:
     WordFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength);
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<string>> observationList, size_t pos) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<string>> observationList) const;
 
 private:
     size_t maxNgram;

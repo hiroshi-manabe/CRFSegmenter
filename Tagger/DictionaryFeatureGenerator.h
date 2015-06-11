@@ -24,7 +24,7 @@ using HighOrderCRF::FeatureTemplateGenerator;
 class DictionaryFeatureGenerator : public FeatureTemplateGenerator<string> {
 public:
     DictionaryFeatureGenerator(shared_ptr<DictionaryClass> dictionary);
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<string>> observationList, size_t pos) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<string>> observationList) const;
 
 private:
     shared_ptr<DictionaryClass> dictionary;

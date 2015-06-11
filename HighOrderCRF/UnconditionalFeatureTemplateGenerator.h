@@ -19,12 +19,14 @@ class UnconditionalFeatureTemplateGenerator : public FeatureTemplateGenerator<T>
 {
 public:
     UnconditionalFeatureTemplateGenerator(size_t maxLabelLength) : maxLabelLength(maxLabelLength) {};
-    virtual shared_ptr<vector<shared_ptr<FeatureTemplate>>> generateFeatureTemplatesAt(shared_ptr<vector<T>> observationList, size_t pos) const {
-        auto templateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
-        for (size_t i = 1; i <= min(maxLabelLength, pos + 1); ++i) {
-            templateList->push_back(make_shared<FeatureTemplate>("", i));
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<T>> observationList) const {
+        auto templateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
+        for (size_t pos = 0; pos < observationList->size(); ++pos) {
+            for (size_t i = 1; i <= min(maxLabelLength, pos + 1); ++i) {
+                (*templateListList)[pos].push_back(make_shared<FeatureTemplate>("", i));
+            }
         }
-        return templateList;
+        return templateListList;
     }
 private:
     size_t maxLabelLength;

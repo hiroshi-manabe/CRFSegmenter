@@ -27,31 +27,20 @@ DictionaryFeatureGenerator::DictionaryFeatureGenerator(shared_ptr<DictionaryClas
     resultCache = make_shared<map<shared_ptr<vector<string>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
 }
 
-shared_ptr<vector<shared_ptr<FeatureTemplate>>> DictionaryFeatureGenerator::generateFeatureTemplatesAt(shared_ptr<vector<string>> observationList, size_t pos) const {
-    if (resultCache->find(observationList) == resultCache->end()) {
-        auto templateListList = make_shared<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>(observationList->size());
+shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<string>> observationList) const {
+    auto templateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
 
-        // Generates all the templates
+    // Generates all the templates
         
-        for (size_t i = 0; i < templateListList->size(); ++i) {
-            // Looks up the words
-            auto resultListList = dictionary->lookup((*observationList)[i]);
-            for (const auto &resultList : resultListList) {
-                assert(resultList.size() == 1);
-                auto &templateList = (*templateListList)[i];
-                templateList = make_shared<vector<shared_ptr<FeatureTemplate>>>();
-                templateList->push_back(make_shared<FeatureTemplate>(string("D-") + *resultList[0], 1));
-            }
+    for (size_t i = 0; i < templateListList->size(); ++i) {
+        // Looks up the words
+        auto resultListList = dictionary->lookup((*observationList)[i]);
+        for (const auto &resultList : resultListList) {
+            assert(resultList.size() == 1);
+            (*templateListList)[i].push_back(make_shared<FeatureTemplate>(string("D-") + *resultList[0], 1));
         }
-        resultCache->insert(make_pair(observationList, templateListList));
     }
-    const auto it = *resultCache->find(observationList);
-    const auto cachedTemplateListList = it.second;
-    if ((*cachedTemplateListList)[pos]) {
-        return (*cachedTemplateListList)[pos];
-    } else {
-        return make_shared<vector<shared_ptr<FeatureTemplate>>>();
-    }
+    return templateListList;
 }
 
 }  // namespace Tagger

@@ -28,7 +28,7 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-DataSequence::DataSequence(shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>> featureTemplateListList,
+DataSequence::DataSequence(shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> featureTemplateListList,
                            shared_ptr<vector<label_t>> labels,
                            shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList,
                            bool hasValidLabels) {
@@ -61,7 +61,7 @@ void DataSequence::accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_
         return;
     }
     for (size_t pos = 0; pos < labels->size(); ++pos) {
-        for (auto &featureTemplate : *featureTemplateListList->at(pos)) {
+        for (auto &featureTemplate : (*featureTemplateListList)[pos]) {
             if (pos < featureTemplate->getLabelLength() - 1) {
                 continue;
             }
@@ -122,7 +122,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
             patternDataList.emplace_back();
         }
 
-        for (const auto &featureTemplate : *curFeatureTemplateList) {
+        for (const auto &featureTemplate : curFeatureTemplateList) {
             if (featureTemplate->getLabelLength() > pos + 1) {
                 continue;
             }
