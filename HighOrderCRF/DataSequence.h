@@ -31,7 +31,7 @@ public:
     size_t length() const;
     shared_ptr<LabelSequence> getLabelSequence(size_t pos, size_t length) const;
     void accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_ptr<Feature>, size_t>> featureCountMap) const;
-    shared_ptr<PatternSetSequence> generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>> featureTemplateToFeatureListMap) const;
+    shared_ptr<PatternSetSequence> generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>> featureTemplateToFeatureListMap, const Feature *firstFeature) const;
 private:
     shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> featureTemplateListList;
     shared_ptr<vector<label_t>> labels;

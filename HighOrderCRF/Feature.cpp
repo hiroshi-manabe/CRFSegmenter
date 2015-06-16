@@ -18,20 +18,6 @@ Feature::Feature(string obs, const shared_ptr<LabelSequence> pat) {
     this->pat = pat;
 }
 
-Feature::Feature(string obs, const shared_ptr<LabelSequence> pat, feature_index_t index) {
-    this->obs = obs;
-    this->pat = pat;
-    this->index = index;
-}
-
-void Feature::setIndex(feature_index_t index) {
-    this->index = index;
-}
-
-feature_index_t Feature::getIndex() const {
-    return index;
-}
-
 shared_ptr<LabelSequence> Feature::getLabelSequence() const {
     return pat;
 }

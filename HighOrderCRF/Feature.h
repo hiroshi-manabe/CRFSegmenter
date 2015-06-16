@@ -19,9 +19,6 @@ class Feature
 {
 public:
     Feature(string obs, const shared_ptr<LabelSequence> pat);
-    Feature(string obs, const shared_ptr<LabelSequence> pat, feature_index_t index);
-    void setIndex(feature_index_t index);
-    feature_index_t getIndex() const;
     shared_ptr<LabelSequence> getLabelSequence() const;
     const string &getObservation() const;
     shared_ptr<FeatureTemplate> createFeatureTemplate() const;
@@ -31,7 +28,6 @@ public:
 private:
     string obs;
     shared_ptr<LabelSequence> pat;
-    feature_index_t index;
 };
 
 }  // namespace HighOrderCRF

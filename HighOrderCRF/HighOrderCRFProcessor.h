@@ -96,7 +96,6 @@ public:
         feature_index_t featureIndex = 0;
         for (auto &entry : *featureToFeatureCountMap) {
             auto &feature = entry.first;
-            feature->setIndex(featureIndex);
             featureList->push_back(move(*feature));
             (*featureCountList)[featureIndex] = entry.second;
             ++featureIndex;
@@ -109,7 +108,7 @@ public:
 
         auto patternSetSequenceList = make_shared<vector<shared_ptr<PatternSetSequence>>>();
         for (auto &dataSequence : *dataSequenceList) {
-            patternSetSequenceList->push_back(dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap));
+            patternSetSequenceList->push_back(dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap, &featureList->front()));
         }
         auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
         auto initialWeightList = make_shared<vector<double>>(featureList->size());
@@ -122,7 +121,7 @@ public:
     shared_ptr<vector<string>> tag(shared_ptr<ObservationSequence<T>> observationSequence,
                                    shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
         auto labelMap = modelData->getLabelMap();
-        auto labelList = tagLabelType(observationSequence, featureTemplateGenerator);
+        auto labelList = tagLabelType(observationSequence, featureTemplateGenerator, &modelData->getFeatureList()->front());
         auto ret = make_shared<vector<string>>();
         for (auto label : *labelList) {
             ret->push_back((*labelStringList)[label]);
@@ -148,7 +147,7 @@ public:
         hwm::task_queue tq(concurrency);
         vector<future<shared_ptr<vector<label_t>>>> futureList;
         for (size_t i = 0 ; i < sequenceCount; ++i) {
-            future<shared_ptr<vector<label_t>>> f = tq.enqueue(&HighOrderCRFProcessor::tagLabelType, this, observationSequenceList->at(i), featureTemplateGenerator);
+            future<shared_ptr<vector<label_t>>> f = tq.enqueue(&HighOrderCRFProcessor::tagLabelType, this, observationSequenceList->at(i), featureTemplateGenerator, &modelData->getFeatureList()->front());
             futureList.push_back(move(f));
         }
 
@@ -210,9 +209,10 @@ public:
 
 private:
     shared_ptr<vector<label_t>> tagLabelType(shared_ptr<ObservationSequence<T>> observationSequence,
-                                             shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+                                             shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
+                                             const Feature *firstFeature) {
         auto dataSequence = observationSequence->generateDataSequence(featureTemplateGenerator, modelData->getLabelMap());
-        auto patternSetSequence = dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap);
+        auto patternSetSequence = dataSequence->generatePatternSetSequence(featureTemplateToFeatureListMap, firstFeature);
         return patternSetSequence->decode(expWeightList.get()->data());
     }
 

@@ -116,7 +116,7 @@ void HighOrderCRFData::read(const string &filename) {
         }
         double weight;
         readNumber<uint64_t>(&in, (uint64_t*)&weight);  // assuming that the size of double is 64 bits
-        featureList->emplace_back(obs, make_shared<LabelSequence>(labels), i);
+        featureList->emplace_back(obs, make_shared<LabelSequence>(labels));
         (*bestWeightList)[i] = weight;
     }
 
