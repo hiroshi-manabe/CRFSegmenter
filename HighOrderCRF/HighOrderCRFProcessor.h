@@ -90,20 +90,23 @@ public:
             dataSequence->accumulateFeatureCountsToMap(featureToFeatureCountMap);
         }
         auto featureList = make_shared<vector<Feature>>();
-        auto featureCountList = make_shared<vector<double>>(featureToFeatureCountMap->size());
+        featureList->reserve(featureToFeatureCountMap->size());
+        auto featureCountList = make_shared<vector<double>>();
+        featureCountList->reserve(featureList->size());
         auto featureTemplateToFeatureListMap = make_shared<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>>();
         
         feature_index_t featureIndex = 0;
         for (auto &entry : *featureToFeatureCountMap) {
             auto &feature = entry.first;
             featureList->push_back(move(*feature));
-            (*featureCountList)[featureIndex] = entry.second;
-            ++featureIndex;
-            auto ft = feature->createFeatureTemplate();
+            featureCountList->push_back(entry.second);
+        }
+        for (auto &feature : *featureList) {
+            auto ft = feature.createFeatureTemplate();
             if (featureTemplateToFeatureListMap->find(ft) == featureTemplateToFeatureListMap->end()) {
                 featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<const Feature *>>()));
             }
-            featureTemplateToFeatureListMap->at(ft)->push_back(&featureList->back());
+            featureTemplateToFeatureListMap->at(ft)->push_back(&feature);
         }
 
         auto patternSetSequenceList = make_shared<vector<shared_ptr<PatternSetSequence>>>();
