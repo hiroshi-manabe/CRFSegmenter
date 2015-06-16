@@ -108,7 +108,7 @@ void generatePatternSetProc(label_t *labels, size_t size, int dataIndex, int par
     generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[0] : INVALID_LABEL, make_shared<vector<feature_index_t>>(move(thisPatternData.featureIndexList)));
 }
 
-shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap) const {
+shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>> featureTemplateToFeatureListMap) const {
     
     vector<Trie<label_t>> trieList(this->length());
     vector<PatternData> patternDataList;

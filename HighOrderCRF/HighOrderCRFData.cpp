@@ -63,10 +63,10 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(shared_ptr<vector<shared_ptr<Feature>>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap) : featureList(featureList), bestWeightList(bestWeightList), labelMap(labelMap) {}
+HighOrderCRFData::HighOrderCRFData(shared_ptr<vector<Feature>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap) : featureList(featureList), bestWeightList(bestWeightList), labelMap(labelMap) {}
 HighOrderCRFData::HighOrderCRFData() {}
 
-shared_ptr<vector<shared_ptr<Feature>>> HighOrderCRFData::getFeatureList() const {
+shared_ptr<vector<Feature>> HighOrderCRFData::getFeatureList() const {
     return featureList;
 }
 
@@ -96,7 +96,7 @@ void HighOrderCRFData::read(const string &filename) {
     // reads features
     uint32_t numFeatures;
     readNumber<uint32_t>(&in, &numFeatures);
-    auto featureList = make_shared<vector<shared_ptr<Feature>>>();
+    auto featureList = make_shared<vector<Feature>>();
     featureList->reserve(numFeatures);
     auto bestWeightList = make_shared<vector<double>>(numFeatures);
 
@@ -116,7 +116,7 @@ void HighOrderCRFData::read(const string &filename) {
         }
         double weight;
         readNumber<uint64_t>(&in, (uint64_t*)&weight);  // assuming that the size of double is 64 bits
-        featureList->push_back(make_shared<Feature>(obs, make_shared<LabelSequence>(labels), i));
+        featureList->emplace_back(obs, make_shared<LabelSequence>(labels), i);
         (*bestWeightList)[i] = weight;
     }
 
@@ -164,8 +164,8 @@ void HighOrderCRFData::write(const string &filename) const {
             continue;
         }
         // writes the observation of a feature
-        writeString(&out, feature->getObservation());
-        auto labelSequence = feature->getLabelSequence();
+        writeString(&out, feature.getObservation());
+        auto labelSequence = feature.getLabelSequence();
         writeNumber<uint32_t>(&out, labelSequence->getLength());
         for (size_t j = 0; j < labelSequence->getLength(); ++j) {
             writeNumber<label_t>(&out, labelSequence->getLabelAt(j));
@@ -191,8 +191,8 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
         if (outputWeights) {
             out << (*bestWeightList)[i] << "\t";
         }
-        out << (feature->getObservation().empty() ? "LABEL" : feature->getObservation());
-        auto labelSequence = feature->getLabelSequence();
+        out << (feature.getObservation().empty() ? "LABEL" : feature.getObservation());
+        auto labelSequence = feature.getLabelSequence();
         for (size_t j = 0; j < labelSequence->getLength(); ++j) {
             out << "\t" << reversedLabelMap->at(labelSequence->getLabelAt(j));
         }

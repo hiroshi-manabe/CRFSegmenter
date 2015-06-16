@@ -18,10 +18,10 @@ using std::vector;
 
 class HighOrderCRFData {
 public:
-    HighOrderCRFData(shared_ptr<vector<shared_ptr<Feature>>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap);
+    HighOrderCRFData(shared_ptr<vector<Feature>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap);
     HighOrderCRFData();
 
-    shared_ptr<vector<shared_ptr<Feature>>> getFeatureList() const;
+    shared_ptr<vector<Feature>> getFeatureList() const;
     shared_ptr<vector<double>> getBestWeightList() const;
     shared_ptr<unordered_map<string, label_t>> getLabelMap() const;
     shared_ptr<vector<string>> getLabelStringList() const;
@@ -30,7 +30,7 @@ public:
     void dumpFeatures(const string &filename, bool outputWeights) const;
 
 private:
-    shared_ptr<vector<shared_ptr<Feature>>> featureList;
+    shared_ptr<vector<Feature>> featureList;
     shared_ptr<vector<double>> bestWeightList;
     shared_ptr<unordered_map<string, label_t>> labelMap;
 };

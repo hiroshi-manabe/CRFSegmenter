@@ -89,22 +89,22 @@ public:
         for (auto &dataSequence : *dataSequenceList) {
             dataSequence->accumulateFeatureCountsToMap(featureToFeatureCountMap);
         }
-        auto featureList = make_shared<vector<shared_ptr<Feature>>>();
+        auto featureList = make_shared<vector<Feature>>();
         auto featureCountList = make_shared<vector<double>>(featureToFeatureCountMap->size());
-        auto featureTemplateToFeatureListMap = make_shared<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>>();
+        auto featureTemplateToFeatureListMap = make_shared<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>>();
         
         feature_index_t featureIndex = 0;
         for (auto &entry : *featureToFeatureCountMap) {
             auto &feature = entry.first;
             feature->setIndex(featureIndex);
-            featureList->push_back(feature);
+            featureList->push_back(move(*feature));
             (*featureCountList)[featureIndex] = entry.second;
             ++featureIndex;
             auto ft = feature->createFeatureTemplate();
             if (featureTemplateToFeatureListMap->find(ft) == featureTemplateToFeatureListMap->end()) {
-                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<shared_ptr<Feature>>>()));
+                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<const Feature *>>()));
             }
-            featureTemplateToFeatureListMap->at(ft)->push_back(feature);
+            featureTemplateToFeatureListMap->at(ft)->push_back(&featureList->back());
         }
 
         auto patternSetSequenceList = make_shared<vector<shared_ptr<PatternSetSequence>>>();
@@ -117,7 +117,6 @@ public:
         auto bestWeightList = optimizer->getBestWeightList();
         
         modelData = make_shared<HighOrderCRFData>(featureList, bestWeightList, labelMap);
-        prepare();
     }
 
     shared_ptr<vector<string>> tag(shared_ptr<ObservationSequence<T>> observationSequence,
@@ -223,18 +222,18 @@ private:
         for (size_t i = 0; i < featureCount; ++i) {
             (*expWeightList)[i] = exp((*modelData->getBestWeightList())[i]);
         }
-        featureTemplateToFeatureListMap = make_shared<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>>();
+        featureTemplateToFeatureListMap = make_shared<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>>();
         for (auto &feature : *modelData->getFeatureList()) {
-            auto ft = feature->createFeatureTemplate();
+            auto ft = feature.createFeatureTemplate();
             if (featureTemplateToFeatureListMap->find(ft) == featureTemplateToFeatureListMap->end()) {
-                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<shared_ptr<Feature>>>()));
+                featureTemplateToFeatureListMap->insert(make_pair(ft, make_shared<vector<const Feature *>>()));
             }
-            featureTemplateToFeatureListMap->at(ft)->push_back(feature);
+            featureTemplateToFeatureListMap->at(ft)->push_back(&feature);
         }
         labelStringList = modelData->getLabelStringList();
     }
     shared_ptr<HighOrderCRFData> modelData;
-    shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<shared_ptr<Feature>>>>> featureTemplateToFeatureListMap;
+    shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>> featureTemplateToFeatureListMap;
     shared_ptr<vector<double>> expWeightList;
     shared_ptr<vector<string>> labelStringList;
 };
