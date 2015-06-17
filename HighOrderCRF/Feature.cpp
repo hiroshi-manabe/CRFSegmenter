@@ -6,19 +6,21 @@
 #include <cmath>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace HighOrderCRF {
 
 using std::make_shared;
+using std::move;
 using std::shared_ptr;
 using std::string;
 
-Feature::Feature(string obs, const shared_ptr<LabelSequence> pat) {
-    this->obs = obs;
+Feature::Feature(string obs, LabelSequence pat) {
+    this->obs = move(obs);
     this->pat = pat;
 }
 
-shared_ptr<LabelSequence> Feature::getLabelSequence() const {
+LabelSequence Feature::getLabelSequence() const {
     return pat;
 }
 
@@ -27,16 +29,16 @@ const string &Feature::getObservation() const {
 }
 
 shared_ptr<FeatureTemplate> Feature::createFeatureTemplate() const {
-    return make_shared<FeatureTemplate>(obs, pat->getLength());
+    return make_shared<FeatureTemplate>(obs, pat.getLength());
 }
 
 bool Feature::operator==(const Feature &that) const {
-    return this->getObservation() == that.getObservation() && *this->getLabelSequence() == *that.getLabelSequence();
+    return this->getObservation() == that.getObservation() && this->getLabelSequence() == that.getLabelSequence();
 }
 
 size_t Feature::hash() const
 {
-    return std::hash<string>()(obs) ^ pat->hash();
+    return std::hash<string>()(obs) ^ pat.hash();
 };
 
 }  // namespace HighOrderCRF

@@ -108,15 +108,15 @@ void HighOrderCRFData::read(const string &filename) {
         // reads the labels
         uint32_t labelLength;
         readNumber<uint32_t>(&in, &labelLength);
-        auto labels = make_shared<vector<label_t>>(labelLength);
+        vector<label_t> labels(labelLength);
         for (size_t j = 0; j < labelLength; ++j) {
             label_t label;
             readNumber<label_t>(&in, &label);
-            (*labels)[j] = label;
+            labels[j] = label;
         }
         double weight;
         readNumber<uint64_t>(&in, (uint64_t*)&weight);  // assuming that the size of double is 64 bits
-        featureList->emplace_back(obs, make_shared<LabelSequence>(labels));
+        featureList->emplace_back(obs, labels);
         (*bestWeightList)[i] = weight;
     }
 
@@ -166,9 +166,9 @@ void HighOrderCRFData::write(const string &filename) const {
         // writes the observation of a feature
         writeString(&out, feature.getObservation());
         auto labelSequence = feature.getLabelSequence();
-        writeNumber<uint32_t>(&out, labelSequence->getLength());
-        for (size_t j = 0; j < labelSequence->getLength(); ++j) {
-            writeNumber<label_t>(&out, labelSequence->getLabelAt(j));
+        writeNumber<uint32_t>(&out, labelSequence.getLength());
+        for (size_t j = 0; j < labelSequence.getLength(); ++j) {
+            writeNumber<label_t>(&out, labelSequence.getLabelAt(j));
         }
         writeNumber<uint64_t>(&out, *((uint64_t*)(&expectation)));  // assuming that the size of double is 64 bits
     }
@@ -193,8 +193,8 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
         }
         out << (feature.getObservation().empty() ? "LABEL" : feature.getObservation());
         auto labelSequence = feature.getLabelSequence();
-        for (size_t j = 0; j < labelSequence->getLength(); ++j) {
-            out << "\t" << reversedLabelMap->at(labelSequence->getLabelAt(j));
+        for (size_t j = 0; j < labelSequence.getLength(); ++j) {
+            out << "\t" << reversedLabelMap->at(labelSequence.getLabelAt(j));
         }
         out << endl;
     }

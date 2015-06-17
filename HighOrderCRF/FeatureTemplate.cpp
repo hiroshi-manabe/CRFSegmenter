@@ -18,10 +18,6 @@ FeatureTemplate::FeatureTemplate(const string obs, size_t labelLength) {
     this->hashValue = std::hash<string>()(obs) ^ std::hash<size_t>()(labelLength);
 }
 
-const shared_ptr<Feature> FeatureTemplate::generateFeature(const shared_ptr<LabelSequence> seq) const {
-    return make_shared<Feature>(obs, seq);
-}
-
 size_t FeatureTemplate::getLabelLength() const {
     return labelLength;
 }

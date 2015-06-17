@@ -42,18 +42,18 @@ size_t DataSequence::length() const {
     return featureTemplateListList->size();
 }
 
-shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t length) const {
+LabelSequence DataSequence::getLabelSequence(size_t pos, size_t length) const {
     if (!hasValidLabels) {
         return LabelSequence::createEmptyLabelSequence();
     }
     if (pos < length - 1) {
         return LabelSequence::createEmptyLabelSequence();
     }
-    auto labels = make_shared<vector<label_t>>();
+    vector<label_t> labels;
     for (size_t i = 0; i < length; ++i) {
-        labels->push_back(this->labels->at(pos - i));
+        labels.push_back(this->labels->at(pos - i));
     }
-    return make_shared<LabelSequence>(labels);
+    return LabelSequence(labels);
 }
 
 void DataSequence::accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_ptr<Feature>, size_t>> featureCountMap) const {
@@ -117,7 +117,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
     for (size_t pos = 0; pos < this->length(); ++pos) {
         const auto &curFeatureTemplateList = (*featureTemplateListList)[pos];
         auto &curTrie = trieList[pos];
-        int dataIndex = curTrie.findOrInsert(emptyLabelSequence->getLabelData(), emptyLabelSequence->getLength(), patternDataList.size());
+        int dataIndex = curTrie.findOrInsert(emptyLabelSequence.getLabelData(), emptyLabelSequence.getLength(), patternDataList.size());
         if (dataIndex == patternDataList.size()) {
             patternDataList.emplace_back();
         }
@@ -134,8 +134,8 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
                 auto seq = feature->getLabelSequence();
 
                 bool labelsOK = true;
-                for (size_t i = 0; i < seq->getLength(); ++i) {
-                    if (!(*possibleLabelTypeSetList)[pos - i].empty() && (*possibleLabelTypeSetList)[pos - i].find(seq->getLabelAt(i)) == (*possibleLabelTypeSetList)[pos - i].end()) {
+                for (size_t i = 0; i < seq.getLength(); ++i) {
+                    if (!(*possibleLabelTypeSetList)[pos - i].empty() && (*possibleLabelTypeSetList)[pos - i].find(seq.getLabelAt(i)) == (*possibleLabelTypeSetList)[pos - i].end()) {
                         labelsOK = false;
                         break;
                     }
@@ -143,7 +143,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
                 if (!labelsOK) {
                     continue;
                 }
-                int dataIndex = curTrie.findOrInsert(seq->getLabelData(), seq->getLength(), patternDataList.size());
+                int dataIndex = curTrie.findOrInsert(seq.getLabelData(), seq.getLength(), patternDataList.size());
                 if (dataIndex == patternDataList.size()) {
                     patternDataList.emplace_back();
                 }
@@ -151,10 +151,10 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
                 patternDataList[dataIndex].featureIndexList.push_back(feature - firstFeature);
 
                 if (pos > 0) {
-                    size_t labelLength = seq->getLength();
+                    size_t labelLength = seq.getLength();
                     for (size_t i = 1; i <= min(labelLength - 1, pos); ++i) {
                         auto &prevTrie = trieList[pos - i];
-                        int prevDataIndex = prevTrie.findOrInsert(seq->getLabelData() + i, seq->getLength() - i, patternDataList.size());
+                        int prevDataIndex = prevTrie.findOrInsert(seq.getLabelData() + i, seq.getLength() - i, patternDataList.size());
                         if (prevDataIndex == patternDataList.size()) {
                             patternDataList.emplace_back();
                         } else {

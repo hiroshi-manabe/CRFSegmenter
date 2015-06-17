@@ -18,8 +18,8 @@ using std::string;
 class Feature
 {
 public:
-    Feature(string obs, const shared_ptr<LabelSequence> pat);
-    shared_ptr<LabelSequence> getLabelSequence() const;
+    Feature(string obs, LabelSequence pat);
+    LabelSequence getLabelSequence() const;
     const string &getObservation() const;
     shared_ptr<FeatureTemplate> createFeatureTemplate() const;
     bool operator==(const Feature &that) const;
@@ -27,7 +27,7 @@ public:
 
 private:
     string obs;
-    shared_ptr<LabelSequence> pat;
+    LabelSequence pat;
 };
 
 }  // namespace HighOrderCRF
@@ -35,16 +35,9 @@ private:
 namespace std {
 
 template<> 
-struct hash<std::shared_ptr<HighOrderCRF::Feature>> {
-    std::size_t operator()(const std::shared_ptr<HighOrderCRF::Feature> &feature) const {
-        return feature->hash();
-    }
-};
-
-template<>
-struct equal_to<std::shared_ptr<HighOrderCRF::Feature>> {
-    bool operator()(const std::shared_ptr<HighOrderCRF::Feature>& left, const std::shared_ptr<HighOrderCRF::Feature> &right) const {
-        return *left == *right;
+struct hash<HighOrderCRF::Feature> {
+    std::size_t operator()(const HighOrderCRF::Feature &feature) const {
+        return feature.hash();
     }
 };
 

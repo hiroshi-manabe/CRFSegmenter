@@ -11,45 +11,45 @@ using std::min;
 using std::shared_ptr;
 using std::vector;
 
-LabelSequence::LabelSequence(shared_ptr<vector<label_t>> labels) {
+LabelSequence::LabelSequence(vector<label_t> labels) {
     this->labels = labels;
 }
 
 size_t LabelSequence::getLength() const {
-    return labels->size();
+    return labels.size();
 }
 
 label_t LabelSequence::getLabelAt(size_t pos) const {
-    if (pos >= labels->size()) {
+    if (pos >= labels.size()) {
         return INVALID_LABEL;
     }
-    return labels->at(pos);
+    return labels.at(pos);
 }
 
-label_t *LabelSequence::getLabelData() const {
-    return labels->data();
+const label_t *LabelSequence::getLabelData() const {
+    return labels.data();
 }
 
 label_t LabelSequence::getLastLabel() const {
     return getLabelAt(0);
 }
 
-shared_ptr<LabelSequence> LabelSequence::createPrefix() const {
-    auto seq = make_shared<vector<label_t>>(labels->begin() + 1, labels->end());
-    return make_shared<LabelSequence>(seq);
+LabelSequence LabelSequence::createPrefix() const {
+    vector<label_t> seq(labels.begin() + 1, labels.end());
+    return LabelSequence(seq);
 }
 
-size_t LabelSequence::getDifferencePosition(const shared_ptr<LabelSequence> &that) const {
-    size_t minLength = min(getLength(), that->getLength());
+size_t LabelSequence::getDifferencePosition(const LabelSequence &that) const {
+    size_t minLength = min(getLength(), that.getLength());
     for (size_t i = 0; i < minLength; ++i) {
-        if (getLabelAt(i) != that->getLabelAt(i)) {
+        if (getLabelAt(i) != that.getLabelAt(i)) {
             return i;
         }
     }
     return minLength;
 }
 
-bool LabelSequence::operator<(const LabelSequence &that) {
+bool LabelSequence::operator<(const LabelSequence &that) const {
     size_t thisLength = getLength();
     size_t thatLength = that.getLength();
 
@@ -63,7 +63,7 @@ bool LabelSequence::operator<(const LabelSequence &that) {
     return thisLength < thatLength;
 }
 
-bool LabelSequence::operator==(const LabelSequence &that) {
+bool LabelSequence::operator==(const LabelSequence &that) const {
     if (this->getLength() != that.getLength()) {
         return false;
     }
@@ -81,13 +81,13 @@ size_t LabelSequence::hash() const
 {
     size_t ret = 0;
     for (size_t i = 0; i < getLength(); ++i) {
-        ret ^= std::hash<label_t>()(labels->at(i));
+        ret ^= std::hash<label_t>()(labels.at(i));
     }
     return ret;
 };
 
-shared_ptr<LabelSequence> LabelSequence::createEmptyLabelSequence() {
-    return make_shared<LabelSequence>(make_shared<vector<label_t>>());
+LabelSequence LabelSequence::createEmptyLabelSequence() {
+    return LabelSequence(vector<label_t>());
 }
 
 }  // namespace HighOrderCRF
