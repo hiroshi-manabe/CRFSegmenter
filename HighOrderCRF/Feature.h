@@ -41,6 +41,13 @@ struct hash<shared_ptr<HighOrderCRF::Feature>> {
     }
 };
 
+template<>
+struct equal_to<std::shared_ptr<HighOrderCRF::Feature>> {
+    bool operator()(const std::shared_ptr<HighOrderCRF::Feature>& left, const std::shared_ptr<HighOrderCRF::Feature> &right) const {
+        return *left == *right;
+    }
+};
+
 }  // namespace std
 
 #endif  // HOCRF_HIGH_ORDER_CRF_FEATURE_H
