@@ -35,9 +35,9 @@ private:
 namespace std {
 
 template<> 
-struct hash<HighOrderCRF::Feature> {
-    std::size_t operator()(const HighOrderCRF::Feature &feature) const {
-        return feature.hash();
+struct hash<shared_ptr<HighOrderCRF::Feature>> {
+    std::size_t operator()(const shared_ptr<HighOrderCRF::Feature> &feature) const {
+        return feature->hash();
     }
 };
 
