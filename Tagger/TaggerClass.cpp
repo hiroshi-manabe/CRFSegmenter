@@ -108,17 +108,17 @@ shared_ptr<ObservationSequence<string>> convertLineToObservationSequence(const s
     return make_shared<ObservationSequence<string>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
 
-shared_ptr<unordered_set<string>> readTagSet(const string &filename) {
+unordered_set<string> readTagSet(const string &filename) {
     ifstream ifs(filename);
     if (!ifs.is_open()) {
         cerr << "Cannot read from the tag set file: " << filename << endl;
         exit(1);
     }
     
-    auto ret = make_shared<unordered_set<string>>();
+    unordered_set<string> ret;
     string line;
     while (getline(ifs, line)) {
-        ret->insert(line);
+        ret.insert(line);
     }
     ifs.close();
     return ret;
@@ -295,16 +295,16 @@ TaggerClass::TaggerClass(const TaggerOptions &options) {
     featureGenerator = gen;
 };
 
-shared_ptr<vector<shared_ptr<ObservationSequence<string>>>> TaggerClass::readData(const string &fileName, bool hasValidLabels) {
+vector<shared_ptr<ObservationSequence<string>>> TaggerClass::readData(const string &fileName, bool hasValidLabels) {
     ifstream ifs(fileName);
     if (!ifs.is_open()) {
         cerr << "Cannot read from file: " << fileName << endl;
         exit(1);
     }
-    auto observationSequenceList = make_shared<vector<shared_ptr<ObservationSequence<string>>>>();
+    vector<shared_ptr<ObservationSequence<string>>> observationSequenceList;
     string line;
     while (getline(ifs, line)) {
-        observationSequenceList->push_back(convertLineToObservationSequence(line, dictionary, hasValidLabels));
+        observationSequenceList.push_back(convertLineToObservationSequence(line, dictionary, hasValidLabels));
     }
     ifs.close();
     return observationSequenceList;
@@ -312,14 +312,14 @@ shared_ptr<vector<shared_ptr<ObservationSequence<string>>>> TaggerClass::readDat
 
 void TaggerClass::train(const string &trainingFilename,
                         const string &modelFilename,
-                        shared_ptr<unordered_set<string>> tagSet) {
+                        const unordered_set<string> &tagSet) {
     auto observationSequenceList = readData(trainingFilename, true);
     bool isL1 = false;
     if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
         cerr << "Unsupported regularization type: " << options.regType;
     }
     CRFProcessor = make_shared<HighOrderCRFProcessor<string>>();
-    CRFProcessor->train(observationSequenceList, featureGenerator, tagSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
+    CRFProcessor->train(observationSequenceList, *featureGenerator, tagSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     CRFProcessor->writeModel(modelFilename);
 }
 
@@ -328,7 +328,7 @@ string TaggerClass::tag(string line, bool tagUnknown, bool delimitByNewline) con
         return "";
     }
     auto observationSequence = convertLineToObservationSequence(line, dictionary, false);
-    auto tagList = CRFProcessor->tag(observationSequence, featureGenerator);
+    auto tagList = CRFProcessor->tag(*observationSequence, *featureGenerator);
     auto wordList = observationSequence->getObservationList();
     auto possibleLabelSetList = observationSequence->getPossibleLabelSetList();
     string ret;
@@ -351,11 +351,11 @@ string TaggerClass::tag(string line, bool tagUnknown, bool delimitByNewline) con
 
 void TaggerClass::test(const string &testFilename) {
     auto observationSequenceList = readData(testFilename, true);
-    auto labelListList = make_shared<vector<shared_ptr<vector<string>>>>();
-    for (auto &observationSequence : *observationSequenceList) {
-        labelListList->push_back(observationSequence->getLabelList());
+    vector<shared_ptr<vector<string>>> labelListList;
+    for (auto &observationSequence : observationSequenceList) {
+        labelListList.push_back(observationSequence->getLabelList());
     }
-    CRFProcessor->test(observationSequenceList, featureGenerator, labelListList, options.numThreads);
+    CRFProcessor->test(observationSequenceList, *featureGenerator, labelListList, options.numThreads);
 }
 
 void TaggerClass::readModel(const string &modelFilename) {

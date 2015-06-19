@@ -21,35 +21,32 @@ public:
     FeatureTemplate(const string obs, size_t order);
     size_t getLabelLength() const;
     const string &getObservation() const;
-    bool operator==(const FeatureTemplate &that);
+    bool operator==(const FeatureTemplate &that) const;
     size_t hash() const;
 
 private:
     string obs;
     size_t labelLength;
-    size_t hashValue;
 };
 
 }  // namespace HighOrderCRF
 
-
-
 namespace std {
 
 template<>
-struct hash<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
-    std::size_t operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
+struct hash<shared_ptr<HighOrderCRF::FeatureTemplate>> {
+    size_t operator()(const shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
         return featureTemplate->hash();
     }
 };
 
 template<>
-struct equal_to<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
-    bool operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate>& left, const std::shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
+struct equal_to<shared_ptr<HighOrderCRF::FeatureTemplate>> {
+    bool operator()(const shared_ptr<HighOrderCRF::FeatureTemplate>& left, const shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
         return *left == *right;
     }
 };
 
-}
+}  // namespace std
 
 #endif  // HOCRF_HIGH_ORDER_CRF_FEATURE_TEMPLATE_H

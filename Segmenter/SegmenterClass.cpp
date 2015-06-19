@@ -226,7 +226,7 @@ int mainProc(int argc, char **argv) {
     queue<future<string>> futureQueue;
     
     while (getline(cin, line)) {
-        future<string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, &s, line);
+        future<string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, s, line);
         futureQueue.push(move(f));
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             cout << futureQueue.front().get() << endl;
@@ -258,16 +258,16 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
     featureGenerator = gen;
 };
 
-shared_ptr<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>> SegmenterClass::readData(const string &fileName, bool hasValidLabels) {
+vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> SegmenterClass::readData(const string &fileName, bool hasValidLabels) {
     ifstream ifs(fileName);
     if (!ifs.is_open()) {
         cerr << "Cannot read from file: " << fileName << endl;
         exit(1);
     }
-    auto observationSequenceList = make_shared<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>>();
+    vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
     string line;
     while (getline(ifs, line)) {
-        observationSequenceList->push_back(convertLineToObservationSequence(line, hasValidLabels));
+        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels));
     }
     ifs.close();
     return observationSequenceList;
@@ -277,15 +277,15 @@ void SegmenterClass::train(const string &trainingFilename,
                            const string &modelFilename) {
     auto observationSequenceList = readData(trainingFilename, true);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
-    auto labelSet = make_shared<unordered_set<string>>();
-    labelSet->insert("0");
-    labelSet->insert("1");
+    unordered_set<string> labelSet;
+    labelSet.insert("0");
+    labelSet.insert("1");
     bool isL1 = false;
     if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
         cerr << "Unsupported regularization type: " << options.regType;
     }
     isL1 = (options.regType == "L1");
-    CRFProcessor->train(observationSequenceList, featureGenerator, labelSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
+    CRFProcessor->train(observationSequenceList, *featureGenerator, labelSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     CRFProcessor->writeModel(modelFilename);
 }
 
@@ -294,7 +294,7 @@ string SegmenterClass::segment(const string &line) const {
         return "";
     }
     auto observationSequence = convertLineToObservationSequence(line, false);
-    auto spaceList = CRFProcessor->tag(observationSequence, featureGenerator);
+    auto spaceList = CRFProcessor->tag(*observationSequence, *featureGenerator);
     auto unicodeList = observationSequence->getObservationList();
     string ret;
     for (size_t i = 0; i < unicodeList->size(); ++i) {
@@ -308,11 +308,11 @@ string SegmenterClass::segment(const string &line) const {
 
 void SegmenterClass::test(const string &testFilename) {
     auto observationSequenceList = readData(testFilename, true);
-    auto labelListList = make_shared<vector<shared_ptr<vector<string>>>>();
-    for (auto &observationSequence : *observationSequenceList) {
-        labelListList->push_back(observationSequence->getLabelList());
+    vector<shared_ptr<vector<string>>> labelListList;
+    for (auto &observationSequence : observationSequenceList) {
+        labelListList.push_back(observationSequence->getLabelList());
     }
-    CRFProcessor->test(observationSequenceList, featureGenerator, labelListList, options.numThreads);
+    CRFProcessor->test(observationSequenceList, *featureGenerator, labelListList, options.numThreads);
 }
 
 void SegmenterClass::readModel(const string &modelFilename) {

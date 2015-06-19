@@ -15,30 +15,26 @@ using std::move;
 using std::shared_ptr;
 using std::string;
 
-Feature::Feature(string obs, LabelSequence pat) {
+Feature::Feature(string obs, shared_ptr<LabelSequence> seq) {
     this->obs = move(obs);
-    this->pat = pat;
+    this->seq = seq;
 }
 
-LabelSequence Feature::getLabelSequence() const {
-    return pat;
+shared_ptr<LabelSequence> Feature::getLabelSequence() const {
+    return seq;
 }
 
 const string &Feature::getObservation() const {
     return obs;
 }
 
-shared_ptr<FeatureTemplate> Feature::createFeatureTemplate() const {
-    return make_shared<FeatureTemplate>(obs, pat.getLength());
-}
-
 bool Feature::operator==(const Feature &that) const {
-    return this->getObservation() == that.getObservation() && this->getLabelSequence() == that.getLabelSequence();
+    return this->getObservation() == that.getObservation() && *this->getLabelSequence() == *that.getLabelSequence();
 }
 
 size_t Feature::hash() const
 {
-    return std::hash<string>()(obs) ^ pat.hash();
+    return std::hash<string>()(obs) ^ seq->hash();
 };
 
 }  // namespace HighOrderCRF

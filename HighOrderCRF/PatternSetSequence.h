@@ -21,7 +21,7 @@ public:
     patternListList(patternListList), longestMatchIndexList(longestMatchIndexList) {};
     void accumulateFeatureCounts(double *counts) const;
     double accumulateFeatureExpectations(const double *expWeights, double *expectations) const;
-    shared_ptr<vector<label_t>> decode(const double *expWeights) const;
+    vector<label_t> decode(const double *expWeights) const;
     double calcLogLikelihood() const;
     
 private:

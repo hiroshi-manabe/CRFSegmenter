@@ -1,6 +1,6 @@
 #include "HighOrderCRFData.h"
 
-#include "Feature.h"
+#include "FeatureTemplate.h"
 #include "LabelSequence.h"
 
 #include <cstring>
@@ -20,21 +20,24 @@ using std::ios;
 using std::ifstream;
 using std::make_pair;
 using std::make_shared;
+using std::move;
 using std::ofstream;
 using std::string;
 using std::unordered_map;
 using std::vector;
 
 template<class T>
-void readNumber(ifstream *ifs, T *num) {
-    memset(num, 0, sizeof(T));
+T readNumber(ifstream *ifs) {
+    T num;
+    memset(&num, 0, sizeof(T));
     unsigned char val;
     size_t shift = 0;
     for (size_t i = 0; i < sizeof(T); ++i) {
         ifs->read((char *)&val, 1);
-        *num |= ((T)val << shift);
+        num |= ((T)val << shift);
         shift += 8;
     }
+    return num;
 }
 
 template<class T>
@@ -48,14 +51,15 @@ void writeNumber(ofstream *ofs, T num) {
     }
 }
 
-void readString(ifstream *ifs, string *str, vector<char> *buffer) {
-    uint32_t len;
-    readNumber<uint32_t>(ifs, &len);
+string readString(ifstream *ifs, vector<char> *buffer) {
+    string str;
+    uint32_t len = readNumber<uint32_t>(ifs);
     if (len > buffer->size()) {
         buffer->resize(len);
     }
     ifs->read(buffer->data(), len);
-    str->assign(buffer->begin(), buffer->begin() + len);
+    str.assign(buffer->begin(), buffer->begin() + len);
+    return str;
 }
 
 void writeString(ofstream *ofs, const string &str) {
@@ -63,25 +67,40 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(shared_ptr<vector<Feature>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap) : featureList(featureList), bestWeightList(bestWeightList), labelMap(labelMap) {}
-HighOrderCRFData::HighOrderCRFData() {}
-
-shared_ptr<vector<Feature>> HighOrderCRFData::getFeatureList() const {
-    return featureList;
+HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> bestWeightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
+    this->featureTemplateToFeatureIndexListMap = move(featureTemplateToFeatureIndexListMap);
+    this->bestWeightList = move(bestWeightList);
+    this->featureLabelSequenceIndexList = move(featureLabelSequenceIndexList);
+    this->labelSequenceList = move(labelSequenceList);
+    this->labelMap = move(labelMap);
 }
 
-shared_ptr<vector<double>> HighOrderCRFData::getBestWeightList() const {
+HighOrderCRFData::HighOrderCRFData() {}
+
+const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
+    return featureTemplateToFeatureIndexListMap;
+}
+
+const vector<double> &HighOrderCRFData::getBestWeightList() const {
     return bestWeightList;
 }
 
-shared_ptr<unordered_map<string, label_t>> HighOrderCRFData::getLabelMap() const {
+const vector<uint32_t> &HighOrderCRFData::getFeatureLabelSequenceIndexList() const {
+    return featureLabelSequenceIndexList;
+}
+
+const vector<LabelSequence> &HighOrderCRFData::getLabelSequenceList() const {
+    return labelSequenceList;
+}
+
+const unordered_map<string, label_t> &HighOrderCRFData::getLabelMap() const {
     return labelMap;
 }
 
-shared_ptr<vector<string>> HighOrderCRFData::getLabelStringList() const {
-    auto ret = make_shared<vector<string>>(labelMap->size());
-    for (auto &entry : *labelMap) {
-        (*ret)[entry.second] = entry.first;
+vector<string> HighOrderCRFData::getLabelStringList() const {
+    vector<string> ret(labelMap.size());
+    for (auto &entry : labelMap) {
+        ret[entry.second] = entry.first;
     }
     return ret;
 }
@@ -93,90 +112,163 @@ void HighOrderCRFData::read(const string &filename) {
     buffer.reserve(1024);  // a buffer of an arbitrary size
     uint32_t bufferSize = 0;
 
-    // reads features
-    uint32_t numFeatures;
-    readNumber<uint32_t>(&in, &numFeatures);
-    auto featureList = make_shared<vector<Feature>>();
-    featureList->reserve(numFeatures);
-    auto bestWeightList = make_shared<vector<double>>(numFeatures);
+    // reads feature templates
+    uint32_t numFeatureTemplates = readNumber<uint32_t>(&in);
+    featureTemplateToFeatureIndexListMap.clear();
+    featureTemplateToFeatureIndexListMap.reserve(numFeatureTemplates);
+    for (size_t i = 0; i < numFeatureTemplates; ++i) {
+        // reads the observation of a feature template
+        string obs = readString(&in, &buffer);
 
-    for (uint32_t i = 0; i < numFeatures; ++i) {
-        // reads the observation of a feature
-        string obs;
-        readString(&in, &obs, &buffer);
+        // reads the label length
+        uint32_t labelLength =  readNumber<uint32_t>(&in);
+        auto ft = make_shared<FeatureTemplate>(obs, labelLength);
 
-        // reads the labels
-        uint32_t labelLength;
-        readNumber<uint32_t>(&in, &labelLength);
-        vector<label_t> labels(labelLength);
-        for (size_t j = 0; j < labelLength; ++j) {
-            label_t label;
-            readNumber<label_t>(&in, &label);
-            labels[j] = label;
+        // reads the feature indexes
+        uint32_t featureIndexCount = readNumber<uint32_t>(&in);
+        vector<uint32_t> featureIndexes;
+        featureIndexes.reserve(featureIndexCount);
+        for (size_t j = 0; j < featureIndexCount; ++j) {
+            featureIndexes.push_back(readNumber<uint32_t>(&in));
         }
-        double weight;
-        readNumber<uint64_t>(&in, (uint64_t*)&weight);  // assuming that the size of double is 64 bits
-        featureList->emplace_back(obs, labels);
-        (*bestWeightList)[i] = weight;
+        featureTemplateToFeatureIndexListMap.insert(make_pair(ft, featureIndexes));
+    }
+
+    // read features
+    uint32_t numFeatures = readNumber<uint32_t>(&in);
+    bestWeightList.clear();
+    bestWeightList.reserve(numFeatures);
+    featureLabelSequenceIndexList.clear();
+    featureLabelSequenceIndexList.reserve(numFeatures);
+    for (size_t i = 0; i < numFeatures; ++i) {
+        uint64_t t = readNumber<uint64_t>(&in);
+        bestWeightList.push_back(*(double *)&t);
+        featureLabelSequenceIndexList.push_back(readNumber<uint32_t>(&in));
+    }
+
+    // read label sequences
+    uint32_t numLabelSequences = readNumber<uint32_t>(&in);
+    labelSequenceList.clear();
+    labelSequenceList.reserve(numLabelSequences);
+    for (size_t i = 0; i < numLabelSequences; ++i) {
+        uint32_t len = readNumber<uint32_t>(&in);
+        vector<label_t> v;
+        for (size_t j = 0; j < len; ++j) {
+            v.push_back(readNumber<uint32_t>(&in));
+        }
+        labelSequenceList.push_back(move(v));
     }
 
     // reads the label map
-    uint32_t numLabels;
-    in.read((char *)&numLabels, sizeof(uint32_t));
-    auto labelMap = make_shared<unordered_map<string, label_t>>();
+    uint32_t numLabels = readNumber<uint32_t>(&in);
+    labelMap.clear();
 
-    for (uint32_t i = 0; i < numLabels; ++i) {
+    for (size_t i = 0; i < numLabels; ++i) {
         // reads the label string
-        string labelString;
-        readString(&in, &labelString, &buffer);
-
-        // reads the label number
-        label_t labelNum;
-        readNumber<label_t>(&in, &labelNum);
-
-        labelMap->insert(make_pair(labelString, labelNum));
+        string labelString = readString(&in, &buffer);
+        labelMap.insert(make_pair(labelString, i));
     }
-    this->featureList = featureList;
-    this->bestWeightList = bestWeightList;
-    this->labelMap = labelMap;
 
     in.close();
+}
+
+void HighOrderCRFData::trim() {
+    // trim features
+    uint32_t validFeatureCount = 0;
+    vector<uint32_t> validFeatureIndexList;
+    validFeatureIndexList.reserve(bestWeightList.size());
+    vector<bool> flagList(labelSequenceList.size());
+    for (size_t i = 0; i < bestWeightList.size(); ++i) {
+        if (bestWeightList[i] != 0.0) {
+            flagList[featureLabelSequenceIndexList[i]] = true;
+            bestWeightList[validFeatureCount] = bestWeightList[i];
+            featureLabelSequenceIndexList[validFeatureCount] = featureLabelSequenceIndexList[i];
+            validFeatureIndexList.push_back(validFeatureCount);
+            ++validFeatureCount;
+        }
+        else {
+            validFeatureIndexList.push_back(UINT32_MAX);
+        }
+    }
+    bestWeightList.resize(validFeatureCount);
+    featureLabelSequenceIndexList.resize(validFeatureCount);
+
+    // trim label sequence list
+    uint32_t validLabelSequenceCount = 0;
+    vector<uint32_t> validLabelSequenceIndexList;
+    validLabelSequenceIndexList.reserve(labelSequenceList.size());
+    for (size_t i = 0; i < labelSequenceList.size(); ++i) {
+        validLabelSequenceIndexList.push_back(flagList[i] ? validLabelSequenceCount : UINT32_MAX);
+        if (flagList[i]) {
+            if (validLabelSequenceCount != i) {
+                labelSequenceList[validLabelSequenceCount] = move(labelSequenceList[i]);
+            }
+            ++validLabelSequenceCount;
+        }
+    }
+    labelSequenceList.resize(validLabelSequenceCount);
+
+    // update features
+    for (auto &i : featureLabelSequenceIndexList) {
+        i = validLabelSequenceIndexList[i];
+    }
+
+    // trim feature templates
+    for (auto it = featureTemplateToFeatureIndexListMap.begin(); it != featureTemplateToFeatureIndexListMap.end(); ) {
+        auto &v = it->second;
+        vector<uint32_t> validFeatureIndexes;
+        for (auto i : v) {
+            auto newIndex = validFeatureIndexList[i];
+            if (newIndex != UINT32_MAX) {
+                validFeatureIndexes.push_back(newIndex);
+            }
+        }
+        if (validFeatureIndexes.empty()) {
+            featureTemplateToFeatureIndexListMap.erase(it++);
+        }
+        else {
+            v = move(validFeatureIndexes);
+            ++it;
+        }
+    }
 }
 
 void HighOrderCRFData::write(const string &filename) const {
     ofstream out(filename, ios::out | ios::binary);
 
-    size_t validFeatureCount = 0;
-
-    for (uint32_t i = 0; i < featureList->size(); ++i) {
-        if ((*bestWeightList)[i] != 0.0) {
-            ++validFeatureCount;
+    // write feature templates
+    writeNumber<uint32_t>(&out, featureTemplateToFeatureIndexListMap.size());
+    for (auto entry : featureTemplateToFeatureIndexListMap) {
+        auto &ft = entry.first;
+        auto &v = entry.second;
+        writeString(&out, ft->getObservation());
+        writeNumber<uint32_t>(&out, ft->getLabelLength());
+        writeNumber<uint32_t>(&out, v.size());
+        for (auto &i : v) {
+            writeNumber<uint32_t>(&out, i);
         }
     }
 
-    writeNumber<uint32_t>(&out, validFeatureCount);
-
-    for (uint32_t i = 0; i < featureList->size(); ++i) {
-        auto &feature = (*featureList)[i];
-
-        double expectation = (*bestWeightList)[i];
-        if (expectation == 0.0) {
-            continue;
-        }
-        // writes the observation of a feature
-        writeString(&out, feature.getObservation());
-        auto labelSequence = feature.getLabelSequence();
-        writeNumber<uint32_t>(&out, labelSequence.getLength());
-        for (size_t j = 0; j < labelSequence.getLength(); ++j) {
-            writeNumber<label_t>(&out, labelSequence.getLabelAt(j));
-        }
-        writeNumber<uint64_t>(&out, *((uint64_t*)(&expectation)));  // assuming that the size of double is 64 bits
+    // write features
+    writeNumber<uint32_t>(&out, bestWeightList.size());
+    for (size_t i = 0; i < bestWeightList.size(); ++i) {
+        writeNumber<uint64_t>(&out, *((uint64_t*)(&bestWeightList[i])));  // assuming that the size of double is 64 bits
+        writeNumber<uint32_t>(&out, featureLabelSequenceIndexList[i]);
     }
-    
-    writeNumber<uint32_t>(&out, labelMap->size());
-    for (auto &entry : *labelMap) {
-        writeString(&out, entry.first);
-        writeNumber<label_t>(&out, entry.second);
+
+    // write label sequences
+    writeNumber<uint32_t>(&out, labelSequenceList.size());
+    for (auto &l : labelSequenceList) {
+        writeNumber<uint32_t>(&out, l.getLength());
+        for (size_t j = 0; j < l.getLength(); ++j) {
+            writeNumber<label_t>(&out, l.getLabelAt(j));
+        }
+    }
+
+    auto labelStringList = getLabelStringList();
+    writeNumber<uint32_t>(&out, labelStringList.size());
+    for (auto &str : labelStringList) {
+        writeString(&out, str);
     }
     
     out.close();
@@ -185,18 +277,22 @@ void HighOrderCRFData::write(const string &filename) const {
 void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) const {
     ofstream out(filename, ios::binary);
     out.precision(15);
-    auto reversedLabelMap = getLabelStringList();
-    for (size_t i = 0; i < featureList->size(); ++i) {
-        auto &feature = (*featureList)[i];
-        if (outputWeights) {
-            out << (*bestWeightList)[i] << "\t";
+    auto labelStringList = getLabelStringList();
+    for (auto &entry : featureTemplateToFeatureIndexListMap) {
+        auto &ft = entry.first;
+        auto &v = entry.second;
+
+        for (auto &featureIndex : v) {
+            if (outputWeights) {
+                out << bestWeightList[featureIndex] << "\t";
+            }
+            out << (ft->getObservation().empty() ? "LABEL" : ft->getObservation());
+            auto &labelSequence = labelSequenceList[featureIndex];
+            for (size_t j = 0; j < labelSequence.getLength(); ++j) {
+                out << "\t" << labelStringList[labelSequence.getLabelAt(j)];
+            }
+            out << endl;
         }
-        out << (feature.getObservation().empty() ? "LABEL" : feature.getObservation());
-        auto labelSequence = feature.getLabelSequence();
-        for (size_t j = 0; j < labelSequence.getLength(); ++j) {
-            out << "\t" << reversedLabelMap->at(labelSequence.getLabelAt(j));
-        }
-        out << endl;
     }
     out.close();
 }

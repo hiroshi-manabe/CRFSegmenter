@@ -48,24 +48,24 @@ public:
         return possibleLabelSetList;
     }
 
-    shared_ptr<DataSequence> generateDataSequence(shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator,
-        shared_ptr<unordered_map<string, label_t>> labelMap) {
+    shared_ptr<DataSequence> generateDataSequence(const FeatureTemplateGenerator<T> &featureTemplateGenerator,
+                                                  const unordered_map<string, label_t> &labelMap) const {
         auto labels = make_shared<vector<label_t>>();
         labels->reserve(observationList->size());
         auto possibleLabelTypeSetList = make_shared<vector<unordered_set<label_t>>>();
-        auto featureTemplateListList = featureTemplateGenerator->generateFeatureTemplates(observationList);
+        auto featureTemplateListList = featureTemplateGenerator.generateFeatureTemplates(observationList);
         for (size_t pos = 0; pos < observationList->size(); ++pos) {
-            if (hasValidLabels && labelMap->find(labelList->at(pos)) == labelMap->end()) {
+            if (hasValidLabels && labelMap.find(labelList->at(pos)) == labelMap.end()) {
                 cerr << "Unknown label: " << labelList->at(pos) << endl;
                 exit(1);
             }
-            labels->push_back(hasValidLabels ? labelMap->at(labelList->at(pos)) : 0);
+            labels->push_back(hasValidLabels ? labelMap.at(labelList->at(pos)) : 0);
             unordered_set<label_t> possibleLabelTypeSet;
             for (const auto &label : (*possibleLabelSetList)[pos]) {
-                if (labelMap->find(label) == labelMap->end()) {
+                if (labelMap.find(label) == labelMap.end()) {
                     cerr << "Unknown label: " << label << endl;
                 }
-                possibleLabelTypeSet.insert(labelMap->at(label));
+                possibleLabelTypeSet.insert(labelMap.at(label));
             }
             possibleLabelTypeSetList->push_back(move(possibleLabelTypeSet));
         }

@@ -34,7 +34,7 @@ class SegmenterClass {
 
 public:
     SegmenterClass(const SegmenterOptions &segmenterOptions);
-    shared_ptr<vector<shared_ptr<ObservationSequence<UnicodeCharacter>>>> readData(const string &fileName, bool hasValidLabels);
+    vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string &fileName, bool hasValidLabels);
     void train(const string &trainingFilename, const string &modelFilename);
     string segment(const string &line) const;
     void test(const string &testFilename);

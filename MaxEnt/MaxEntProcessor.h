@@ -65,32 +65,33 @@ public:
                double epsilonForConvergence) {
 
         auto compiledDataList = make_shared<vector<shared_ptr<CompiledData>>>();
-        auto labelToIndexMap = make_shared<unordered_map<string, uint32_t>>();
-        auto attrToIndexMap = make_shared<unordered_map<string, uint32_t>>();
-        auto indexPairToFeatureIndexMap = make_shared<unordered_map<pair<uint32_t, uint32_t>, uint32_t>>();
+        unordered_map<string, uint32_t> labelToIndexMap;
+        unordered_map<string, uint32_t> attrToIndexMap;
+        unordered_map<pair<uint32_t, uint32_t>, uint32_t> indexPairToFeatureIndexMap;
         compiledDataList->reserve(observationList.size());
         
         for (auto &obs : observationList) {
-            compiledDataList->push_back(obs.compile(labelToIndexMap, attrToIndexMap, indexPairToFeatureIndexMap, true));
+            compiledDataList->push_back(obs.compile(&labelToIndexMap, &attrToIndexMap, &indexPairToFeatureIndexMap, true));
         }
-        auto featureCountList = make_shared<vector<double>>(indexPairToFeatureIndexMap->size());
+        vector<double> featureCountList(indexPairToFeatureIndexMap.size());
         for (auto &data : (*compiledDataList)) {
-            data->accumulateFeatureCounts(featureCountList->data());
+            data->accumulateFeatureCounts(featureCountList.data());
         }
         
-        auto optimizer = make_shared<Optimizer::OptimizerClass>(maxEntUpdateProc, static_cast<void *>(&compiledDataList), featureCountList, concurrency, 0, false, regularizationCoefficient, epsilonForConvergence);
-        auto initialWeightList = make_shared<vector<double>>(featureCountList->size());
-        optimizer->optimize(initialWeightList->data());
+        auto optimizer = make_shared<Optimizer::OptimizerClass>(maxEntUpdateProc, static_cast<void *>(&compiledDataList), move(featureCountList), concurrency, maxIters, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
+        vector<double> initialWeightList(featureCountList.size());
+        optimizer->optimize(initialWeightList.data());
         auto bestWeightList = optimizer->getBestWeightList();
         
-        modelData = make_shared<MaxEntData>(labelToIndexMap, attrToIndexMap, indexPairToFeatureIndexMap, bestWeightList);
+        modelData = make_shared<MaxEntData>(move(labelToIndexMap), move(attrToIndexMap), move(indexPairToFeatureIndexMap), move(bestWeightList));
     }
 
     string inferLabel(const Observation &obs) const {
-        return obs.compile(modelData->getLabelToIndexMap(), modelData->getAttrToIndexMap(), modelData->getIndexPairToFeatureIndexMap(), false)->inferLabel(modelData->getBestWeightList()->data());
+        return obs.compile(&modelData->getLabelToIndexMap(), &modelData->getAttrToIndexMap(), &modelData->getIndexPairToFeatureIndexMap(), false)->inferLabel(modelData->getBestWeightList().data());
     }
 
     void writeModel(const string &filename) {
+        modelData->trim();
         modelData->write(filename);
     }
 

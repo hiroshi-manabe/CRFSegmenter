@@ -42,41 +42,44 @@ size_t DataSequence::length() const {
     return featureTemplateListList->size();
 }
 
-LabelSequence DataSequence::getLabelSequence(size_t pos, size_t length) const {
+shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t length) const {
     if (!hasValidLabels) {
-        return LabelSequence::createEmptyLabelSequence();
+        return make_shared<LabelSequence>();
     }
     if (pos < length - 1) {
-        return LabelSequence::createEmptyLabelSequence();
+        return make_shared<LabelSequence>();
     }
     vector<label_t> labels;
     for (size_t i = 0; i < length; ++i) {
         labels.push_back(this->labels->at(pos - i));
     }
-    return LabelSequence(labels);
+    return make_shared<LabelSequence>(move(labels));
 }
 
-void DataSequence::accumulateFeatureCountsToMap(shared_ptr<unordered_map<shared_ptr<Feature>, size_t>> featureCountMap) const {
+void DataSequence::accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> *featureTemplateToFeatureIndexListMap,
+                                         unordered_map<shared_ptr<Feature>, uint32_t> *featureToFeatureIndexMap,
+                                         vector<double> *featureCountList) const {
     if (!hasValidLabels) {
         return;
     }
     for (size_t pos = 0; pos < labels->size(); ++pos) {
-        for (auto &featureTemplate : (*featureTemplateListList)[pos]) {
-            if (pos < featureTemplate->getLabelLength() - 1) {
+        for (auto &ft : (*featureTemplateListList)[pos]) {
+            if (pos < ft->getLabelLength() - 1) {
                 continue;
             }
-            auto f = make_shared<Feature>(featureTemplate->getObservation(), getLabelSequence(pos, featureTemplate->getLabelLength()));
-            auto it = featureCountMap->find(f);
-            if (it == featureCountMap->end()) {
-                featureCountMap->insert(make_pair(f, 1));
-            } else {
-                it->second += 1;
+            auto f = make_shared<Feature>(ft->getObservation(), getLabelSequence(pos, ft->getLabelLength()));
+            auto it = featureToFeatureIndexMap->find(f);
+            if (it == featureToFeatureIndexMap->end()) {
+                auto index = (uint32_t)featureToFeatureIndexMap->size();
+                it = featureToFeatureIndexMap->insert(make_pair(f, index)).first;
+                featureCountList->push_back(0);
+                auto it2 = featureTemplateToFeatureIndexListMap->find(ft);
+                if (it2 == featureTemplateToFeatureIndexListMap->end()) {
+                    it2 = featureTemplateToFeatureIndexListMap->insert(make_pair(ft, vector<uint32_t>())).first;
+                }
+                it2->second.push_back(it->second);
             }
-#ifdef EMULATE_BOS_EOS
-            if (pos == 0 || pos == labels->size() - 1) {
-                featureCountMap->find(f)->second -= 1;
-            }
-#endif
+            ++(*featureCountList)[it->second];
         }
     }
 }
@@ -105,10 +108,10 @@ void generatePatternSetProc(label_t *labels, size_t size, int dataIndex, int par
     ++generationData->currentIndex;
     PatternData &suffixPatternData = (*generationData->patternDataList)[parentDataIndex];
     pattern_index_t suffixPatternIndex = suffixPatternData.patternIndex;
-    generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[0] : INVALID_LABEL, make_shared<vector<feature_index_t>>(move(thisPatternData.featureIndexList)));
+    generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[0] : INVALID_LABEL, vector<feature_index_t>(thisPatternData.featureIndexList));
 }
 
-shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const shared_ptr<unordered_map<shared_ptr<FeatureTemplate>, shared_ptr<vector<const Feature *>>>> featureTemplateToFeatureListMap, const Feature *firstFeature) const {
+shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &featureTemplateToFeatureIndexListMap, const vector<uint32_t> &featureLabelSequenceIndexList, const vector<LabelSequence> &labelSequenceList) const {
     
     vector<Trie<label_t>> trieList(this->length());
     vector<PatternData> patternDataList;
@@ -126,12 +129,12 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
             if (featureTemplate->getLabelLength() > pos + 1) {
                 continue;
             }
-            auto featureList = featureTemplateToFeatureListMap->find(featureTemplate);
-            if (featureList == featureTemplateToFeatureListMap->end()) {
+            auto featureIndexList = featureTemplateToFeatureIndexListMap.find(featureTemplate);
+            if (featureIndexList == featureTemplateToFeatureIndexListMap.end()) {
                 continue;
             }
-            for (auto &feature : *featureList->second) {
-                auto seq = feature->getLabelSequence();
+            for (auto &featureIndex : featureIndexList->second) {
+                auto seq = labelSequenceList[featureLabelSequenceIndexList[featureIndex]];
 
                 bool labelsOK = true;
                 for (size_t i = 0; i < seq.getLength(); ++i) {
@@ -148,7 +151,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const sh
                     patternDataList.emplace_back();
                 }
 
-                patternDataList[dataIndex].featureIndexList.push_back(feature - firstFeature);
+                patternDataList[dataIndex].featureIndexList.push_back(featureIndex);
 
                 if (pos > 0) {
                     size_t labelLength = seq.getLength();

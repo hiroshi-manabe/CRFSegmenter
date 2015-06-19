@@ -34,4 +34,15 @@ private:
 
 }  // namespace HighOrderCRF
 
+namespace std {
+
+template<> 
+struct hash<HighOrderCRF::LabelSequence> {
+    size_t operator()(const HighOrderCRF::LabelSequence &seq) const {
+        return seq.hash();
+    }
+};
+
+}  // namespace std
+
 #endif  // HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H

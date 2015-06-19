@@ -475,7 +475,12 @@ void MorphemeTaggerClass::train(const string &trainingFilename,
     ifs.close();
 
     MaxEntProcessor maxent;
-    maxent.train(observationList, options.numThreads, 10000, false, 10.0, 0.00001);
+    bool isL1 = false;
+    if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
+        cerr << "Unsupported regularization type: " << options.regType;
+    }
+    isL1 = (options.regType == "L1");
+    maxent.train(observationList, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     maxent.writeModel(modelFilename);
 }
 

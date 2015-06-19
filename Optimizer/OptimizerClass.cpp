@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace Optimizer {
@@ -14,6 +15,7 @@ namespace Optimizer {
 using std::cout;
 using std::endl;
 using std::make_shared;
+using std::move;
 using std::shared_ptr;
 using std::vector;
 
@@ -38,11 +40,11 @@ int lbfgsProgress(void *instance,
     return ((OptimizerClass*)instance)->progress(x, g, fx, xnorm, gnorm, step, n, k, ls);
 }
 
-OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, shared_ptr<vector<double>> featureCountList,
+OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, vector<double> featureCountList,
     size_t concurrency, size_t maxIter, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
     this->updateProc = updateProc;
     this->updateData = updateData;
-    this->featureCountList = featureCountList;
+    this->featureCountList = move(featureCountList);
     this->concurrency = concurrency;
     this->maxIter = maxIter;
     this->useL1Optimization = useL1Optimization;
@@ -57,9 +59,9 @@ void OptimizerClass::optimize(const double* featureWeights) {
     lbfgsParam.past = 10;
 
     cout << "L-BFGS optimization" << endl;
-    size_t featureListSize = featureCountList->size();
-    bestWeightList = make_shared<vector<double>>(featureListSize);
-    buffer = make_shared<vector<double>>(featureListSize);
+    size_t featureListSize = featureCountList.size();
+    bestWeightList.resize(featureListSize);
+    buffer.resize(featureListSize);
     
     if (maxIter != 0) {
         lbfgsParam.max_iterations = maxIter;
@@ -76,7 +78,7 @@ void OptimizerClass::optimize(const double* featureWeights) {
     } else {
         lbfgsParam.orthantwise_c = 0.0;
     }
-    auto ret = lbfgs(featureListSize, buffer->data(), 0, lbfgsEvaluate, lbfgsProgress, this, &lbfgsParam);
+    auto ret = lbfgs(featureListSize, buffer.data(), 0, lbfgsEvaluate, lbfgsProgress, this, &lbfgsParam);
 
     if (ret == LBFGS_CONVERGENCE) {
         cout << "L-BFGS resulted in convergence." << endl;
@@ -90,13 +92,13 @@ void OptimizerClass::optimize(const double* featureWeights) {
 };
 
 double OptimizerClass::evaluate(const double *x, double *g) {
-    size_t featureListSize = featureCountList->size();
+    size_t featureListSize = featureCountList.size();
     vector<double> expWeights(featureListSize);
 
     for (size_t i = 0; i < featureListSize; ++i) {
         // sets exponential weights
         expWeights[i] = exp(x[i]);
-        g[i] = -(*featureCountList)[i];
+        g[i] = -featureCountList[i];
     }
 
     double logLikelihood = updateProc(updateData, expWeights.data(), g, concurrency);
@@ -122,8 +124,8 @@ int OptimizerClass::progress(const double *x,
                         int k,
                         int ls) {
     size_t activeFeatureCount = 0;
-    for (size_t i = 0; i < featureCountList->size(); ++i) {
-        (*bestWeightList)[i] = x[i];
+    for (size_t i = 0; i < featureCountList.size(); ++i) {
+        bestWeightList[i] = x[i];
         if (x[i] != 0.0) {
             ++activeFeatureCount;
         }
@@ -138,7 +140,7 @@ int OptimizerClass::progress(const double *x,
     return 0;
 }
 
-shared_ptr<vector<double>> OptimizerClass::getBestWeightList() {
+const vector<double> &OptimizerClass::getBestWeightList() {
     return bestWeightList;
 }
 

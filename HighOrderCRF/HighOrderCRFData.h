@@ -2,7 +2,7 @@
 #define HOCRF_HIGH_ORDER_CRF_HIGH_ORDER_CRF_DATA_H_
 
 #include "types.h"
-#include "Feature.h"
+#include "FeatureTemplate.h"
 
 #include <memory>
 #include <string>
@@ -18,21 +18,26 @@ using std::vector;
 
 class HighOrderCRFData {
 public:
-    HighOrderCRFData(shared_ptr<vector<Feature>> featureList, shared_ptr<vector<double>> bestWeightList, shared_ptr<unordered_map<string, label_t>> labelMap);
+    HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> bestWeightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap);
     HighOrderCRFData();
 
-    shared_ptr<vector<Feature>> getFeatureList() const;
-    shared_ptr<vector<double>> getBestWeightList() const;
-    shared_ptr<unordered_map<string, label_t>> getLabelMap() const;
-    shared_ptr<vector<string>> getLabelStringList() const;
+    const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &getFeatureTemplateToFeatureIndexMapList() const;
+    const vector<double> &getBestWeightList() const;
+    const vector<uint32_t> &getFeatureLabelSequenceIndexList() const;
+    const vector<LabelSequence> &getLabelSequenceList() const;
+    const unordered_map<string, label_t> &getLabelMap() const;
+    vector<string> getLabelStringList() const;
+    void trim();
     void read(const string &filename);
     void write(const string &filename) const;
     void dumpFeatures(const string &filename, bool outputWeights) const;
 
 private:
-    shared_ptr<vector<Feature>> featureList;
-    shared_ptr<vector<double>> bestWeightList;
-    shared_ptr<unordered_map<string, label_t>> labelMap;
+    unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
+    vector<double> bestWeightList;
+    vector<uint32_t> featureLabelSequenceIndexList;
+    vector<LabelSequence> labelSequenceList;
+    unordered_map<string, label_t> labelMap;
 };
 
 }  // namespace HighOrderCRF

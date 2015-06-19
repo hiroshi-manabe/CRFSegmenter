@@ -36,13 +36,13 @@ class TaggerClass {
 
 public:
     TaggerClass(const TaggerOptions &taggerOptions);
-    void train(const string &trainingFilename, const string &modelFilename, shared_ptr<unordered_set<string>> tagSet);
+    void train(const string &trainingFilename, const string &modelFilename, const unordered_set<string> &tagSet);
     string tag(string line, bool tagUnknown, bool delimitByNewline) const;
     void test(const string &testFilename);
     void readModel(const string &modelFilename);
 
 private:
-    shared_ptr<vector<shared_ptr<ObservationSequence<string>>>> readData(const string &fileName, bool hasValidLabels);
+    vector<shared_ptr<ObservationSequence<string>>> readData(const string &fileName, bool hasValidLabels);
     shared_ptr<FeatureTemplateGenerator<string>> featureGenerator;
     shared_ptr<DictionaryClass> dictionary;
     shared_ptr<HighOrderCRFProcessor<string>> CRFProcessor;

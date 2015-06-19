@@ -32,7 +32,7 @@ shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vecto
             auto &curPattern = curPatternList[i];
             auto &curWeight = curWeightList[i];
             curWeight = 1.0;
-            for (auto &featureIndex : *curPattern.getFeatureIndexList()) {
+            for (auto &featureIndex : curPattern.getFeatureIndexList()) {
                 curWeight *= expWeights[featureIndex];
             }
             curWeight *= curWeightList[curPattern.getLongestSuffixIndex()];
@@ -46,7 +46,7 @@ void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
         auto &patternList = (*patternListList)[pos];
         pattern_index_t index = (*longestMatchIndexList)[pos];
         while (index != 0) {
-            for (auto featureIndex : *patternList[index].getFeatureIndexList()) {
+            for (auto featureIndex : patternList[index].getFeatureIndexList()) {
                 counts[featureIndex] += 1.0;
             }
             index = patternList[index].getLongestSuffixIndex();
@@ -179,7 +179,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
         auto &curPatternList = (*patternListList)[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
-            for (auto &featureIndex : *curPatternList[index].getFeatureIndexList()) {
+            for (auto &featureIndex : curPatternList[index].getFeatureIndexList()) {
                 expectations[featureIndex] += scoreListList[pos][index];
             }
         }
@@ -196,7 +196,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
     return logLikelihood;
 }
 
-shared_ptr<vector<label_t>> PatternSetSequence::decode(const double *expWeights) const {
+vector<label_t> PatternSetSequence::decode(const double *expWeights) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = patternListList->size();
 
@@ -280,12 +280,12 @@ shared_ptr<vector<label_t>> PatternSetSequence::decode(const double *expWeights)
         }
     }
 
-    auto bestLabelList = make_shared<vector<label_t>>(sequenceLength);
+    vector<label_t> bestLabelList(sequenceLength);
     for (size_t pos = sequenceLength; pos-- > 0;) {
         auto &curPatternList = (*patternListList)[pos];
         auto &bestIndexList = bestIndexListList[pos];
         
-        (*bestLabelList)[pos] = curPatternList[bestIndex].getLastLabel();
+        bestLabelList[pos] = curPatternList[bestIndex].getLastLabel();
         bestIndex = bestIndexList[bestIndex];
     }
 

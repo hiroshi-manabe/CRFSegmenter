@@ -46,7 +46,7 @@ void Observation::output(ostream &os) {
     os << endl << endl;
 }
 
-shared_ptr<CompiledData> Observation::compile(shared_ptr<unordered_map<string, uint32_t>> labelToIndexMap, shared_ptr<unordered_map<string, uint32_t>> attrToIndexMap, shared_ptr<unordered_map<pair<uint32_t, uint32_t>, uint32_t>> indexPairToFeatureIndexMap, bool extendMaps) const {
+shared_ptr<CompiledData> Observation::compile(unordered_map<string, uint32_t> *labelToIndexMap, unordered_map<string, uint32_t> *attrToIndexMap, unordered_map<pair<uint32_t, uint32_t>, uint32_t> *indexPairToFeatureIndexMap, bool extendMaps) const {
     vector<vector<uint32_t>> featureIndexListList;
     vector<string> labelStringList;
     
