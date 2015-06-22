@@ -174,13 +174,137 @@ sub process_hocrf
     printf "Label sequences: %d => %d\n", $num_label_seqs, $num_valid_seqs;
 }
 
-sub read_i32
+sub process_maxent
 {
-    my ($in) = @_;
-    my $buf;
-    read($in, $buf, 4);
-    my $val = unpack('V', $buf);
-    return $val & 0x80000000 ? -((~$val & 0xffffffff) + 1) : $val;
+    my ($in, $out, $threshold) = @_;
+    
+    # read
+
+    my $label_num = read_u32($in);
+    my %label_id_map;
+    for (0..$label_num - 1) {
+        my $str = read_string($in);
+        $label_id_map{$str} = $_;
+    }
+
+    my $attr_num = read_u32($in);
+    my %attr_id_map;
+    for (0..$attr_num - 1) {
+        my $str = read_string($in);
+        $attr_id_map{$str} = $_;
+    }
+    
+    my $feature_num = read_u32($in);
+    my %pair_id_map;
+    for (0..$feature_num - 1) {
+        my $first = read_u32($in);
+        my $second = read_u32($in);
+        $pair_id_map{join("\t", $first, $second)} = $_;
+    }
+
+    my @weights;
+    for (1..$feature_num) {
+        push @weights, read_double($in);
+    }
+
+    # filter
+
+    # generate valid feature list
+    my $valid_feature_num = 0;
+    my @valid_features;
+    for my $weight(@weights) {
+        push @valid_features, abs($weight) > $threshold ? $valid_feature_num++ : -1;
+    }
+
+    # set valid attribute flags
+    
+    my @attr_flags;
+    for my $pair(keys %pair_id_map) {
+        my (undef, $attr_id) = split /\t/, $pair;
+        my $feature_id = $pair_id_map{$pair};
+        if ($valid_features[$feature_id] != -1) {
+            $attr_flags[$attr_id] = 1;
+        }
+    }
+    
+    # generate old-new attribute index map
+    my $valid_attr_num = 0;
+    my @valid_attrs;
+    for my $flag(@attr_flags) {
+        push @valid_attrs, $flag ? $valid_attr_num++ : -1;
+    }
+
+    # filter attr-to-index map
+    for my $attr(keys %attr_id_map) {
+        my $attr_id = $attr_id_map{$attr};
+        my $new_attr_id = $valid_attrs[$attr_id];
+        if ($new_attr_id == -1) {
+            delete($attr_id_map{$attr});
+        }
+        else {
+            $attr_id_map{$attr} = $new_attr_id;
+        }
+    }
+
+    # filter the weight list
+    for my $id(0..$#weights) {
+        my $new_id = $valid_features[$id];
+        $weights[$new_id] = $weights[$id] if $new_id != -1;
+    }
+    $#weights = $valid_feature_num - 1;
+
+    # generate a new pair-to-feature-id map
+    my %new_pair_id_map;
+    for my $pair(keys %pair_id_map) {
+        my $feature_id = $pair_id_map{$pair};
+        my ($label_id, $attr_id) = split /\t/, $pair;
+        my $new_attr_id = $valid_attrs[$attr_id];
+        my $new_feature_id = $valid_features[$feature_id];
+        $new_pair_id_map{join("\t", $label_id, $attr_id)} = $new_feature_id if $new_attr_id != -1 and $new_feature_id != -1;
+    }
+
+    # write
+    
+    # labels
+    write_u32($out, $label_num);
+    my @labels;
+    for my $label(keys %label_id_map) {
+        $labels[$label_id_map{$label}] = $label;
+    }
+    for my $label(@labels) {
+        write_string($out, $label);
+    }
+
+    # attributes
+    write_u32($out, $valid_attr_num);
+    my @attrs;
+    for my $attr(keys %attr_id_map) {
+        $attrs[$attr_id_map{$attr}] = $attr;
+    }
+    for my $attr(@attrs) {
+        write_string($out, $attr);
+    }
+
+    # pairs
+    my @pairs;
+    for my $pair(keys %new_pair_id_map) {
+        $pairs[$new_pair_id_map{$pair}] = $pair;
+    }
+    
+    write_u32($out, scalar(@weights));
+    for my $pair(@pairs) {
+        my ($label_id, $attr_id) = split /\t/, $pair;
+        write_u32($out, $label_id);
+        write_u32($out, $attr_id);
+    }
+
+    # weights
+    for my $weight(@weights) {
+        write_double($out, $weight);
+    }
+    
+    printf "Attributes: %d => %d\n", $attr_num, $valid_attr_num;
+    printf "Features: %d => %d\n", $feature_num, $valid_feature_num;
 }
 
 sub read_u32
@@ -206,13 +330,6 @@ sub read_string
     my $buf;
     read ($in, $buf, $len);
     return decode_utf8($buf);
-}
-
-sub write_i32
-{
-    my ($out, $val) = @_;
-    my $buf = pack('V', $val & 0xffffffff);
-    print $out $buf;
 }
 
 sub write_u32
