@@ -43,6 +43,13 @@ struct hash<shared_ptr<HighOrderCRF::LabelSequence>> {
     }
 };
 
+template<>
+struct equal_to<shared_ptr<HighOrderCRF::LabelSequence>> {
+    bool operator()(const shared_ptr<HighOrderCRF::LabelSequence>& left, const shared_ptr<HighOrderCRF::LabelSequence> &right) const {
+        return *left == *right;
+    }
+};
+
 }  // namespace std
 
 #endif  // HOCRF_HIGH_ORDER_CRF_LABEL_SEQUENCE_H
