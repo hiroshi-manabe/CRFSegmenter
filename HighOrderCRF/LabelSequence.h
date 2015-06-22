@@ -37,9 +37,9 @@ private:
 namespace std {
 
 template<> 
-struct hash<HighOrderCRF::LabelSequence> {
-    size_t operator()(const HighOrderCRF::LabelSequence &seq) const {
-        return seq.hash();
+struct hash<shared_ptr<HighOrderCRF::LabelSequence>> {
+    size_t operator()(const shared_ptr<HighOrderCRF::LabelSequence> &seq) const {
+        return seq->hash();
     }
 };
 
