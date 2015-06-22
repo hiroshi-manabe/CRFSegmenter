@@ -107,14 +107,18 @@ public:
 
     int findLongestMatch(const L *data, size_t size) const {
         const TrieNode<L> *node = &rootNode;
+        int value = node->value;
         for (size_t i = 0; i < size; ++i) {
             TrieNode<L> *nextNode = node->getChild(node->getChildIndex(data[i]), data[i]);
             if (!nextNode) {
-                return node->value;
+                return value;
             }
             node = nextNode;
+            if (node->value != -1) {
+                value = node->value;
+            }
         }
-        return node->value;
+        return value;
     }
 
     void visitValidNodes(void (*proc)(L *, size_t, int, int, void *), void *data) {
