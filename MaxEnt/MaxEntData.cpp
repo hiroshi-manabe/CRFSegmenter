@@ -1,6 +1,7 @@
 #include "MaxEntData.h"
 #include "Observation.h"
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -119,11 +120,11 @@ void MaxEntData::read(const string &filename) {
         }
     }
     
+    uint32_t featureNum = readNumber<uint32_t>(&in);
     {
-        uint32_t num = readNumber<uint32_t>(&in);
         indexPairToFeatureIndexMap.clear();
-        indexPairToFeatureIndexMap.reserve(num);
-        for (uint32_t i = 0; i < num; ++i) {
+        indexPairToFeatureIndexMap.reserve(featureNum);
+        for (uint32_t i = 0; i < featureNum; ++i) {
             uint32_t first = readNumber<uint32_t>(&in);
             uint32_t second = readNumber<uint32_t>(&in);
             indexPairToFeatureIndexMap.insert(make_pair(make_pair(first, second), i));
@@ -131,10 +132,9 @@ void MaxEntData::read(const string &filename) {
     }
 
     {
-        uint32_t num = readNumber<uint32_t>(&in);
         bestWeightList.clear();
-        bestWeightList.reserve(num);
-        for (uint32_t i = 0; i < num; ++i) {
+        bestWeightList.reserve(featureNum);
+        for (uint32_t i = 0; i < featureNum; ++i) {
             uint64_t t = readNumber<uint64_t>(&in);  // assuming that the size of double is 64 bits
             bestWeightList.push_back(*(double *)&t);
         }
@@ -249,6 +249,7 @@ void MaxEntData::write(const string &filename) const {
             v[e.second] = e.first;
         }
     
+        assert(bestWeightList.size() == bestWeightList.size());
         writeNumber<uint32_t>(&out, (uint32_t)v.size());
         for (uint32_t i = 0; i < v.size(); ++i) {
             writeNumber<uint32_t>(&out, v[i].first);
@@ -257,7 +258,6 @@ void MaxEntData::write(const string &filename) const {
     }
 
     {
-        writeNumber<uint32_t>(&out, (uint32_t)bestWeightList.size());
         for (uint32_t i = 0; i < bestWeightList.size(); ++i) {
             double expectation = bestWeightList[i];
             writeNumber<uint64_t>(&out, *((uint64_t*)(&expectation)));  // assuming that the size of double is 64 bits
