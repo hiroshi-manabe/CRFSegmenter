@@ -211,7 +211,6 @@ public:
 
     void readModel(const string &filename) {
         modelData->read(filename);
-        prepare();
     }
 
 private:
@@ -220,18 +219,10 @@ private:
                                  const FeatureTemplateGenerator<T> *featureTemplateGenerator) {
         auto dataSequence = observationSequence.generateDataSequence(*featureTemplateGenerator, modelData->getLabelMap());
         auto patternSetSequence = dataSequence->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList());
-        return patternSetSequence->decode(expWeightList.get()->data());
+        return patternSetSequence->decode(modelData->getWeightList().data());
     }
 
-    void prepare() {
-        auto featureCount = modelData->getBestWeightList().size();
-        expWeightList = make_shared<vector<double>>(featureCount);
-        for (size_t i = 0; i < featureCount; ++i) {
-            (*expWeightList)[i] = exp(modelData->getBestWeightList()[i]);
-        }
-    }
     shared_ptr<HighOrderCRFData> modelData;
-    shared_ptr<vector<double>> expWeightList;
 };
 
 } // namespace HighOrderCRF

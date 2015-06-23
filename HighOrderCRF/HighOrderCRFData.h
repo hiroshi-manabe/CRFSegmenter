@@ -18,11 +18,11 @@ using std::vector;
 
 class HighOrderCRFData {
 public:
-    HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> bestWeightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap);
+    HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap);
     HighOrderCRFData();
 
     const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &getFeatureTemplateToFeatureIndexMapList() const;
-    const vector<double> &getBestWeightList() const;
+    const vector<weight_t> &getWeightList() const;
     const vector<uint32_t> &getFeatureLabelSequenceIndexList() const;
     const vector<LabelSequence> &getLabelSequenceList() const;
     const unordered_map<string, label_t> &getLabelMap() const;
@@ -34,7 +34,7 @@ public:
 
 private:
     unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
-    vector<double> bestWeightList;
+    vector<weight_t> weightList;
     vector<uint32_t> featureLabelSequenceIndexList;
     vector<LabelSequence> labelSequenceList;
     unordered_map<string, label_t> labelMap;

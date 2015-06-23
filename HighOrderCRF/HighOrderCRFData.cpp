@@ -67,12 +67,15 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> bestWeightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
+HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
     this->featureTemplateToFeatureIndexListMap = move(featureTemplateToFeatureIndexListMap);
-    this->bestWeightList = move(bestWeightList);
     this->featureLabelSequenceIndexList = move(featureLabelSequenceIndexList);
     this->labelSequenceList = move(labelSequenceList);
     this->labelMap = move(labelMap);
+    this->weightList.reserve(weightList.size());
+    for (auto w : weightList) {
+        this->weightList.push_back(double_to_weight(w));
+    }
 }
 
 HighOrderCRFData::HighOrderCRFData() {}
@@ -81,8 +84,8 @@ const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRF
     return featureTemplateToFeatureIndexListMap;
 }
 
-const vector<double> &HighOrderCRFData::getBestWeightList() const {
-    return bestWeightList;
+const vector<weight_t> &HighOrderCRFData::getWeightList() const {
+    return weightList;
 }
 
 const vector<uint32_t> &HighOrderCRFData::getFeatureLabelSequenceIndexList() const {
@@ -136,13 +139,13 @@ void HighOrderCRFData::read(const string &filename) {
 
     // read features
     uint32_t numFeatures = readNumber<uint32_t>(&in);
-    bestWeightList.clear();
-    bestWeightList.reserve(numFeatures);
+    weightList.clear();
+    weightList.reserve(numFeatures);
     featureLabelSequenceIndexList.clear();
     featureLabelSequenceIndexList.reserve(numFeatures);
     for (size_t i = 0; i < numFeatures; ++i) {
-        uint64_t t = readNumber<uint64_t>(&in);
-        bestWeightList.push_back(*(double *)&t);
+        weight_t t = readNumber<weight_t>(&in);
+        weightList.push_back(t);
         featureLabelSequenceIndexList.push_back(readNumber<uint32_t>(&in));
     }
 
@@ -176,12 +179,12 @@ void HighOrderCRFData::trim() {
     // trim features
     uint32_t validFeatureCount = 0;
     vector<uint32_t> validFeatureIndexList;
-    validFeatureIndexList.reserve(bestWeightList.size());
+    validFeatureIndexList.reserve(weightList.size());
     vector<bool> flagList(labelSequenceList.size());
-    for (size_t i = 0; i < bestWeightList.size(); ++i) {
-        if (bestWeightList[i] != 0.0) {
+    for (size_t i = 0; i < weightList.size(); ++i) {
+        if (weightList[i] != 0) {
             flagList[featureLabelSequenceIndexList[i]] = true;
-            bestWeightList[validFeatureCount] = bestWeightList[i];
+            weightList[validFeatureCount] = weightList[i];
             featureLabelSequenceIndexList[validFeatureCount] = featureLabelSequenceIndexList[i];
             validFeatureIndexList.push_back(validFeatureCount);
             ++validFeatureCount;
@@ -190,7 +193,7 @@ void HighOrderCRFData::trim() {
             validFeatureIndexList.push_back(UINT32_MAX);
         }
     }
-    bestWeightList.resize(validFeatureCount);
+    weightList.resize(validFeatureCount);
     featureLabelSequenceIndexList.resize(validFeatureCount);
 
     // trim label sequence list
@@ -250,9 +253,9 @@ void HighOrderCRFData::write(const string &filename) const {
     }
 
     // write features
-    writeNumber<uint32_t>(&out, bestWeightList.size());
-    for (size_t i = 0; i < bestWeightList.size(); ++i) {
-        writeNumber<uint64_t>(&out, *((uint64_t*)(&bestWeightList[i])));  // assuming that the size of double is 64 bits
+    writeNumber<uint32_t>(&out, weightList.size());
+    for (size_t i = 0; i < weightList.size(); ++i) {
+        writeNumber<weight_t>(&out, weightList[i]);  // assuming that the size of double is 64 bits
         writeNumber<uint32_t>(&out, featureLabelSequenceIndexList[i]);
     }
 
@@ -284,7 +287,7 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
 
         for (auto &featureIndex : v) {
             if (outputWeights) {
-                out << bestWeightList[featureIndex] << "\t";
+                out << weight_to_double(weightList[featureIndex]) << "\t";
             }
             out << (ft->getObservation().empty() ? "LABEL" : ft->getObservation());
             auto &labelSequence = labelSequenceList[featureIndex];

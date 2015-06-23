@@ -41,6 +41,30 @@ shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vecto
     return ret;
 }
 
+// for decoding
+shared_ptr<vector<vector<double>>> getAccumulatedWeightListListForDecoding(shared_ptr<vector<vector<Pattern>>> patternListList, const weight_t *weights) {
+    auto ret = make_shared<vector<vector<double>>>(0);
+
+    // accumulates weights
+    for (size_t pos = 0; pos < patternListList->size(); ++pos) {
+        auto &curPatternList = (*patternListList)[pos];
+        ret->push_back(vector<double>(curPatternList.size()));
+        auto &curWeightList = ret->back();
+        curWeightList[0] = 0.0;
+
+        for (size_t i = 1; i < curPatternList.size(); ++i) {
+            auto &curPattern = curPatternList[i];
+            auto &curWeight = curWeightList[i];
+            curWeight = 0.0;
+            for (auto &featureIndex : curPattern.getFeatureIndexList()) {
+                curWeight += weight_to_double(weights[featureIndex]);
+            }
+            curWeight += curWeightList[curPattern.getLongestSuffixIndex()];
+        }
+    }
+    return ret;
+}
+
 void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
     for (size_t pos = 0; pos < patternListList->size(); ++pos) {
         auto &patternList = (*patternListList)[pos];
@@ -196,7 +220,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
     return logLikelihood;
 }
 
-vector<label_t> PatternSetSequence::decode(const double *expWeights) const {
+vector<label_t> PatternSetSequence::decode(const weight_t *weights) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = patternListList->size();
 
@@ -219,11 +243,9 @@ vector<label_t> PatternSetSequence::decode(const double *expWeights) const {
     vector<double> *prevTempScoreList = &tempScoreList2;
     vector<double> prevTempScoreListForLabel(maxPatternSetSize);
 
-    auto weightListList = getAccumulatedWeightListList(patternListList, expWeights);
-    int exponentDiff = 0;
-    double scale = 1.0;
+    auto weightListList = getAccumulatedWeightListListForDecoding(patternListList, weights);
 
-    (*prevTempScoreList)[0] = 1.0;
+    (*prevTempScoreList)[0] = 0;
 
     for (size_t pos = 0; pos < sequenceLength; ++pos) {
         auto &curPatternList = (*patternListList)[pos];
@@ -232,11 +254,11 @@ vector<label_t> PatternSetSequence::decode(const double *expWeights) const {
         size_t listSize = curPatternList.size();
         size_t prevListSize = (pos > 0) ? (*patternListList)[pos - 1].size() : 1;
         
-        fill(curTempScoreList->begin(), curTempScoreList->begin() + listSize, 0);
+        fill(curTempScoreList->begin(), curTempScoreList->begin() + listSize, -DBL_MAX);
 
         label_t prevLabel = INVALID_LABEL;
         size_t prevIndex = prevListSize;
-        double maxScore = 0.0;
+        double maxScore = -DBL_MAX;
 
         for (size_t index = listSize - 1; index > 0; --index) {
             auto &curPattern = curPatternList[index];
@@ -256,21 +278,16 @@ vector<label_t> PatternSetSequence::decode(const double *expWeights) const {
                     bestPrefixIndexList[longestSuffixIndex] = bestPrefixIndexList[prevIndex];
                 }
             }
-            (*curTempScoreList)[index] = prevTempScoreListForLabel[prevIndex] * weightList[index];
+            (*curTempScoreList)[index] = prevTempScoreListForLabel[prevIndex] + weightList[index];
             bestIndexList[index] = bestPrefixIndexList[prevIndex];
             if ((*curTempScoreList)[index] > maxScore) {
                 maxScore = (*curTempScoreList)[index];
             }
         }
-        frexp(maxScore, &exponentDiff);
-        scale = ldexp(1.0, -exponentDiff);
-        for (size_t index = 1; index < listSize; ++index) {
-            (*curTempScoreList)[index] *= scale;
-        }
         swap(curTempScoreList, prevTempScoreList);
     }
 
-    double lastBestScore = 0.0;
+    double lastBestScore = -DBL_MAX;
     size_t bestIndex = 0;
 
     for (size_t index = 1; index < patternListList->back().size(); ++index) {
