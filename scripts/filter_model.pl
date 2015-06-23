@@ -3,6 +3,7 @@
 use strict;
 use utf8;
 
+use bigint;
 use Encode;
 
 my %type_proc_dict = (
@@ -37,11 +38,13 @@ sub process_hocrf
     my ($in, $out, $threshold) = @_;
     
     # read
+    print "Start reading model...";
 
     # feature templates
     my %ft_map;
     my $num_ft = read_u32($in);
     for (1..$num_ft) {
+        print $_."\n" if $_ % 10000 == 0;
         my $obs = read_string($in);
         my $label_len = read_u32($in);
         my $key = $obs."\t".$label_len;
@@ -56,7 +59,7 @@ sub process_hocrf
     my @weights = ();
     my @label_seq_indexes = ();
     for (1..$num_features) {
-        push @weights, read_double($in);
+        push @weights, read_float($in);
         push @label_seq_indexes, read_u32($in);
     }
 
@@ -78,8 +81,10 @@ sub process_hocrf
     for (1..$num_labels) {
         push @labels, read_string($in);
     }
+    print "done.\n";
 
     # filter
+    print "Start filtering model...";
     
     # features
     my $num_valid_features = 0;
@@ -132,8 +137,10 @@ sub process_hocrf
         }
         $new_ft_map{$key} = \@new_values if scalar(@new_values) != 0;
     }
+    print "done.\n";
 
     # write
+    print "Start writing model...";
 
     # feature templates
     write_u32($out, scalar(keys %new_ft_map));
@@ -150,7 +157,7 @@ sub process_hocrf
     # features
     write_u32($out, scalar(@weights));
     for (0..$#weights) {
-        write_double($out, $weights[$_]);
+        write_float($out, $weights[$_]);
         write_u32($out, $label_seq_indexes[$_]);
     }
 
@@ -168,6 +175,7 @@ sub process_hocrf
     for my $label(@labels) {
         write_string($out, $label);
     }
+    print "done.\n";
 
     printf "Feature templates: %d => %d\n", $num_ft, scalar(keys %new_ft_map);
     printf "Features: %d => %d\n", $num_features, $num_valid_features;
@@ -320,7 +328,15 @@ sub read_double
     my ($in) = @_;
     my $buf;
     read($in, $buf, 8);
-    return unpack('d', $buf);
+    return unpack('d<', $buf);
+}
+
+sub read_float
+{
+    my ($in) = @_;
+    my $buf;
+    read($in, $buf, 4);
+    return unpack('f<', $buf);
 }
 
 sub read_string
@@ -342,7 +358,14 @@ sub write_u32
 sub write_double
 {
     my ($out, $val) = @_;
-    my $buf = pack('d', $val);
+    my $buf = pack('d<', $val);
+    print $out $buf;
+}
+
+sub write_float
+{
+    my ($out, $val) = @_;
+    my $buf = pack('f<', $val);
     print $out $buf;
 }
 
