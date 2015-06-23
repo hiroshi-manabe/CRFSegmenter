@@ -4,6 +4,7 @@
 #include "Feature.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <mutex>
 #include <memory>
 #include <vector>
