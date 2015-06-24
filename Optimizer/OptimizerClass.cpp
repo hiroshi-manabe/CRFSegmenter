@@ -73,7 +73,7 @@ void OptimizerClass::optimize(const double* featureWeights) {
         regularizationCoefficient = 1.0;
     }
     if (useL1Optimization) {
-        lbfgsParam.orthantwise_c = 1.0 / regularizationCoefficient;
+        lbfgsParam.orthantwise_c = regularizationCoefficient;
         lbfgsParam.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
     } else {
         lbfgsParam.orthantwise_c = 0.0;
@@ -104,10 +104,9 @@ double OptimizerClass::evaluate(const double *x, double *g) {
     double logLikelihood = updateProc(updateData, expWeights.data(), g, concurrency);
 
     if (!useL1Optimization) {
-        double sigma2inv = 1.0 / (regularizationCoefficient * regularizationCoefficient);
         for (size_t i = 0; i < featureListSize; ++i) {
-            g[i] += x[i] * sigma2inv;
-            logLikelihood -= x[i] * x[i] * 0.5 * sigma2inv;
+            g[i] += x[i] * 2 * regularizationCoefficient;
+            logLikelihood -= x[i] * x[i] * regularizationCoefficient;
         }
     }
 
