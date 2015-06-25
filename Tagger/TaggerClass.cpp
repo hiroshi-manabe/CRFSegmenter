@@ -318,6 +318,7 @@ void TaggerClass::train(const string &trainingFilename,
     if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
         cerr << "Unsupported regularization type: " << options.regType;
     }
+    isL1 = (options.regType == "L1");
     CRFProcessor = make_shared<HighOrderCRFProcessor<string>>();
     CRFProcessor->train(observationSequenceList, *featureGenerator, tagSet, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
     CRFProcessor->writeModel(modelFilename);
