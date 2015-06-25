@@ -6,6 +6,8 @@ use utf8;
 use bigint;
 use Encode;
 
+$| = 1;
+
 my %type_proc_dict = (
     'hocrf' => \&process_hocrf,
     'maxent' => \&process_maxent
@@ -15,7 +17,7 @@ sub usage
 {
     print <<USAGE;
 filter_model.pl <file> <type> <threshold>
-    <file> : The input model file. The output file will be named "<file>.filtered".
+    <file> : The input model file. The output file will be named "<file>.filtered.<threshold>".
     <type> : "hocrf" for High-Order CRF models and "maxent" for Maximum Entropy models.
     <threshold> : The cutoff threshold. Must be >= 0.
 USAGE
@@ -28,7 +30,7 @@ usage() if not exists $type_proc_dict{$type};
 usage() if $threshold < 0;
 
 open my $in, '<:raw', $file;
-open my $out, '>:raw', $file.'.filtered';
+open my $out, '>:raw', $file.'.filtered.'.$threshold;
 $type_proc_dict{$type}->($in, $out, $threshold);
 close $out;
 close $in;
@@ -38,13 +40,13 @@ sub process_hocrf
     my ($in, $out, $threshold) = @_;
     
     # read
-    print "Start reading model...";
+    print "Start reading model";
 
     # feature templates
     my %ft_map;
     my $num_ft = read_u32($in);
     for (1..$num_ft) {
-        print $_."\n" if $_ % 10000 == 0;
+        print '.' if $_ % 100000 == 0;
         my $obs = read_string($in);
         my $label_len = read_u32($in);
         my $key = $obs."\t".$label_len;
@@ -59,6 +61,7 @@ sub process_hocrf
     my @weights = ();
     my @label_seq_indexes = ();
     for (1..$num_features) {
+        print '.' if $_ % 100000 == 0;
         push @weights, read_float($in);
         push @label_seq_indexes, read_u32($in);
     }
@@ -67,6 +70,7 @@ sub process_hocrf
     my $num_label_seqs = read_u32($in);
     my @label_seqs = ();
     for (1..$num_label_seqs) {
+        print '.' if $_ % 100000 == 0;
         my $len = read_u32($in);
         my @seq;
         for (1..$len) {
@@ -79,12 +83,13 @@ sub process_hocrf
     my $num_labels = read_u32($in);
     my @labels = ();
     for (1..$num_labels) {
+        print '.' if $_ % 100000 == 0;
         push @labels, read_string($in);
     }
     print "done.\n";
 
     # filter
-    print "Start filtering model...";
+    print "Start filtering model";
     
     # features
     my $num_valid_features = 0;
@@ -92,6 +97,7 @@ sub process_hocrf
     my @seq_valid_flags = ();
     
     for (0..$#weights) {
+        print '.' if $_ % 100000 == 0;
         if (abs($weights[$_]) > $threshold) {
             $seq_valid_flags[$label_seq_indexes[$_]] = 1;
             $weights[$num_valid_features] = $weights[$_];
@@ -111,6 +117,7 @@ sub process_hocrf
     my @valid_seq_list = ();
 
     for (0..$#label_seqs) {
+        print '.' if $_ % 100000 == 0;
         if ($seq_valid_flags[$_]) {
             push @valid_seq_list, $num_valid_seqs;
             $label_seqs[$num_valid_seqs] = $label_seqs[$_];
@@ -123,12 +130,15 @@ sub process_hocrf
     
     # update features
     for (0..$#label_seq_indexes) {
+        print '.' if $_ % 100000 == 0;
         $label_seq_indexes[$_] = $valid_seq_list[$label_seq_indexes[$_]];
     }
 
     # trim feature templates
+    my $count = 0;
     my %new_ft_map = ();
     for my $key(keys %ft_map) {
+        print '.' if $count++ % 100000 == 0;
         my $values = $ft_map{$key};
         my @new_values = ();
         for my $v(@{$values}) {
@@ -140,11 +150,13 @@ sub process_hocrf
     print "done.\n";
 
     # write
-    print "Start writing model...";
+    print "Start writing model";
 
     # feature templates
     write_u32($out, scalar(keys %new_ft_map));
+    $count = 0;
     for my $ft(keys %new_ft_map) {
+        print '.' if $count++ % 100000 == 0;
         my ($obs, $len) = split/\t/, $ft;
         write_string($out, $obs);
         write_u32($out, $len);
@@ -157,6 +169,7 @@ sub process_hocrf
     # features
     write_u32($out, scalar(@weights));
     for (0..$#weights) {
+        print '.' if $_ % 100000 == 0;
         write_float($out, $weights[$_]);
         write_u32($out, $label_seq_indexes[$_]);
     }
@@ -164,6 +177,7 @@ sub process_hocrf
     # label sequences
     write_u32($out, scalar(@label_seqs));
     for my $label_seq(@label_seqs) {
+        print '.' if $count++ % 100000 == 0;
         write_u32($out, scalar(@{$label_seq}));
         for my $l(@{$label_seq}) {
             write_u32($out, $l);
@@ -173,6 +187,7 @@ sub process_hocrf
     # label strings
     write_u32($out, scalar(@labels));
     for my $label(@labels) {
+        print '.' if $count++ % 100000 == 0;
         write_string($out, $label);
     }
     print "done.\n";
