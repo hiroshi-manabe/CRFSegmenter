@@ -149,7 +149,7 @@ const option::Descriptor usage[] =
     { NEWLINE, 0, "", "newline", Arg::None, "  --newline  \tOutputs newline-separated tags. Valid only with --tag option. Use this option to feed the morpheme tagger." },
     { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words (for training)." },
     { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words (for training)." },
-    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximux label length of words (for training)." },
+    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of words (for training)." },
     { TAGSET, 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
