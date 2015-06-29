@@ -68,7 +68,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
             observationList->push_back(uchar);
             labelList->push_back(prevIsSpace ? "1" : "0");
             unordered_set<string> possibleLabelSet;
-            if (pos == 0) {
+            if (possibleLabelSetList->empty()) {
                 possibleLabelSet = decltype(possibleLabelSet){ "1" };
             }
             else {
