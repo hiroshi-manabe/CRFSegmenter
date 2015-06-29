@@ -55,6 +55,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
 
     size_t pos = 0;
     bool isAfterSlash = false;
+    auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>(observationList->size());
     while (pos < len) {
         size_t charCount = 0;
         auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
@@ -66,14 +67,12 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         else {
             observationList->push_back(uchar);
             labelList->push_back(prevIsSpace ? "1" : "0");
+            unordered_set<string> possibleLabelSet;
+            possibleLabelSet.insert("1");
+            if ((hasValidLabels && pos != 0) || (!hasValidLabels && !prevIsSpace)) {
+                possibleLabelSet.insert("0");
+            }
             prevIsSpace = false;
-        }
-    }
-    auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>(observationList->size());
-    for (size_t i = 0; i < possibleLabelSetList->size(); ++i) {
-        (*possibleLabelSetList)[i].insert("1");
-        if (i > 0) {
-            (*possibleLabelSetList)[i].insert("0");
         }
     }
     return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
