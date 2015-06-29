@@ -46,7 +46,7 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
-shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels) {
+shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels, bool isDecodingPreservingSpaces) {
     const char *buf = line.c_str();
     size_t len = line.size();
     bool prevIsSpace = true;
@@ -68,18 +68,45 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
             observationList->push_back(uchar);
             labelList->push_back(prevIsSpace ? "1" : "0");
             unordered_set<string> possibleLabelSet;
-            possibleLabelSet.insert("1");
-            if ((hasValidLabels && pos != 0) || (!hasValidLabels && !prevIsSpace)) {
-                possibleLabelSet.insert("0");
+            if (pos == 0) {
+                possibleLabelSet = decltype(possibleLabelSet){ "1" };
             }
+            else {
+                if (!isDecodingPreservingSpaces) {
+                    possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+                }
+                else {
+                    if (prevIsSpace) {
+                        possibleLabelSet = decltype(possibleLabelSet){ "1" };
+                    }
+                    else {
+                        possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+                    }
+                }
+            }
+            possibleLabelSetList->push_back(move(possibleLabelSet));
             prevIsSpace = false;
         }
     }
     return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
 
+vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string &fileName, bool hasValidLabels, bool preserveSpacesWhenDecoding) {
+    ifstream ifs(fileName);
+    if (!ifs.is_open()) {
+        cerr << "Cannot read from file: " << fileName << endl;
+        exit(1);
+    }
+    vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
+    string line;
+    while (getline(ifs, line)) {
+        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels, preserveSpacesWhenDecoding));
+    }
+    ifs.close();
+    return observationSequenceList;
+}
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, PRESERVE_SPACES, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -106,6 +133,7 @@ const option::Descriptor usage[] =
     { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { PRESERVE_SPACES, 0, "", "preserve-spaces", Arg::None, "  --preserve-spaces  \tPreserves spaces in the original text when segmenting. Ignored when training or testing." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
     { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
@@ -217,6 +245,8 @@ int mainProc(int argc, char **argv) {
     }
 
     // segments the inputs
+    op.preserveSpacesWhenDecoding = options[PRESERVE_SPACES] ? true : false;
+
     Segmenter::SegmenterClass s(op);
     s.readModel(modelFilename);
     
@@ -257,24 +287,9 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
     featureGenerator = gen;
 };
 
-vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> SegmenterClass::readData(const string &fileName, bool hasValidLabels) {
-    ifstream ifs(fileName);
-    if (!ifs.is_open()) {
-        cerr << "Cannot read from file: " << fileName << endl;
-        exit(1);
-    }
-    vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
-    string line;
-    while (getline(ifs, line)) {
-        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels));
-    }
-    ifs.close();
-    return observationSequenceList;
-}
-
 void SegmenterClass::train(const string &trainingFilename,
                            const string &modelFilename) {
-    auto observationSequenceList = readData(trainingFilename, true);
+    auto observationSequenceList = readData(trainingFilename, true, false);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
     unordered_set<string> labelSet;
     labelSet.insert("0");
@@ -292,7 +307,7 @@ string SegmenterClass::segment(const string &line) const {
     if (line.empty()) {
         return "";
     }
-    auto observationSequence = convertLineToObservationSequence(line, false);
+    auto observationSequence = convertLineToObservationSequence(line, false, options.preserveSpacesWhenDecoding);
     auto spaceList = CRFProcessor->tag(*observationSequence, *featureGenerator);
     auto unicodeList = observationSequence->getObservationList();
     string ret;
@@ -306,7 +321,7 @@ string SegmenterClass::segment(const string &line) const {
 }
 
 void SegmenterClass::test(const string &testFilename) {
-    auto observationSequenceList = readData(testFilename, true);
+    auto observationSequenceList = readData(testFilename, true, false);
     vector<shared_ptr<vector<string>>> labelListList;
     for (auto &observationSequence : observationSequenceList) {
         labelListList.push_back(observationSequence->getLabelList());
