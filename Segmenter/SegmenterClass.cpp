@@ -46,7 +46,7 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
-shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels, bool isDecodingPreservingSpaces) {
+shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels, bool preserveSpaces, bool ignoreLatin) {
     const char *buf = line.c_str();
     size_t len = line.size();
     bool prevIsSpace = true;
@@ -56,6 +56,8 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
     size_t pos = 0;
     bool isAfterSlash = false;
     auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>(observationList->size());
+    string prevCharType;
+
     while (pos < len) {
         size_t charCount = 0;
         auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
@@ -66,32 +68,44 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         }
         else {
             observationList->push_back(uchar);
+            string charType = uchar.getCharacterType();
+
             labelList->push_back(prevIsSpace ? "1" : "0");
             unordered_set<string> possibleLabelSet;
+
+            bool cutFlag = false;
+            bool noCutFlag = false;
+
             if (possibleLabelSetList->empty()) {
-                possibleLabelSet = decltype(possibleLabelSet){ "1" };
+                cutFlag = true;
             }
             else {
-                if (!isDecodingPreservingSpaces) {
-                    possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+                if (preserveSpaces && prevIsSpace) {
+                    cutFlag = true;
                 }
-                else {
-                    if (prevIsSpace) {
-                        possibleLabelSet = decltype(possibleLabelSet){ "1" };
-                    }
-                    else {
-                        possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
-                    }
+                else if (ignoreLatin && prevCharType == "LATIN" && charType == "LATIN") {
+                    noCutFlag = true;
                 }
             }
+            if (cutFlag) {
+                possibleLabelSet = decltype(possibleLabelSet){ "1" };
+            }
+            else if (noCutFlag) {
+                possibleLabelSet = decltype(possibleLabelSet){ "0" };
+            }
+            else {
+                possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+            }
+
             possibleLabelSetList->push_back(move(possibleLabelSet));
             prevIsSpace = false;
+            prevCharType = move(charType);
         }
     }
     return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
 
-vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string &fileName, bool hasValidLabels, bool preserveSpacesWhenDecoding) {
+vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string &fileName, bool hasValidLabels, bool preserveSpaces, bool ignoreLatin) {
     ifstream ifs(fileName);
     if (!ifs.is_open()) {
         cerr << "Cannot read from file: " << fileName << endl;
@@ -100,13 +114,13 @@ vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string 
     vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
     string line;
     while (getline(ifs, line)) {
-        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels, preserveSpacesWhenDecoding));
+        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels, preserveSpaces, ignoreLatin));
     }
     ifs.close();
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, PRESERVE_SPACES, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -134,6 +148,7 @@ const option::Descriptor usage[] =
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { PRESERVE_SPACES, 0, "", "preserve-spaces", Arg::None, "  --preserve-spaces  \tPreserves spaces in the original text when segmenting. Ignored when training or testing." },
+    { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
     { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
@@ -245,7 +260,8 @@ int mainProc(int argc, char **argv) {
     }
 
     // segments the inputs
-    op.preserveSpacesWhenDecoding = options[PRESERVE_SPACES] ? true : false;
+    op.preserveSpaces = options[PRESERVE_SPACES] ? true : false;
+    op.ignoreLatin = options[IGNORE_LATIN] ? true : false;
 
     Segmenter::SegmenterClass s(op);
     s.readModel(modelFilename);
@@ -289,7 +305,7 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
 
 void SegmenterClass::train(const string &trainingFilename,
                            const string &modelFilename) {
-    auto observationSequenceList = readData(trainingFilename, true, false);
+    auto observationSequenceList = readData(trainingFilename, true, false, false);
     CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
     unordered_set<string> labelSet;
     labelSet.insert("0");
@@ -307,7 +323,7 @@ string SegmenterClass::segment(const string &line) const {
     if (line.empty()) {
         return "";
     }
-    auto observationSequence = convertLineToObservationSequence(line, false, options.preserveSpacesWhenDecoding);
+    auto observationSequence = convertLineToObservationSequence(line, false, options.preserveSpaces, options.ignoreLatin);
     auto spaceList = CRFProcessor->tag(*observationSequence, *featureGenerator);
     auto unicodeList = observationSequence->getObservationList();
     string ret;
@@ -321,7 +337,7 @@ string SegmenterClass::segment(const string &line) const {
 }
 
 void SegmenterClass::test(const string &testFilename) {
-    auto observationSequenceList = readData(testFilename, true, false);
+    auto observationSequenceList = readData(testFilename, true, false, false);
     vector<shared_ptr<vector<string>>> labelListList;
     for (auto &observationSequence : observationSequenceList) {
         labelListList.push_back(observationSequence->getLabelList());
