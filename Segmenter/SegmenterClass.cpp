@@ -62,7 +62,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         size_t charCount = 0;
         auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
         pos += charCount;
-        if (uchar.getCodePoint() == ' ') {
+        if (uchar.getCodePoint() == 0x20 || uchar.getCodePoint() == 0x3000) {
             prevIsSpace = true;
             continue;
         }
