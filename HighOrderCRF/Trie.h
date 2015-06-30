@@ -21,6 +21,10 @@ struct TrieNode {
     TrieNode(L label) : label(label) {
         value = -1;
     }
+
+    size_t getChildCount() const {
+        return children.size();
+    }
     
     size_t getChildIndex(L label) const {
         size_t index = 0;
@@ -78,6 +82,10 @@ public:
     }
 
     ~Trie() {
+    }
+
+    bool isEmpty() {
+        return rootNode.getChildCount() == 0;
     }
 
     int findOrInsert(const L *data, size_t size, int value) {

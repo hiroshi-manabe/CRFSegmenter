@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -24,6 +25,7 @@ using std::move;
 using std::ofstream;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 template<class T>
@@ -180,10 +182,21 @@ void HighOrderCRFData::trim() {
     uint32_t validFeatureCount = 0;
     vector<uint32_t> validFeatureIndexList;
     validFeatureIndexList.reserve(weightList.size());
-    vector<bool> flagList(labelSequenceList.size());
+    unordered_set<uint32_t> labelFeatureSet;
+
+    auto emptyFeatureTemplate = make_shared<FeatureTemplate>("", 1);
+    auto it = featureTemplateToFeatureIndexListMap.find(emptyFeatureTemplate);
+    if (it != featureTemplateToFeatureIndexListMap.end()) {
+        const auto &features = it->second;
+        for (auto feature : features) {
+            labelFeatureSet.insert(feature);
+        }
+    }
+
+    vector<bool> labelFlagList(labelSequenceList.size());
     for (size_t i = 0; i < weightList.size(); ++i) {
-        if (weightList[i] != 0) {
-            flagList[featureLabelSequenceIndexList[i]] = true;
+        if (weightList[i] != 0 || labelFeatureSet.find(i) != labelFeatureSet.end()) {
+            labelFlagList[featureLabelSequenceIndexList[i]] = true;
             weightList[validFeatureCount] = weightList[i];
             featureLabelSequenceIndexList[validFeatureCount] = featureLabelSequenceIndexList[i];
             validFeatureIndexList.push_back(validFeatureCount);
@@ -201,8 +214,8 @@ void HighOrderCRFData::trim() {
     vector<uint32_t> validLabelSequenceIndexList;
     validLabelSequenceIndexList.reserve(labelSequenceList.size());
     for (size_t i = 0; i < labelSequenceList.size(); ++i) {
-        validLabelSequenceIndexList.push_back(flagList[i] ? validLabelSequenceCount : UINT32_MAX);
-        if (flagList[i]) {
+        validLabelSequenceIndexList.push_back(labelFlagList[i] ? validLabelSequenceCount : UINT32_MAX);
+        if (labelFlagList[i]) {
             if (validLabelSequenceCount != i) {
                 labelSequenceList[validLabelSequenceCount] = move(labelSequenceList[i]);
             }
