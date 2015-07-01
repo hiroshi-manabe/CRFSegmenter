@@ -71,6 +71,10 @@ public:
         }
         return make_shared<DataSequence>(featureTemplateListList, labels, possibleLabelTypeSetList, hasValidLabels);
    }
+   
+    bool empty() {
+        return observationList->empty();
+    }
 
 private:
     shared_ptr<vector<T>> observationList;

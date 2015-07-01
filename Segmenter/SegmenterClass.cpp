@@ -114,7 +114,11 @@ vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string 
     vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
     string line;
     while (getline(ifs, line)) {
-        observationSequenceList.push_back(convertLineToObservationSequence(line, hasValidLabels, flags));
+        auto seq = convertLineToObservationSequence(line, hasValidLabels, flags);
+        if (seq->empty()) {
+            continue;
+        }
+        observationSequenceList.push_back(seq);
     }
     ifs.close();
     return observationSequenceList;
@@ -327,6 +331,9 @@ string SegmenterClass::segment(const string &line) const {
         return "";
     }
     auto observationSequence = convertLineToObservationSequence(line, false, options);
+    if (observationSequence->empty()) {
+        return "";
+    }
     auto spaceList = CRFProcessor->tag(*observationSequence, *featureGenerator);
     auto unicodeList = observationSequence->getObservationList();
     string ret;
