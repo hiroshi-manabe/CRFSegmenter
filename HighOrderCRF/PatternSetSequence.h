@@ -25,6 +25,7 @@ public:
     double calcLogLikelihood() const;
     
 private:
+    double calculateScores(const double *expWeights, vector<vector<double>> *scores) const;
     shared_ptr<vector<vector<Pattern>>> patternListList;
     shared_ptr<vector<pattern_index_t>> longestMatchIndexList;
 };

@@ -79,12 +79,10 @@ void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
     }
 }
 
-static mutex expectationMutex;
-// returns log likelihood of the sequence
-double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
+double PatternSetSequence::calculateScores(const double *expWeights, vector<vector<double>> *scores) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = patternListList->size();
-    vector<vector<double>> scoreListList(0);
+    vector<vector<double>> &scoreListList = *scores;
     vector<int> exponents(sequenceLength);
 
     for (auto &patternList : *patternListList) {
@@ -114,10 +112,10 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
         auto &scoreList = scoreListList[pos];
         auto &weightList = (*weightListList)[pos];
         size_t listSize = curPatternList.size();
-        
+
         fill(curTempScoreList->begin(), curTempScoreList->begin() + listSize, 0.0);
         double scale = ldexp(1.0, -exponentDiff);
-        
+
         for (size_t index = listSize - 1; index > 0; --index) {
             auto &curPattern = curPatternList[index];
             auto longestSuffixIndex = curPattern.getLongestSuffixIndex();
@@ -141,7 +139,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
         }
         swap(curTempScoreList, prevTempScoreList);
     }
-    
+
     double normalizer = (*prevTempScoreList)[0];
     int normalizerExponent = exponents[sequenceLength - 1];
 
@@ -153,7 +151,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
     // delta for the empty pattern
     (*curTempScoreList)[0] = 1;
 
-    for (size_t pos = sequenceLength; pos-- > 0; ) {
+    for (size_t pos = sequenceLength; pos-- > 0;) {
         auto &curPatternList = (*patternListList)[pos];
         auto &scoreList = scoreListList[pos];
         auto &weightList = (*weightListList)[pos];
@@ -177,7 +175,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
 
             // beta * W
             (*curTempScoreList)[index] *= weightList[index];
-            
+
             // theta (alpha * beta * W)
             scoreList[index] *= (*curTempScoreList)[index];
 
@@ -195,13 +193,29 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
         for (size_t index = listSize - 1; index > 0; --index) {
             scoreList[index] /= scoreList[0];
         }
-        
+
         swap(prevTempScoreList, curTempScoreList);
     }
+
+    // calculates the log likelihood of the sequence
+    double logLikelihood = -(log(normalizer) + log(2.0) * normalizerExponent);
+    for (size_t pos = 0; pos < sequenceLength; ++pos) {
+        auto &weightList = (*weightListList)[pos];
+        logLikelihood += log(weightList[(*longestMatchIndexList)[pos]]);
+    }
+
+    return logLikelihood;
+}
+
+static mutex expectationMutex;
+// returns log likelihood of the sequence
+double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
+    vector<vector<double>> scoreListList;
+    double logLikelihood = calculateScores(expWeights, &scoreListList);
     
     // accumulates expectations
     expectationMutex.lock();
-    for (size_t pos = 0; pos < sequenceLength; ++pos) {
+    for (size_t pos = 0; pos < scoreListList.size(); ++pos) {
         auto &curPatternList = (*patternListList)[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
             for (auto &featureIndex : curPatternList[index].getFeatureIndexList()) {
@@ -211,13 +225,6 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
     }
     expectationMutex.unlock();
 
-    // calculates the log likelihood of the sequence
-    double logLikelihood = -(log(normalizer) + log(2.0) * normalizerExponent);
-    for (size_t pos = 0; pos < sequenceLength; ++pos) {
-        auto &weightList = (*weightListList)[pos];
-        logLikelihood += log(weightList[(*longestMatchIndexList)[pos]]);
-    }
-    
     return logLikelihood;
 }
 
