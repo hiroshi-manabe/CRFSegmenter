@@ -19,7 +19,9 @@
 #include <iostream>
 #include <memory>
 #include <queue>
+#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -43,6 +45,8 @@ using std::make_shared;
 using std::queue;
 using std::shared_ptr;
 using std::string;
+using std::stringstream;
+using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
@@ -124,7 +128,7 @@ vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string 
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -151,6 +155,7 @@ const option::Descriptor usage[] =
     { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculate the likelihoods of cutting at each position." },
     { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUse only ascii spaces for segmentation." },
     { PRESERVE_SPACES, 0, "", "preserve-spaces", Arg::None, "  --preserve-spaces  \tPreserves spaces in the original text when segmenting. Ignored when training or testing." },
     { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
@@ -265,7 +270,7 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    // segments the inputs
+    // --segment or --calc-likelihood
     op.preserveSpaces = options[PRESERVE_SPACES] ? true : false;
     op.ignoreLatin = options[IGNORE_LATIN] ? true : false;
 
@@ -277,7 +282,8 @@ int mainProc(int argc, char **argv) {
     queue<future<string>> futureQueue;
     
     while (getline(cin, line)) {
-        future<string> f = tq.enqueue(&Segmenter::SegmenterClass::segment, s, line);
+        future<string> f = options[CALC_LIKELIHOOD] ? tq.enqueue(&Segmenter::SegmenterClass::calcLabelLikelihoods, s, line) :
+            tq.enqueue(&Segmenter::SegmenterClass::segment, s, line);
         futureQueue.push(move(f));
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             cout << futureQueue.front().get() << endl;
@@ -344,6 +350,28 @@ string SegmenterClass::segment(const string &line) const {
         ret += (*unicodeList)[i].toString();
     }
     return ret;
+}
+
+string SegmenterClass::calcLabelLikelihoods(const string &line) {
+    if (line.empty()) {
+        return "";
+    }
+    auto observationSequence = convertLineToObservationSequence(line, false, options);
+    if (observationSequence->empty()) {
+        return "";
+    }
+    auto unicodeList = observationSequence->getObservationList();
+    auto likelihoods = CRFProcessor->calcLabelLikelihoods(*observationSequence, *featureGenerator);
+    stringstream ss;
+    for (size_t i = 0; i < unicodeList->size(); ++i) {
+        const auto &labelMap = likelihoods[i];
+        ss << (*unicodeList)[i].toString();
+        for (const auto &entry : labelMap) {
+            ss << "\t" << entry.first << ":" << entry.second;
+        }
+        ss << endl;
+    }
+    return ss.str();
 }
 
 void SegmenterClass::test(const string &testFilename) {

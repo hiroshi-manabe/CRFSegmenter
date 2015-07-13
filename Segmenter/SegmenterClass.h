@@ -36,6 +36,7 @@ public:
     SegmenterClass(const SegmenterOptions &segmenterOptions);
     void train(const string &trainingFilename, const string &modelFilename);
     string segment(const string &line) const;
+    string calcLabelLikelihoods(const string &line);
     void test(const string &testFilename);
     void readModel(const string &modelFilename);
 

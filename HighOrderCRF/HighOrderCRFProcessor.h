@@ -123,7 +123,7 @@ public:
     }
 
     shared_ptr<vector<string>> tag(const ObservationSequence<T> &observationSequence,
-                                   const FeatureTemplateGenerator<T> &featureTemplateGenerator) {
+                                   const FeatureTemplateGenerator<T> &featureTemplateGenerator) const {
         auto labelMap = modelData->getLabelMap();
         auto labelList = tagLabelType(observationSequence, &featureTemplateGenerator);
         auto ret = make_shared<vector<string>>();
@@ -133,11 +133,29 @@ public:
         }
         return ret;
     }
+
+    vector<unordered_map<string, double>> calcLabelLikelihoods(const ObservationSequence<T> &observationSequence,
+                                                               const FeatureTemplateGenerator<T> &featureTemplateGenerator) {
+        prepareExpWeights();
+        auto likelihoodMap = observationSequence.generateDataSequence(featureTemplateGenerator, modelData->getLabelMap())
+            ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
+            ->calcLabelLikelihoods(expWeights->data());
+        auto labelStringList = modelData->getLabelStringList();
+        vector<unordered_map<string, double>> ret;
+        for (const auto &m : likelihoodMap) {
+            unordered_map<string, double> newMap;
+            for (const auto &entry : m) {
+                newMap.insert(make_pair(labelStringList[entry.first], entry.second));
+            }
+            ret.push_back(move(newMap));
+        }
+        return ret;
+    }
     
     void test(const vector<shared_ptr<ObservationSequence<T>>> &observationSequenceList,
               const FeatureTemplateGenerator<T> &featureTemplateGenerator,
               const vector<shared_ptr<vector<string>>> &correctLabelListList,
-              size_t concurrency) {
+              size_t concurrency) const {
         // number of distinct labels
         size_t labelCount = modelData->getLabelStringList().size();
         vector<size_t> observationLabelCounts(labelCount);
@@ -201,7 +219,6 @@ public:
             correctLabelCount, allLabelCount, correctLabelCount / (double)allLabelCount);
         printf("Instance Accuracy: %d / %d (%1.4f)\n",
             correctSequenceCount, sequenceCount, correctSequenceCount / (double)sequenceCount);
-
     }
 
     void writeModel(const string &filename) {
@@ -216,13 +233,25 @@ public:
 private:
     // the second argument cannot be a simple reference because the task queue complains
     vector<label_t> tagLabelType(const ObservationSequence<T> &observationSequence,
-                                 const FeatureTemplateGenerator<T> *featureTemplateGenerator) {
-        auto dataSequence = observationSequence.generateDataSequence(*featureTemplateGenerator, modelData->getLabelMap());
-        auto patternSetSequence = dataSequence->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList());
-        return patternSetSequence->decode(modelData->getWeightList().data());
+                                 const FeatureTemplateGenerator<T> *featureTemplateGenerator) const {
+        return observationSequence.generateDataSequence(*featureTemplateGenerator, modelData->getLabelMap())
+               ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
+               ->decode(modelData->getWeightList().data());
+    }
+    void prepareExpWeights() {
+        if (expWeights || !modelData) {
+            return;
+        }
+        expWeights.reset(new vector<double>());
+        auto weightList = modelData->getWeightList();
+        expWeights->reserve(weightList.size());
+        for (auto w : weightList) {
+            expWeights->push_back(exp(weight_to_double(w)));
+        }
     }
 
     shared_ptr<HighOrderCRFData> modelData;
+    shared_ptr<vector<double>> expWeights;  // only for likelihood calculation
 };
 
 } // namespace HighOrderCRF

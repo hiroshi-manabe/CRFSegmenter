@@ -7,6 +7,7 @@
 #include <cfloat>
 #include <mutex>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace HighOrderCRF {
@@ -14,9 +15,11 @@ namespace HighOrderCRF {
 using std::copy;
 using std::fill;
 using std::make_shared;
+using std::make_pair;
 using std::mutex;
 using std::shared_ptr;
 using std::swap;
+using std::unordered_map;
 using std::vector;
 
 shared_ptr<vector<vector<double>>> getAccumulatedWeightListList(shared_ptr<vector<vector<Pattern>>> patternListList, const double *expWeights) {
@@ -79,7 +82,26 @@ void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
     }
 }
 
-double PatternSetSequence::calculateScores(const double *expWeights, vector<vector<double>> *scores) const {
+vector<unordered_map<label_t, double>> PatternSetSequence::calcLabelLikelihoods(const double *expWeights) const {
+    vector<unordered_map<label_t, double>> ret;
+    vector<vector<double>> scoreListList;
+    calcScores(expWeights, &scoreListList);
+    for (size_t i = 0; i < scoreListList.size(); ++i) {
+        unordered_map<label_t, double> curMap;
+        for (size_t j = 1; j < scoreListList[i].size(); ++j) {
+            if ((*patternListList)[i][j].getLongestSuffixIndex() != 0) {
+                continue;
+            }
+            label_t l = (*patternListList)[i][j].getLastLabel();
+            curMap.insert(make_pair(l, scoreListList[i][j]));
+        }
+        ret.push_back(move(curMap));
+    }
+    return ret;
+}
+
+
+double PatternSetSequence::calcScores(const double *expWeights, vector<vector<double>> *scores) const {
     size_t maxPatternSetSize = 0;
     size_t sequenceLength = patternListList->size();
     vector<vector<double>> &scoreListList = *scores;
@@ -211,7 +233,7 @@ static mutex expectationMutex;
 // returns log likelihood of the sequence
 double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
     vector<vector<double>> scoreListList;
-    double logLikelihood = calculateScores(expWeights, &scoreListList);
+    double logLikelihood = calcScores(expWeights, &scoreListList);
     
     // accumulates expectations
     expectationMutex.lock();
