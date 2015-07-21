@@ -21,6 +21,7 @@ struct SegmenterOptions {
     string regType;
     string dictionaryFilename;
     bool preserveSpaces;
+    bool concatenateOnly;
     bool ignoreLatin;
     bool asciiSpaceOnly;
 };

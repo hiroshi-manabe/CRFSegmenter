@@ -87,7 +87,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
                 if (flags.preserveSpaces && prevIsSpace) {
                     cutFlag = true;
                 }
-                else if (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN") {
+                else if ((flags.concatenateOnly && !prevIsSpace) || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) {
                     noCutFlag = true;
                 }
             }
@@ -128,7 +128,7 @@ vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string 
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -155,8 +155,9 @@ const option::Descriptor usage[] =
     { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculate the likelihoods of cutting at each position." },
-    { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUse only ascii spaces for segmentation." },
+    { CONCATENATE_ONLY, 0, "", "concatenate-only", Arg::None, "  --concatenate-only  \tDoes not segment and only concatenates words." },
+    { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
+    { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
     { PRESERVE_SPACES, 0, "", "preserve-spaces", Arg::None, "  --preserve-spaces  \tPreserves spaces in the original text when segmenting. Ignored when training or testing." },
     { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
@@ -272,6 +273,7 @@ int mainProc(int argc, char **argv) {
 
     // --segment or --calc-likelihood
     op.preserveSpaces = options[PRESERVE_SPACES] ? true : false;
+    op.concatenateOnly = options[CONCATENATE_ONLY] ? true : false;
     op.ignoreLatin = options[IGNORE_LATIN] ? true : false;
 
     Segmenter::SegmenterClass s(op);
