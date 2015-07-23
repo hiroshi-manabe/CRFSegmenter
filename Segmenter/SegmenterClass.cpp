@@ -84,10 +84,10 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
                 cutFlag = true;
             }
             else {
-                if (flags.preserveSpaces && prevIsSpace) {
+                if ((flags.preserveSpaces || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && prevIsSpace) {
                     cutFlag = true;
                 }
-                else if ((flags.concatenateOnly && !prevIsSpace) || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) {
+                else if ((flags.concatenateOnly || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
                     noCutFlag = true;
                 }
             }
