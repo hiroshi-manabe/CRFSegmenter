@@ -82,6 +82,10 @@ UnicodeCharacter UnicodeCharacter::fromString(const char *buf, size_t len, size_
             goto ERROR;
         }
     }
+    else {
+        goto ERROR;
+    }
+
     return UnicodeCharacter(codePoint);
 
 ERROR:
