@@ -405,6 +405,9 @@ int mainProc(int argc, char **argv) {
         if (line.empty()) {
             auto f = tq.enqueue(&MorphemeTagger::MorphemeTaggerClass::tag, &s, sentence);
             futureQueue.push(move(f));
+            if (op.numThreads == 1) {
+                futureQueue.front().wait();
+            }
             while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
                 const auto result = futureQueue.front().get();
                 for (size_t i = 0; i < result.size(); ++i) {

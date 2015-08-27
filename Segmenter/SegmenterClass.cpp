@@ -287,6 +287,9 @@ int mainProc(int argc, char **argv) {
         future<string> f = options[CALC_LIKELIHOOD] ? tq.enqueue(&Segmenter::SegmenterClass::calcLabelLikelihoods, s, line) :
             tq.enqueue(&Segmenter::SegmenterClass::segment, s, line);
         futureQueue.push(move(f));
+        if (op.numThreads == 1) {
+            futureQueue.front().wait();
+        }
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             cout << futureQueue.front().get() << endl;
             futureQueue.pop();
