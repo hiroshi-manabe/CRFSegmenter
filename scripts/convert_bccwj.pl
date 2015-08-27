@@ -55,14 +55,14 @@ if ($pos_table) {
         $pos_dict{$F[0]} = $F[1];
     }
     close $pos_table_in;
+    if (scalar(keys(%pos_dict)) == 0) {
+        die "POS table is empty: cannot convert POS tags.";
+    }
 }
 
 for my $type(@output_types) {
     if ($type eq 'analyze' and scalar(keys(%seidaku_dict)) == 0) {
         print STDERR "unidic_analyze not provided: cannot add voicedness tag.\n";
-    }
-    if (($type eq 'postag' or $type eq 'analyze') and scalar(keys(%pos_dict)) == 0) {
-        die "POS table not provided: cannot convert POS tags.";
     }
     for my $filelist(@filelists) {
         my %file_dict = ();
