@@ -66,7 +66,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
         size_t charCount = 0;
         auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
         pos += charCount;
-        if (uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && uchar.getCodePoint() == 0x3000)) {
+        if (uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || uchar.getCodePoint() == 0xa0))) {
             prevIsSpace = true;
             continue;
         }
