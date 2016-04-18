@@ -28,7 +28,7 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 
-class UnicodeCharacter;
+class CharWithSpace;
 
 class SegmenterClass {
 
@@ -41,8 +41,8 @@ public:
     void readModel(const string &modelFilename);
 
 private:
-    shared_ptr<FeatureTemplateGenerator<UnicodeCharacter>> featureGenerator;
-    shared_ptr<HighOrderCRFProcessor<UnicodeCharacter>> CRFProcessor;
+    shared_ptr<FeatureTemplateGenerator<CharWithSpace>> featureGenerator;
+    shared_ptr<HighOrderCRFProcessor<CharWithSpace>> CRFProcessor;
     SegmenterOptions options;
 };
 

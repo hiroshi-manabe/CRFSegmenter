@@ -1,7 +1,7 @@
 #include "DictionaryFeatureGenerator.h"
 
 #include "../Dictionary/DictionaryClass.h"
-#include "UnicodeCharacter.h"
+#include "CharWithSpace.h"
 
 #include <algorithm>
 #include <cassert>
@@ -28,10 +28,10 @@ using HighOrderCRF::FeatureTemplate;
 
 DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile) {
     dictionary = make_shared<DictionaryClass>(dictionaryFile);
-    resultCache = make_shared<unordered_map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
+    resultCache = make_shared<unordered_map<shared_ptr<vector<CharWithSpace>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
 }
 
-shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const {
+shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const {
     auto templateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
 
     // Generates all the templates

@@ -15,12 +15,12 @@ using std::vector;
 using HighOrderCRF::FeatureTemplate;
 using HighOrderCRF::FeatureTemplateGenerator;
 
-class UnicodeCharacter;
+class CharWithSpace;
 
-class CharacterTypeFeatureGenerator : public FeatureTemplateGenerator<UnicodeCharacter> {
+class CharacterTypeFeatureGenerator : public FeatureTemplateGenerator<CharWithSpace> {
 public:
     CharacterTypeFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength);
-    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const;
 
 private:
     size_t maxNgram;

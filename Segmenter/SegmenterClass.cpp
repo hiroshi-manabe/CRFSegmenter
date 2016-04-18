@@ -4,11 +4,12 @@
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../HighOrderCRF/ObservationSequence.h"
 #include "../HighOrderCRF/UnconditionalFeatureTemplateGenerator.h"
+#include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
+#include "CharWithSpace.h"
 #include "DictionaryFeatureGenerator.h"
-#include "../optionparser/optionparser.h"
 #include "SegmenterOptions.h"
 #include "UnicodeCharacter.h"
 
@@ -50,11 +51,11 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequence(const string &line, bool hasValidLabels, const SegmenterOptions &flags) {
+shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(const string &line, bool hasValidLabels, const SegmenterOptions &flags) {
     const char *buf = line.c_str();
     size_t len = line.size();
     bool prevIsSpace = true;
-    auto observationList = make_shared<vector<UnicodeCharacter>>();
+    auto observationList = make_shared<vector<CharWithSpace>>();
     auto labelList = make_shared<vector<string>>();
 
     size_t pos = 0;
@@ -71,7 +72,7 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
             continue;
         }
         else {
-            observationList->push_back(uchar);
+            observationList->push_back(CharWithSpace(uchar, false));
             string charType = uchar.getCharacterType();
 
             labelList->push_back(prevIsSpace ? "1" : "0");
@@ -106,16 +107,16 @@ shared_ptr<ObservationSequence<UnicodeCharacter>> convertLineToObservationSequen
             prevCharType = move(charType);
         }
     }
-    return make_shared<ObservationSequence<UnicodeCharacter>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
+    return make_shared<ObservationSequence<CharWithSpace>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
 
-vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> readData(const string &fileName, bool hasValidLabels, const SegmenterOptions &flags) {
+vector<shared_ptr<ObservationSequence<CharWithSpace>>> readData(const string &fileName, bool hasValidLabels, const SegmenterOptions &flags) {
     ifstream ifs(fileName);
     if (!ifs.is_open()) {
         cerr << "Cannot read from file: " << fileName << endl;
         exit(1);
     }
-    vector<shared_ptr<ObservationSequence<UnicodeCharacter>>> observationSequenceList;
+    vector<shared_ptr<ObservationSequence<CharWithSpace>>> observationSequenceList;
     string line;
     while (getline(ifs, line)) {
         auto seq = convertLineToObservationSequence(line, hasValidLabels, flags);
@@ -306,8 +307,8 @@ int mainProc(int argc, char **argv) {
 
 SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
     this->options = options;
-    auto gen = make_shared<AggregatedFeatureTemplateGenerator<UnicodeCharacter>>();
-    gen->addFeatureTemplateGenerator(make_shared<UnconditionalFeatureTemplateGenerator<UnicodeCharacter>>(1));
+    auto gen = make_shared<AggregatedFeatureTemplateGenerator<CharWithSpace>>();
+    gen->addFeatureTemplateGenerator(make_shared<UnconditionalFeatureTemplateGenerator<CharWithSpace>>(1));
     gen->addFeatureTemplateGenerator(make_shared<CharacterFeatureGenerator>(options.charMaxNgram,
                                                                             options.charMaxWindow,
                                                                             options.charMaxLabelLength));
@@ -324,7 +325,7 @@ void SegmenterClass::train(const string &trainingFilename,
                            const string &modelFilename) {
 
     auto observationSequenceList = readData(trainingFilename, true, options);
-    CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
+    CRFProcessor = make_shared<HighOrderCRFProcessor<CharWithSpace>>();
     unordered_set<string> labelSet;
     labelSet.insert("0");
     labelSet.insert("1");
@@ -389,7 +390,7 @@ void SegmenterClass::test(const string &testFilename) {
 }
 
 void SegmenterClass::readModel(const string &modelFilename) {
-    CRFProcessor = make_shared<HighOrderCRFProcessor<UnicodeCharacter>>();
+    CRFProcessor = make_shared<HighOrderCRFProcessor<CharWithSpace>>();
     CRFProcessor->readModel(modelFilename);
 }
 

@@ -22,16 +22,16 @@ using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 using HighOrderCRF::FeatureTemplateGenerator;
 
-class UnicodeCharacter;
+class CharWithSpace;
 
-class DictionaryFeatureGenerator : public FeatureTemplateGenerator<UnicodeCharacter> {
+class DictionaryFeatureGenerator : public FeatureTemplateGenerator<CharWithSpace> {
 public:
     DictionaryFeatureGenerator(const string &dictionaryFile);
-    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const;
+    virtual shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const;
 
 private:
     shared_ptr<DictionaryClass> dictionary;
-    shared_ptr<unordered_map<shared_ptr<vector<UnicodeCharacter>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>> resultCache;
+    shared_ptr<unordered_map<shared_ptr<vector<CharWithSpace>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>> resultCache;
 };
 
 }

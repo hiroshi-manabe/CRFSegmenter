@@ -1,6 +1,6 @@
 #include "CharacterFeatureGenerator.h"
 
-#include "UnicodeCharacter.h"
+#include "CharWithSpace.h"
 
 #include <algorithm>
 #include <cassert>
@@ -26,7 +26,7 @@ CharacterFeatureGenerator::CharacterFeatureGenerator(size_t maxNgram, size_t max
     this->maxLabelLength = maxLabelLength;
 }
 
-shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> CharacterFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<UnicodeCharacter>> observationList) const {
+shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> CharacterFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const {
     auto featureTemplateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
     for (size_t pos = 0; pos < observationList->size(); ++pos) {
         int startPos = max(0, (int)pos - (int)maxWindow);
