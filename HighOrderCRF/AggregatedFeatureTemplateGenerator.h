@@ -7,6 +7,7 @@
 #include "FeatureTemplateGenerator.h"
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <vector>
 

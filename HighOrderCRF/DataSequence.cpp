@@ -8,6 +8,7 @@
 #include "Trie.h"
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
