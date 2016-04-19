@@ -20,10 +20,11 @@ struct SegmenterOptions {
     size_t maxIter;
     string regType;
     string dictionaryFilename;
-    bool preserveSpaces;
+    bool isTraining;
     bool concatenateOnly;
     bool ignoreLatin;
     bool asciiSpaceOnly;
+    bool containsSpaces;
 };
 
 }

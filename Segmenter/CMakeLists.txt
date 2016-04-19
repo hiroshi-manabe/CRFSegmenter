@@ -2,6 +2,9 @@ add_executable(
     Segmenter
     CharacterFeatureGenerator.cpp
     CharacterTypeFeatureGenerator.cpp
+    CharWithSpace.cpp
+    CharWithSpaceFeatureGenerator.cpp
+    CharWithSpaceTypeFeatureGenerator.cpp
     DictionaryFeatureGenerator.cpp
     SegmenterClass.cpp
     UnicodeCharacter.cpp

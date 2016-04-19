@@ -9,6 +9,8 @@
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
 #include "CharWithSpace.h"
+#include "CharWithSpaceFeatureGenerator.h"
+#include "CharWithSpaceTypeFeatureGenerator.h"
 #include "DictionaryFeatureGenerator.h"
 #include "SegmenterOptions.h"
 #include "UnicodeCharacter.h"
@@ -55,6 +57,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
     const char *buf = line.c_str();
     size_t len = line.size();
     bool prevIsSpace = true;
+    bool prevIsOrigSpace = false;
     auto observationList = make_shared<vector<CharWithSpace>>();
     auto labelList = make_shared<vector<string>>();
 
@@ -67,15 +70,22 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         size_t charCount = 0;
         auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
         pos += charCount;
-        if (uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || uchar.getCodePoint() == 0xa0))) {
+        bool isNBSP = uchar.getCodePoint() == 0xa0;
+        bool isSpace = uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || isNBSP));
+
+        if (flags.isTraining && ((flags.containsSpaces && isNBSP) || (!flags.containsSpaces && isSpace))) {
             prevIsSpace = true;
             continue;
         }
+        else if (((flags.isTraining && flags.containsSpaces) || !flags.isTraining) && isSpace) {
+            prevIsOrigSpace = true;
+            continue;
+        }
         else {
-            observationList->push_back(CharWithSpace(uchar, false));
+            observationList->push_back(CharWithSpace(uchar, prevIsOrigSpace));
             string charType = uchar.getCharacterType();
 
-            labelList->push_back(prevIsSpace ? "1" : "0");
+            labelList->push_back((prevIsSpace || prevIsOrigSpace) ? "1" : "0");
             unordered_set<string> possibleLabelSet;
 
             bool cutFlag = false;
@@ -85,7 +95,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
                 cutFlag = true;
             }
             else {
-                if ((flags.preserveSpaces || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && prevIsSpace) {
+                if (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace)) {
                     cutFlag = true;
                 }
                 else if ((flags.concatenateOnly || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
@@ -129,7 +139,7 @@ vector<shared_ptr<ObservationSequence<CharWithSpace>>> readData(const string &fi
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -156,10 +166,10 @@ const option::Descriptor usage[] =
     { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { CONTAINS_SPACES, 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \tIndicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
     { CONCATENATE_ONLY, 0, "", "concatenate-only", Arg::None, "  --concatenate-only  \tDoes not segment and only concatenates words." },
     { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
     { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
-    { PRESERVE_SPACES, 0, "", "preserve-spaces", Arg::None, "  --preserve-spaces  \tPreserves spaces in the original text when segmenting. Ignored when training or testing." },
     { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
@@ -242,8 +252,11 @@ int mainProc(int argc, char **argv) {
         op.charMaxLabelLength = atoi(options[TYPE_L].arg);
     }
     op.asciiSpaceOnly = options[ASCII_SPACE_ONLY] ? true : false;
+    op.containsSpaces = options[CONTAINS_SPACES] ? true : false;
+    op.isTraining = false;
         
     if (options[TRAIN]) {
+        op.isTraining = true;
         string trainingFilename = options[TRAIN].arg;
 
         if (options[COEFF]) {
@@ -273,7 +286,6 @@ int mainProc(int argc, char **argv) {
     }
 
     // --segment or --calc-likelihood
-    op.preserveSpaces = options[PRESERVE_SPACES] ? true : false;
     op.concatenateOnly = options[CONCATENATE_ONLY] ? true : false;
     op.ignoreLatin = options[IGNORE_LATIN] ? true : false;
 
@@ -315,6 +327,14 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
     gen->addFeatureTemplateGenerator(make_shared<CharacterTypeFeatureGenerator>(options.charTypeMaxNgram,
                                                                                 options.charTypeMaxWindow,
                                                                                 options.charTypeMaxLabelLength));
+    if (options.containsSpaces) {
+    gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceFeatureGenerator>(options.charMaxNgram,
+                                                                                options.charMaxWindow,
+                                                                                options.charMaxLabelLength));
+    gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceTypeFeatureGenerator>(options.charTypeMaxNgram,
+                                                                                    options.charTypeMaxWindow,
+                                                                                    options.charTypeMaxLabelLength));
+    }
     if (!options.dictionaryFilename.empty()) {
         gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(options.dictionaryFilename));
     }
