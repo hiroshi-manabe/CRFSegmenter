@@ -39,22 +39,30 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
     // Reconstructs the whole sentence, recording the start positions
     string sentence;
     vector<size_t> startPosList;
+    // The maximum length of a UTF-8 char is 4
+    vector<size_t> utf8PosToCharPosList(observationList->size() * 4 + 1);
         
     for (auto uchar : *observationList) {
+        utf8PosToCharPosList[sentence.length()] = startPosList.size();
         startPosList.push_back(sentence.length());
         sentence += uchar.toString();
     }
+    utf8PosToCharPosList[sentence.length()] = startPosList.size();
     startPosList.push_back(sentence.length());
 
-    vector<size_t> utf8PosToCharPosList(sentence.length() + 1);
     for (size_t i = 0; i < startPosList.size(); ++i) {
         utf8PosToCharPosList[startPosList[i]] = i;
     }
 
     for (size_t i = 0; i < startPosList.size(); ++i) {
         size_t startUtf8Pos = startPosList[i];
+        // skip the space if there is one
+        if (observationList->at(i).hasSpace()) {
+            ++startUtf8Pos;
+        }
         // Looks up the words
-        auto results = dictionary->commonPrefixSearch(string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
+        auto results = dictionary->commonPrefixSearch(
+            string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
         for (const auto &p : results) {
             const auto &charLength = p.first;
             const auto &featureListList = p.second;
