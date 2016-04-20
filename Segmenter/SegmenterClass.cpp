@@ -82,6 +82,9 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
             continue;
         }
         else {
+            if (observationList->empty()) {
+                prevIsOrigSpace = true;
+            }
             observationList->push_back(CharWithSpace(uchar, prevIsOrigSpace));
             string charType = uchar.getCharacterType();
 
@@ -91,17 +94,13 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
             bool cutFlag = false;
             bool noCutFlag = false;
 
-            if (possibleLabelSetList->empty()) {
+            if (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace)) {
                 cutFlag = true;
             }
-            else {
-                if (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace)) {
-                    cutFlag = true;
-                }
-                else if ((flags.concatenateOnly || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
-                    noCutFlag = true;
-                }
+            else if ((flags.concatenateOnly || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
+                noCutFlag = true;
             }
+
             if (cutFlag) {
                 possibleLabelSet = decltype(possibleLabelSet){ "1" };
             }
