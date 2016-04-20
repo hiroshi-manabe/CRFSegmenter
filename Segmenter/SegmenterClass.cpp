@@ -374,7 +374,7 @@ string SegmenterClass::segment(const string &line) const {
         if (i > 0 && (*spaceList)[i] == "1") {
             ret += " ";
         }
-        ret += (*unicodeList)[i].toString();
+        ret += (*unicodeList)[i].getUnicodeCharacter().toString();
     }
     return ret;
 }
