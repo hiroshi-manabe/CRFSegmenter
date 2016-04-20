@@ -39,8 +39,8 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
     // Reconstructs the whole sentence, recording the start positions
     string sentence;
     vector<size_t> startPosList;
-    // The maximum length of a UTF-8 char is 4
-    vector<size_t> utf8PosToCharPosList(observationList->size() * 4 + 1);
+    // The maximum length of a UTF-8 char is 4, and each character may have a space before it
+    vector<size_t> utf8PosToCharPosList(observationList->size() * 5 + 1);
         
     for (auto uchar : *observationList) {
         utf8PosToCharPosList[sentence.length()] = startPosList.size();
