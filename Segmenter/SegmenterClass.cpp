@@ -77,7 +77,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
             prevIsSpace = true;
             continue;
         }
-        else if (((flags.isTraining && flags.containsSpaces) || !flags.isTraining) && isSpace) {
+        else if (isSpace) {
             prevIsOrigSpace = true;
             continue;
         }
@@ -114,6 +114,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
 
             possibleLabelSetList->push_back(move(possibleLabelSet));
             prevIsSpace = false;
+            prevIsOrigSpace = false;
             prevCharType = move(charType);
         }
     }
