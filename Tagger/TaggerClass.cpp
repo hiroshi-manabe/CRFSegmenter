@@ -221,6 +221,8 @@ void writeOptions(const string &filename, const vector<string> &optionsToSave, c
 }
 
 int mainProc(int argc, char **argv) {
+    Tagger::TaggerOptions op {};
+
     argv += (argc > 0);
     argc -= (argc > 0);
 

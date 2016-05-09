@@ -245,6 +245,8 @@ void writeOptions(const string &filename, const vector<string> &optionsToSave, c
 }
 
 int mainProc(int argc, char **argv) {
+    Segmenter::SegmenterOptions op {};
+
     argv += (argc > 0);
     argc -= (argc > 0);
 
@@ -266,6 +268,7 @@ int mainProc(int argc, char **argv) {
         {"TYPE_L", "1"},
         {"WORD_L", "5"}
     };
+
     for (auto &option : options) {
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "");
