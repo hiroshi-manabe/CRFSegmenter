@@ -20,6 +20,7 @@
 #include <queue>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -41,21 +42,31 @@ using std::getline;
 using std::ifstream;
 using std::make_shared;
 using std::move;
+using std::ofstream;
 using std::queue;
 using std::shared_ptr;
 using std::string;
 using std::stringstream;
+using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-vector<string> splitStringBySpace(const string &s) {
+vector<string> splitString(const string &s, char delim) {
     vector<string> elems;
     stringstream ss(s);
     string item;
-    while (getline(ss, item, ' ')) {
+    while (getline(ss, item, delim)) {
         elems.push_back(item);
     }
     return elems;
+}
+
+static vector<string> splitStringBySpaces(const string &s) {
+    return splitString(s, ' ');
+}
+
+static vector<string> splitStringByTabs(const string &s) {
+    return splitString(s, '\t');
 }
 
 vector<string> rsplit2BySlash(const string &s) {
@@ -73,7 +84,7 @@ shared_ptr<ObservationSequence<string>> convertLineToObservationSequence(const s
     auto labelList = make_shared<vector<string>>();
     auto possibleLabelSetList = make_shared<vector<unordered_set<string>>>();
 
-    auto wordAndLabelList = splitStringBySpace(line);
+    auto wordAndLabelList = splitStringBySpaces(line);
     for (const auto &wordAndLabelStr : wordAndLabelList) {
         auto wordAndLabel = rsplit2BySlash(wordAndLabelStr);
         string &word = wordAndLabel[0];
@@ -126,6 +137,7 @@ unordered_set<string> readTagSet(const string &filename) {
 
 
 enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, NEWLINE, UNK, TAGSET, TEST, MODEL, DICT, THREADS, WORD_N, WORD_W, WORD_L, REGTYPE, COEFF, EPSILON, MAXITER };
+vector<string> optionsToSave { "WORD_N", "WORD_W", "WORD_L" };
 
 struct Arg : public option::Arg
 {
@@ -140,32 +152,73 @@ struct Arg : public option::Arg
 
 const option::Descriptor usage[] =
 {
-    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
+    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
-    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
-    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
-    { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { NEWLINE, 0, "", "newline", Arg::None, "  --newline  \tOutputs newline-separated tags. Valid only with --tag option. Use this option to feed the morpheme tagger." },
-    { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words (for training)." },
-    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words (for training)." },
-    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of words (for training)." },
-    { TAGSET, 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
-    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
-    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
-    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
-    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
-    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNK, 0, "", "unk", Arg::None, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
-    { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
+    { HELP, "HELP", 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { DICT, "DICT", 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { TAG, "TAG", 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { NEWLINE, "NEWLINE", 0, "", "newline", Arg::None, "  --newline  \tOutputs newline-separated tags. Valid only with --tag option. Use this option to feed the morpheme tagger." },
+    { WORD_N, "WORD_N", 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words. Defaults to 2." },
+    { WORD_W, "WORD_W", 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words. Defaults to 2." },
+    { WORD_L, "WORD_L", 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of words. Defaults to 4." },
+    { TAGSET, "TAGSET", 0, "", "tagset", Arg::Required, "  --tagset  <file>\tDesignates the tag set. Only valid for training." },
+    { TEST, "TEST", 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
+    { TRAIN, "TRAIN", 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, "REGTYPE", 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, "COEFF", 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
+    { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { UNK, "UNK", 0, "", "unk", Arg::None, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
+    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "Examples:\n"
     "  Tagger --train train.txt --model model.dat\n"
     "  Tagger --test test.txt --model model.dat\n"
     "  Tagger --segment < input_file > output_file"
     },
     { 0, 0, 0, 0, 0, 0 }
 };
+
+bool fileExists(const string &filename) {
+    ifstream infile(filename.c_str());
+    return infile.good();
+}
+
+void readOptions(const string &filename, const vector<string> &optionsToSave, unordered_map<string, string> *optionMap) {
+    ifstream ifs(filename.c_str());
+    if (!ifs.is_open()) {
+        cerr << "Cannot read from file: " << filename << endl;
+        exit(1);
+    }
+    string line;
+    while (getline(ifs, line)) {
+        vector<string> elems = splitStringByTabs(line);
+        if (elems.size() != 2) {
+            cerr << "Corrupt file: " << filename << endl;
+            exit(1);
+        }
+        (*optionMap)[elems[0]] = elems[1];
+    }
+}
+
+void writeOptions(const string &filename, const vector<string> &optionsToSave, const unordered_map<string, string> &optionMap) {
+    ofstream ofs(filename.c_str());
+    if (!ofs.is_open()) {
+        cerr << "Cannot write to file: " << filename << endl;
+        exit(1);
+    }
+    for (const auto &entry : optionMap) {
+        bool flag = false;
+        for (const auto &elem : optionsToSave) {
+            if (elem == entry.first) {
+                flag = true;
+            }
+        }
+        if (flag) {
+            ofs << entry.first << "\t" << entry.second << endl;
+        }
+    }
+}
 
 int mainProc(int argc, char **argv) {
     Tagger::TaggerOptions op = { 2, 2, 4, 1 };
@@ -182,14 +235,25 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    if (options[HELP]) {
+    unordered_map<string, string> optionMap;
+    for (auto &option : options) {
+        if (option.count() > 0) {
+            optionMap[option.desc->name] = (option.arg ? option.arg : "");
+        }
+    }
+
+    if (optionMap.find("HELP") != optionMap.end()) {
         option::printUsage(cout, usage);
         return 0;
     }
 
     string modelFilename;
-    if (options[MODEL]) {
-        modelFilename = options[MODEL].arg;
+    if (optionMap.find("MODEL") != optionMap.end()) {
+        modelFilename = optionMap["MODEL"];
+        string optionFilename = modelFilename + ".options";
+        if (optionMap.find("TRAIN") == optionMap.end() && fileExists(optionFilename)) {
+            readOptions(optionFilename, optionsToSave, &optionMap);
+        }
     }
     else {
         option::printUsage(cerr, usage);
@@ -197,59 +261,62 @@ int mainProc(int argc, char **argv) {
     }
 
     string dictFilename;
-    if (options[DICT]) {
-        dictFilename = options[DICT].arg;
+    if (optionMap.find("DICT") != optionMap.end()) {
+        dictFilename = optionMap["DICT"];
         op.dictionaryFilename = dictFilename;
     }
 
     op.numThreads = 1;
-    if (options[THREADS]) {
-        char* endptr;
-        int num = strtol(options[THREADS].arg, &endptr, 10);
-        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
-            cerr << "Illegal number of threads." << endl;
+    if (optionMap.find("THREADS") != optionMap.end()) {
+        int num = atoi(optionMap["THREADS"].c_str());
+        if (num < 1) {
+            cerr << "Illegal number of threads" << endl;
             exit(1);
         }
         op.numThreads = num;
     }
         
-    if (options[WORD_N]) {
-        op.wordMaxNgram = atoi(options[WORD_N].arg);
+    if (optionMap.find("WORD_N") != optionMap.end()) {
+        op.wordMaxNgram = atoi(optionMap["WORD_N"].c_str());
     }
-    if (options[WORD_W]) {
-        op.wordMaxWindow = atoi(options[WORD_W].arg);
+    if (optionMap.find("WORD_W") != optionMap.end()) {
+        op.wordMaxWindow = atoi(optionMap["WORD_W"].c_str());
     }
-    if (options[WORD_L]) {
-        op.wordMaxLabelLength = atoi(options[WORD_L].arg);
+    if (optionMap.find("WORD_L") != optionMap.end()) {
+        op.wordMaxLabelLength = atoi(optionMap["WORD_L"].c_str());
     }
         
-    if (options[TRAIN]) {
-        if (!options[TAGSET]) {
+    if (optionMap.find("TRAIN") != optionMap.end()) {
+        if (optionMap.find("TAGSET") == optionMap.end()) {
             cerr << "Tag set was not designated." << endl;
         }
-        auto tagSet = Tagger::readTagSet(options[TAGSET].arg);
-        string trainingFilename = options[TRAIN].arg;
+        auto tagSet = Tagger::readTagSet(optionMap["TAGSET"]);
+        string trainingFilename = optionMap["TRAIN"];
         
-        if (options[COEFF]) {
-            op.coeff = atof(options[COEFF].arg);
+        if (optionMap.find("COEFF") != optionMap.end()) {
+            op.coeff = atof(optionMap["COEFF"].c_str());
         }
-        if (options[EPSILON]) {
-            op.epsilon = atof(options[EPSILON].arg);
+        if (optionMap.find("EPSILON") != optionMap.end()) {
+            op.epsilon = atof(optionMap["EPSILON"].c_str());
         }
-        if (options[MAXITER]) {
-            op.epsilon = atoi(options[MAXITER].arg);
+        if (optionMap.find("MAXITER") != optionMap.end()) {
+            op.epsilon = atoi(optionMap["MAXITER"].c_str());
         }
-        if (options[REGTYPE]) {
-            op.regType = options[REGTYPE].arg;
+        if (optionMap.find("REGTYPE") != optionMap.end()) {
+            op.regType = optionMap["REGTYPE"];
         }
 
         Tagger::TaggerClass s(op);
         s.train(trainingFilename, modelFilename, tagSet);
+
+        string optionFilename = modelFilename + ".options";
+        writeOptions(optionFilename, optionsToSave, optionMap);
+
         return 0;
     }
 
-    if (options[TEST]) {
-        string testFilename = options[TEST].arg;
+    if (optionMap.find("TEST") != optionMap.end()) {
+        string testFilename = optionMap["TEST"];
         Tagger::TaggerClass s(op);
         s.readModel(modelFilename);
         s.test(testFilename);
@@ -265,7 +332,7 @@ int mainProc(int argc, char **argv) {
     queue<future<string>> futureQueue;
     
     while (getline(cin, line)) {
-        future<string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, options[UNK], options[NEWLINE]);
+        future<string> f = tq.enqueue(&Tagger::TaggerClass::tag, &s, line, optionMap.find("UNK") != optionMap.end(), optionMap.find("NEWLINE") != optionMap.end());
         futureQueue.push(move(f));
         if (op.numThreads == 1) {
             futureQueue.front().wait();

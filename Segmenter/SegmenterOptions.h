@@ -14,6 +14,7 @@ struct SegmenterOptions {
     size_t charTypeMaxNgram;
     size_t charTypeMaxWindow;
     size_t charTypeMaxLabelLength;
+    size_t wordMaxLabelLength;
     size_t numThreads;
     double coeff;
     double epsilon;

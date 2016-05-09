@@ -45,6 +45,7 @@ using std::future;
 using std::getline;
 using std::ifstream;
 using std::make_shared;
+using std::ofstream;
 using std::queue;
 using std::shared_ptr;
 using std::string;
@@ -52,6 +53,20 @@ using std::stringstream;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
+
+vector<string> splitString(const string &s, char delim) {
+    vector<string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+static vector<string> splitStringByTabs(const string &s) {
+    return splitString(s, '\t');
+}
 
 shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(const string &line, bool hasValidLabels, const SegmenterOptions &flags) {
     const char *buf = line.c_str();
@@ -139,7 +154,8 @@ vector<shared_ptr<ObservationSequence<CharWithSpace>>> readData(const string &fi
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, WORD_L, REGTYPE, COEFF, EPSILON, MAXITER };
+vector<string> optionsToSave { "CONTAINS_SPACES", "CONCATENATE_ONLY", "ASCII_SPACE_ONLY", "CHAR_N", "CHAR_W", "CHAR_L", "TYPE_N", "TYPE_W", "TYPE_L", "WORD_L" };
 
 struct Arg : public option::Arg
 {
@@ -154,31 +170,32 @@ struct Arg : public option::Arg
 
 const option::Descriptor usage[] =
 {
-    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
+    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
-    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
-    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
-    { CHAR_N, 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters." },
-    { CHAR_W, 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters." },
-    { CHAR_L, 0, "", "charl", Arg::Required, "  --charl  <number>\tMaximum label length of characters." },
-    { TYPE_N, 0, "", "typen", Arg::Required, "  --typen  <number>\tN-gram length of character types." },
-    { TYPE_W, 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types." },
-    { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types." },
-    { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { CONTAINS_SPACES, 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \tIndicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
-    { CONCATENATE_ONLY, 0, "", "concatenate-only", Arg::None, "  --concatenate-only  \tDoes not segment and only concatenates words." },
-    { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
-    { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
-    { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
-    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
-    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
-    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
-    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
-    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNKNOWN, 0, "", "", Arg::None, "Examples:\n"
+    { HELP, "HELP", 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { DICT, "DICT", 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { CHAR_N, "CHAR_N", 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters. Defaults to 3." },
+    { CHAR_W, "CHAR_W", 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters. Defaults to 3." },
+    { CHAR_L, "CHAR_L", 0, "", "charl", Arg::Required, "  --charl  <number>\tMaximum label length of characters. Defaults to 4." },
+    { TYPE_N, "TYPE_N", 0, "", "typen", Arg::Required, "  --typen  <number>\tN-gram length of character types. Defaults to 3." },
+    { TYPE_W, "TYPE_W", 0, "", "typew", Arg::Required, "  --typew  <number>\tWindow width for character types. Defaults to 3." },
+    { TYPE_L, "TYPE_L", 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types. Defaults to 1." },
+    { WORD_L, "WORD_L", 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of dictionary words. Defaults to 5." },
+    { SEGMENT, "SEGMENT", 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { CONTAINS_SPACES, "CONTAINS_SPACES", 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \tIndicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
+    { CONCATENATE_ONLY, "CONCATENATE_ONLY", 0, "", "concatenate-only", Arg::None, "  --concatenate-only  \tDoes not segment and only concatenates words." },
+    { CALC_LIKELIHOOD, "CALC_LIKELIHOOD", 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
+    { ASCII_SPACE_ONLY, "ASCII_SPACE_ONLY", 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
+    { IGNORE_LATIN, "IGNORE_LATIN", 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
+    { TEST, "TEST", 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
+    { TRAIN, "TRAIN", 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, "REGTYPE", 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, "COEFF", 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
+    { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "Examples:\n"
     "  Segmenter --train train.txt --model model.dat\n"
     "  Segmenter --test test.txt --model model.dat\n"
     "  Segmenter --segment < input_file > output_file"
@@ -186,9 +203,49 @@ const option::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0 }
 };
 
+bool fileExists(const string &filename) {
+    ifstream infile(filename.c_str());
+    return infile.good();
+}
+
+void readOptions(const string &filename, const vector<string> &optionsToSave, unordered_map<string, string> *optionMap) {
+    ifstream ifs(filename.c_str());
+    if (!ifs.is_open()) {
+        cerr << "Cannot read from file: " << filename << endl;
+        exit(1);
+    }
+    string line;
+    while (getline(ifs, line)) {
+        vector<string> elems = splitStringByTabs(line);
+        if (elems.size() != 2) {
+            cerr << "Corrupt file: " << filename << endl;
+            exit(1);
+        }
+        (*optionMap)[elems[0]] = elems[1];
+    }
+}
+
+void writeOptions(const string &filename, const vector<string> &optionsToSave, const unordered_map<string, string> &optionMap) {
+    ofstream ofs(filename.c_str());
+    if (!ofs.is_open()) {
+        cerr << "Cannot write to file: " << filename << endl;
+        exit(1);
+    }
+    for (const auto &entry : optionMap) {
+        bool flag = false;
+        for (const auto &elem : optionsToSave) {
+            if (elem == entry.first) {
+                flag = true;
+            }
+        }
+        if (flag) {
+            ofs << entry.first << "\t" << entry.second << endl;
+        }
+    }
+}
 
 int mainProc(int argc, char **argv) {
-    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 1 };
+    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 5, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -202,83 +259,96 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    if (options[HELP]) {
-        option::printUsage(cout, usage);
-        return 0;
+    unordered_map<string, string> optionMap;
+    for (auto &option : options) {
+        if (option.count() > 0) {
+            optionMap[option.desc->name] = (option.arg ? option.arg : "");
+        }
     }
 
     string modelFilename;
-    if (options[MODEL]) {
-        modelFilename = options[MODEL].arg;
+    if (optionMap.find("MODEL") != optionMap.end()) {
+        modelFilename = optionMap["MODEL"];
+        string optionFilename = modelFilename + ".options";
+        if (optionMap.find("TRAIN") == optionMap.end() && fileExists(optionFilename)) {
+            readOptions(optionFilename, optionsToSave, &optionMap);
+        }
     }
     else {
         option::printUsage(cerr, usage);
         return 0;
     }
 
+    if (optionMap.find("HELP") != optionMap.end()) {
+        option::printUsage(cout, usage);
+        return 0;
+    }
+
     string dictFilename;
-    if (options[DICT]) {
-        dictFilename = options[DICT].arg;
+    if (optionMap.find("DICT") != optionMap.end()) {
+        dictFilename = optionMap["DICT"];
         op.dictionaryFilename = dictFilename;
     }
 
     op.numThreads = 1;
-    if (options[THREADS]) {
-        char* endptr;
-        int num = strtol(options[THREADS].arg, &endptr, 10);
-        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
+    if (optionMap.find("THREADS") != optionMap.end()) {
+        int num = atoi(optionMap["THREADS"].c_str());
+        if (num < 1) {
             cerr << "Illegal number of threads" << endl;
             exit(1);
         }
         op.numThreads = num;
     }
 
-    if (options[CHAR_N]) {
-        op.charMaxNgram = atoi(options[CHAR_N].arg);
+    if (optionMap.find("CHAR_N") != optionMap.end()) {
+        op.charMaxNgram = atoi(optionMap["CHAR_N"].c_str());
     }
-    if (options[CHAR_W]) {
-        op.charMaxWindow = atoi(options[CHAR_W].arg);
+    if (optionMap.find("CHAR_W") != optionMap.end()) {
+        op.charMaxWindow = atoi(optionMap["CHAR_W"].c_str());
     }
-    if (options[CHAR_L]) {
-        op.charMaxLabelLength = atoi(options[CHAR_L].arg);
+    if (optionMap.find("CHAR_L") != optionMap.end()) {
+        op.charMaxLabelLength = atoi(optionMap["CHAR_L"].c_str());
     }
-    if (options[TYPE_N]) {
-        op.charMaxNgram = atoi(options[TYPE_N].arg);
+    if (optionMap.find("TYPE_N") != optionMap.end()) {
+        op.charMaxNgram = atoi(optionMap["TYPE_N"].c_str());
     }
-    if (options[TYPE_W]) {
-        op.charMaxWindow = atoi(options[TYPE_W].arg);
+    if (optionMap.find("TYPE_W") != optionMap.end()) {
+        op.charMaxWindow = atoi(optionMap["TYPE_W"].c_str());
     }
-    if (options[TYPE_L]) {
-        op.charMaxLabelLength = atoi(options[TYPE_L].arg);
+    if (optionMap.find("TYPE_L") != optionMap.end()) {
+        op.charMaxLabelLength = atoi(optionMap["TYPE_L"].c_str());
     }
-    op.asciiSpaceOnly = options[ASCII_SPACE_ONLY] ? true : false;
-    op.containsSpaces = options[CONTAINS_SPACES] ? true : false;
+    op.asciiSpaceOnly = optionMap.find("ASCII_SPACE_ONLY") != optionMap.end() ? true : false;
+    op.containsSpaces = optionMap.find("CONTAINS_SPACES") != optionMap.end() ? true : false;
     op.isTraining = false;
         
-    if (options[TRAIN]) {
+    if (optionMap.find("TRAIN") != optionMap.end()) {
         op.isTraining = true;
-        string trainingFilename = options[TRAIN].arg;
+        string trainingFilename = optionMap["TRAIN"];
 
-        if (options[COEFF]) {
-            op.coeff = atof(options[COEFF].arg);
+        if (optionMap.find("COEFF") != optionMap.end()) {
+            op.coeff = atof(optionMap["COEFF"].c_str());
         }
-        if (options[EPSILON]) {
-            op.epsilon = atof(options[EPSILON].arg);
+        if (optionMap.find("EPSILON") != optionMap.end()) {
+            op.epsilon = atof(optionMap["EPSILON"].c_str());
         }
-        if (options[MAXITER]) {
-            op.epsilon = atoi(options[MAXITER].arg);
+        if (optionMap.find("MAXITER") != optionMap.end()) {
+            op.epsilon = atoi(optionMap["MAXITER"].c_str());
         }
-        if (options[REGTYPE]) {
-            op.regType = options[REGTYPE].arg;
+        if (optionMap.find("REGTYPE") != optionMap.end()) {
+            op.regType = optionMap["REGTYPE"];
         }
 
         Segmenter::SegmenterClass s(op);
         s.train(trainingFilename, modelFilename);
+        string optionFilename = modelFilename + ".options";
+        writeOptions(optionFilename, optionsToSave, optionMap);
+        
         return 0;
     }
 
-    if (options[TEST]) {
-        string testFilename = options[TEST].arg;
+    if (optionMap.find("TEST") != optionMap.end()) {
+        string testFilename = optionMap["TEST"];
         Segmenter::SegmenterClass s(op);
         s.readModel(modelFilename);
         s.test(testFilename);
@@ -286,8 +356,8 @@ int mainProc(int argc, char **argv) {
     }
 
     // --segment or --calc-likelihood
-    op.concatenateOnly = options[CONCATENATE_ONLY] ? true : false;
-    op.ignoreLatin = options[IGNORE_LATIN] ? true : false;
+    op.concatenateOnly = optionMap.find("CONCATENATE_ONLY") != optionMap.end() ? true : false;
+    op.ignoreLatin = optionMap.find("IGNORE_LATIN") != optionMap.end() ? true : false;
 
     Segmenter::SegmenterClass s(op);
     s.readModel(modelFilename);
@@ -297,7 +367,7 @@ int mainProc(int argc, char **argv) {
     queue<future<string>> futureQueue;
     
     while (getline(cin, line)) {
-        future<string> f = options[CALC_LIKELIHOOD] ? tq.enqueue(&Segmenter::SegmenterClass::calcLabelLikelihoods, s, line) :
+        future<string> f = optionMap.find("CALC_LIKELIHOOD") != optionMap.end() ? tq.enqueue(&Segmenter::SegmenterClass::calcLabelLikelihoods, s, line) :
             tq.enqueue(&Segmenter::SegmenterClass::segment, s, line);
         futureQueue.push(move(f));
         if (op.numThreads == 1) {
@@ -336,7 +406,7 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
                                                                                     options.charTypeMaxLabelLength));
     }
     if (!options.dictionaryFilename.empty()) {
-        gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(options.dictionaryFilename));
+        gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(options.dictionaryFilename, options.wordMaxLabelLength));
     }
     featureGenerator = gen;
 };

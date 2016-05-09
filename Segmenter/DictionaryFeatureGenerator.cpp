@@ -26,9 +26,10 @@ using std::vector;
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 
-DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile) {
+DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile, size_t maxLabelLength) {
     dictionary = make_shared<DictionaryClass>(dictionaryFile);
     resultCache = make_shared<unordered_map<shared_ptr<vector<CharWithSpace>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
+    this->maxLabelLength = maxLabelLength;
 }
 
 shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const {
@@ -80,8 +81,8 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
             assert(wordLength > 0);
 
             size_t labelLength = wordLength + 1;
-            if (labelLength > 5) {
-                labelLength = 5;
+            if (labelLength > maxLabelLength) {
+                labelLength = maxLabelLength;
             }
             bool hasLeftSpace = ch.hasSpace();
             bool hasRightSpace = (endCharPos < observationList->size() ? observationList->at(endCharPos).hasSpace() : true);
