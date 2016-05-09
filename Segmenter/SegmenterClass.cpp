@@ -245,8 +245,6 @@ void writeOptions(const string &filename, const vector<string> &optionsToSave, c
 }
 
 int mainProc(int argc, char **argv) {
-    Segmenter::SegmenterOptions op = { 3, 3, 4, 3, 3, 1, 5, 1 };
-
     argv += (argc > 0);
     argc -= (argc > 0);
 
@@ -259,7 +257,15 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    unordered_map<string, string> optionMap;
+    unordered_map<string, string> optionMap {
+        {"CHAR_N", "3"},
+        {"CHAR_W", "3"},
+        {"CHAR_L", "4"},
+        {"TYPE_N", "3"},
+        {"TYPE_W", "3"},
+        {"TYPE_L", "1"},
+        {"WORD_L", "5"}
+    };
     for (auto &option : options) {
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "");

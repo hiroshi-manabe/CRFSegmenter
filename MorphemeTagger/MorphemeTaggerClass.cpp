@@ -345,8 +345,6 @@ void writeOptions(const string &filename, const vector<string> &optionsToSave, c
 }
 
 int mainProc(int argc, char **argv) {
-    MorphemeTagger::MorphemeTaggerOptions op = { 2, 1, 1, 1 };
-
     argv += (argc > 0);
     argc -= (argc > 0);
 
@@ -359,7 +357,12 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    unordered_map<string, string> optionMap;
+    unordered_map<string, string> optionMap{
+        {"WORD_W", "2"},
+        {"LABEL_W", "1"},
+        {"COLUMN_W", "1"}
+    };
+
     for (auto &option : options) {
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "");

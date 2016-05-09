@@ -221,8 +221,6 @@ void writeOptions(const string &filename, const vector<string> &optionsToSave, c
 }
 
 int mainProc(int argc, char **argv) {
-    Tagger::TaggerOptions op = { 2, 2, 4, 1 };
-
     argv += (argc > 0);
     argc -= (argc > 0);
 
@@ -235,7 +233,12 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    unordered_map<string, string> optionMap;
+    unordered_map<string, string> optionMap = {
+        {"WORD_N", "2"},
+        {"WORD_W", "2"},
+        {"WORD_L", "4"},
+    };
+
     for (auto &option : options) {
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "");
