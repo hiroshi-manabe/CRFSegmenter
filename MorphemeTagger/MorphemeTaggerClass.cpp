@@ -367,7 +367,7 @@ int mainProc(int argc, char **argv) {
 
     for (auto &option : options) {
         if (option.count() > 0) {
-            optionMap[option.desc->name] = (option.arg ? option.arg : "");
+            optionMap[option.desc->name] = (option.arg ? option.arg : "TRUE");
         }
     }
 
