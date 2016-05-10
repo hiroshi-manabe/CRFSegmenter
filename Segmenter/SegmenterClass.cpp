@@ -109,10 +109,10 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
             bool cutFlag = false;
             bool noCutFlag = false;
 
-            if (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace)) {
+            if (!flags.concatenate && (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace))) {
                 cutFlag = true;
             }
-            else if ((flags.concatenateOnly || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
+            else if ((flags.concatenate || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
                 noCutFlag = true;
             }
 
@@ -154,8 +154,8 @@ vector<shared_ptr<ObservationSequence<CharWithSpace>>> readData(const string &fi
     return observationSequenceList;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE_ONLY, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, WORD_L, REGTYPE, COEFF, EPSILON, MAXITER };
-vector<string> optionsToSave { "CONTAINS_SPACES", "CONCATENATE_ONLY", "ASCII_SPACE_ONLY", "CHAR_N", "CHAR_W", "CHAR_L", "TYPE_N", "TYPE_W", "TYPE_L", "WORD_L" };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE, CALC_LIKELIHOOD, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, THREADS, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, WORD_L, REGTYPE, COEFF, EPSILON, MAXITER };
+vector<string> optionsToSave { "CONTAINS_SPACES", "CONCATENATE", "ASCII_SPACE_ONLY", "CHAR_N", "CHAR_W", "CHAR_L", "TYPE_N", "TYPE_W", "TYPE_L", "WORD_L" };
 
 struct Arg : public option::Arg
 {
@@ -183,8 +183,9 @@ const option::Descriptor usage[] =
     { TYPE_L, "TYPE_L", 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types. Defaults to 1." },
     { WORD_L, "WORD_L", 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of dictionary words. Defaults to 5." },
     { SEGMENT, "SEGMENT", 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { SEGMENT, "SEGMENT", 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { CONTAINS_SPACES, "CONTAINS_SPACES", 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \tIndicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
-    { CONCATENATE_ONLY, "CONCATENATE_ONLY", 0, "", "concatenate-only", Arg::None, "  --concatenate-only  \tDoes not segment and only concatenates words." },
+    { CONCATENATE, "CONCATENATE", 0, "", "concatenate", Arg::None, "  --concatenate  \tConcatenates words." },
     { CALC_LIKELIHOOD, "CALC_LIKELIHOOD", 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
     { ASCII_SPACE_ONLY, "ASCII_SPACE_ONLY", 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
     { IGNORE_LATIN, "IGNORE_LATIN", 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
@@ -365,8 +366,8 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    // --segment or --calc-likelihood
-    op.concatenateOnly = optionMap.find("CONCATENATE_ONLY") != optionMap.end() ? true : false;
+    // --segment, --concatenate or --calc-likelihood
+    op.concatenate = optionMap.find("CONCATENATE") != optionMap.end() ? true : false;
     op.ignoreLatin = optionMap.find("IGNORE_LATIN") != optionMap.end() ? true : false;
 
     Segmenter::SegmenterClass s(op);

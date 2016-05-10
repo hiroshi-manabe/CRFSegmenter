@@ -22,7 +22,7 @@ struct SegmenterOptions {
     string regType;
     string dictionaryFilename;
     bool isTraining;
-    bool concatenateOnly;
+    bool concatenate;
     bool ignoreLatin;
     bool asciiSpaceOnly;
     bool containsSpaces;
