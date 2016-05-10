@@ -227,6 +227,7 @@ int mainProc(int argc, char **argv) {
     option::Parser parse(usage, argc, argv, options.data(), buffer.data());
 
     if (parse.error()) {
+        option::printUsage(cerr, usage);
         return 1;
     }
 
