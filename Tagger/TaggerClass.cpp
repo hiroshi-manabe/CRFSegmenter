@@ -238,7 +238,7 @@ int mainProc(int argc, char **argv) {
     };
 
     for (auto &option : options) {
-        if (option.desc->index == UNKNOWN) {
+        if (option.desc && option.desc->index == UNKNOWN) {
             cerr << "Unknown option: " << option.name << endl;
             option::printUsage(cout, usage);
             return 1;
