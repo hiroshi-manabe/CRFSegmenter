@@ -171,11 +171,6 @@ const option::Descriptor usage[] =
     { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { UNK, "UNK", 0, "", "unk", Arg::None, "  --unk  \tAdds a question mark to the tags of unknown words. Only valid for tagging." },
-    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "Examples:\n"
-    "  Tagger --train train.txt --model model.dat\n"
-    "  Tagger --test test.txt --model model.dat\n"
-    "  Tagger --segment < input_file > output_file"
-    },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -242,6 +237,11 @@ int mainProc(int argc, char **argv) {
     };
 
     for (auto &option : options) {
+        if (option.desc->index == UNKNOWN) {
+            cerr << "Unknown option: " << option.name << endl;
+            option::printUsage(cout, usage);
+            return 1;
+        }
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "TRUE");
         }

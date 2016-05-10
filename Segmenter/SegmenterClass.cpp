@@ -195,11 +195,6 @@ const option::Descriptor usage[] =
     { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
     { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "Examples:\n"
-    "  Segmenter --train train.txt --model model.dat\n"
-    "  Segmenter --test test.txt --model model.dat\n"
-    "  Segmenter --segment < input_file > output_file"
-    },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -256,6 +251,7 @@ int mainProc(int argc, char **argv) {
     option::Parser parse(usage, argc, argv, options.data(), buffer.data());
 
     if (parse.error()) {
+        option::printUsage(cerr, usage);
         return 1;
     }
 
@@ -270,6 +266,11 @@ int mainProc(int argc, char **argv) {
     };
 
     for (auto &option : options) {
+        if (option.desc->index == UNKNOWN) {
+            cerr << "Unknown option: " << option.name << endl;
+            option::printUsage(cout, usage);
+            return 1;
+        }
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "TRUE");
         }
@@ -285,7 +286,7 @@ int mainProc(int argc, char **argv) {
     }
     else {
         option::printUsage(cerr, usage);
-        return 0;
+        return 1;
     }
 
     if (optionMap.find("HELP") != optionMap.end()) {

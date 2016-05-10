@@ -295,11 +295,6 @@ const option::Descriptor usage[] =
     { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
     { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "Examples:\n"
-    "  MorphemeTagger --train train.txt --model model.dat\n"
-    "  MorphemeTagger --test test.txt --model model.dat\n"
-    "  MorphemeTagger --segment < input_file > output_file"
-    },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -366,6 +361,11 @@ int mainProc(int argc, char **argv) {
     };
 
     for (auto &option : options) {
+        if (option.desc->index == UNKNOWN) {
+            cerr << "Unknown option: " << option.name << endl;
+            option::printUsage(cout, usage);
+            return 1;
+        }
         if (option.count() > 0) {
             optionMap[option.desc->name] = (option.arg ? option.arg : "TRUE");
         }
