@@ -105,23 +105,27 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         bool cutFlag = false;
         bool noCutFlag = false;
         
-        if (flags.isTraining && flags.containsSpaces) {
-            if ((flags.concatenate && (prevIsNBSP || prevIsSpace)) || (!flags.concatenate && prevIsSpace)) {
-                insertSpace = true;
+        if (flags.containsSpaces) {
+            if (flags.isTraining) {
+                if ((flags.concatenate && (prevIsNBSP || prevIsSpace)) || (!flags.concatenate && prevIsSpace)) {
+                    insertSpace = true;
+                }
             }
-        }
-        else {
-            insertSpace = prevIsSpace;
+            else {
+                insertSpace = prevIsSpace;
+            }
         }
 
         observationList->push_back(CharWithSpace(uchar, insertSpace));
         string charType = uchar.getCharacterType();
 
-        if (!flags.concatenate) {
-            cutFlag = prevIsSpace;
-        }
-        else {
-            noCutFlag = !prevIsSpace;
+        if (flags.containsSpaces) {
+            if (!flags.concatenate) {
+                cutFlag = prevIsSpace;
+            }
+            else {
+                noCutFlag = !(prevIsSpace || prevIsNBSP);
+            }
         }
 
         bool isBetweenLatin = (prevCharType == "LATIN" && charType == "LATIN");
@@ -136,7 +140,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         
         bool correctLabel = false;
         if (flags.isTraining) {
-            if (!flags.concatenate) {
+            if (flags.containsSpaces && !flags.concatenate) {
                 correctLabel = prevIsNBSP || prevIsSpace;
             }
             else {
