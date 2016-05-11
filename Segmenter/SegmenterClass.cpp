@@ -72,7 +72,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
     const char *buf = line.c_str();
     size_t len = line.size();
     bool prevIsSpace = true;
-    bool prevIsOrigSpace = false;
+    bool prevIsNBSP = false;
     auto observationList = make_shared<vector<CharWithSpace>>();
     auto labelList = make_shared<vector<string>>();
 
@@ -88,49 +88,85 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         bool isNBSP = uchar.getCodePoint() == 0xa0;
         bool isSpace = uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || isNBSP));
 
-        if (flags.isTraining && ((flags.containsSpaces && isNBSP) || (!flags.containsSpaces && isSpace))) {
+        if (flags.isTraining && flags.containsSpaces && isNBSP) {
+            prevIsNBSP = true;
+            continue;
+        }
+        if (isSpace) {
             prevIsSpace = true;
             continue;
         }
-        else if (isSpace) {
-            prevIsOrigSpace = true;
-            continue;
+        
+        if (observationList->empty()) {
+            prevIsSpace = true;
+        }
+        
+        bool insertSpace = false;
+        bool cutFlag = false;
+        bool noCutFlag = false;
+        
+        if (flags.isTraining && flags.containsSpaces) {
+            if ((flags.concatenate && (prevIsNBSP || prevIsSpace)) || (!flags.concatenate && prevIsSpace)) {
+                insertSpace = true;
+            }
         }
         else {
-            if (observationList->empty()) {
-                prevIsOrigSpace = true;
-            }
-            observationList->push_back(CharWithSpace(uchar, prevIsOrigSpace));
-            string charType = uchar.getCharacterType();
+            insertSpace = prevIsSpace;
+        }
 
-            labelList->push_back((prevIsSpace || prevIsOrigSpace) ? "1" : "0");
-            unordered_set<string> possibleLabelSet;
+        observationList->push_back(CharWithSpace(uchar, insertSpace));
+        string charType = uchar.getCharacterType();
 
-            bool cutFlag = false;
-            bool noCutFlag = false;
+        if (!flags.concatenate) {
+            cutFlag = prevIsSpace;
+        }
+        else {
+            noCutFlag = !prevIsSpace;
+        }
 
-            if (!flags.concatenate && (prevIsOrigSpace || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN" && prevIsSpace))) {
+        bool isBetweenLatin = (prevCharType == "LATIN" && charType == "LATIN");
+        if (isBetweenLatin && flags.ignoreLatin) {
+            if (prevIsSpace || prevIsNBSP) {
                 cutFlag = true;
             }
-            else if ((flags.concatenate || (flags.ignoreLatin && prevCharType == "LATIN" && charType == "LATIN")) && !prevIsSpace) {
+            else {
                 noCutFlag = true;
             }
-
-            if (cutFlag) {
-                possibleLabelSet = decltype(possibleLabelSet){ "1" };
-            }
-            else if (noCutFlag) {
-                possibleLabelSet = decltype(possibleLabelSet){ "0" };
+        }
+        
+        bool correctLabel = false;
+        if (flags.isTraining) {
+            if (!flags.concatenate) {
+                correctLabel = prevIsNBSP || prevIsSpace;
             }
             else {
-                possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+                correctLabel = prevIsSpace;
             }
-
-            possibleLabelSetList->push_back(move(possibleLabelSet));
-            prevIsSpace = false;
-            prevIsOrigSpace = false;
-            prevCharType = move(charType);
         }
+        if (cutFlag) {
+            correctLabel = true;
+        }
+        if (noCutFlag) {
+            correctLabel = false;
+        }
+
+        labelList->push_back(correctLabel ? "1" : "0");
+        unordered_set<string> possibleLabelSet;
+
+        if (cutFlag) {
+            possibleLabelSet = decltype(possibleLabelSet){ "1" };
+        }
+        else if (noCutFlag) {
+            possibleLabelSet = decltype(possibleLabelSet){ "0" };
+        }
+        else {
+            possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
+        }
+
+        possibleLabelSetList->push_back(move(possibleLabelSet));
+        prevIsSpace = false;
+        prevIsNBSP = false;
+        prevCharType = move(charType);
     }
     return make_shared<ObservationSequence<CharWithSpace>>(observationList, labelList, possibleLabelSetList, hasValidLabels);
 }
@@ -331,6 +367,7 @@ int mainProc(int argc, char **argv) {
     }
     op.asciiSpaceOnly = optionMap.find("ASCII_SPACE_ONLY") != optionMap.end() ? true : false;
     op.containsSpaces = optionMap.find("CONTAINS_SPACES") != optionMap.end() ? true : false;
+    op.concatenate = optionMap.find("CONCATENATE") != optionMap.end() ? true : false;
     op.isTraining = false;
         
     if (optionMap.find("TRAIN") != optionMap.end()) {
@@ -366,8 +403,7 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    // --segment, --concatenate or --calc-likelihood
-    op.concatenate = optionMap.find("CONCATENATE") != optionMap.end() ? true : false;
+    // --segment or --calc-likelihood
     op.ignoreLatin = optionMap.find("IGNORE_LATIN") != optionMap.end() ? true : false;
 
     Segmenter::SegmenterClass s(op);
@@ -409,12 +445,12 @@ SegmenterClass::SegmenterClass(const SegmenterOptions &options) {
                                                                                 options.charTypeMaxWindow,
                                                                                 options.charTypeMaxLabelLength));
     if (options.containsSpaces) {
-    gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceFeatureGenerator>(options.charMaxNgram,
-                                                                                options.charMaxWindow,
-                                                                                options.charMaxLabelLength));
-    gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceTypeFeatureGenerator>(options.charTypeMaxNgram,
-                                                                                    options.charTypeMaxWindow,
-                                                                                    options.charTypeMaxLabelLength));
+        gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceFeatureGenerator>(options.charMaxNgram,
+                                                                                    options.charMaxWindow,
+                                                                                    options.charMaxLabelLength));
+        gen->addFeatureTemplateGenerator(make_shared<CharWithSpaceTypeFeatureGenerator>(options.charTypeMaxNgram,
+                                                                                        options.charTypeMaxWindow,
+                                                                                        options.charTypeMaxLabelLength));
     }
     if (!options.dictionaryFilename.empty()) {
         gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(options.dictionaryFilename, options.wordMaxLabelLength));
