@@ -213,7 +213,7 @@ const option::Descriptor usage[] =
     { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
     { HELP, "HELP", 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded. Options will be saved to/loaded from <file>.options." },
     { DICT, "DICT", 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
     { CHAR_N, "CHAR_N", 0, "", "charn", Arg::Required, "  --charn  <number>\tN-gram length of characters. Defaults to 3." },
     { CHAR_W, "CHAR_W", 0, "", "charw", Arg::Required, "  --charw  <number>\tWindow width for characters. Defaults to 3." },

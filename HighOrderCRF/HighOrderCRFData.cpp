@@ -16,6 +16,7 @@
 
 namespace HighOrderCRF {
 
+using std::cerr;
 using std::endl;
 using std::ios;
 using std::ifstream;
@@ -112,6 +113,10 @@ vector<string> HighOrderCRFData::getLabelStringList() const {
 
 void HighOrderCRFData::read(const string &filename) {
     ifstream in(filename, ios::in | ios::binary);
+    if (!in.is_open()) {
+        cerr << "Cannot read from file: " << filename << endl;
+        exit(1);
+    }
     vector<char> buffer;
 
     buffer.reserve(1024);  // a buffer of an arbitrary size
