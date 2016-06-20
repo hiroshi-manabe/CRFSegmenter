@@ -21,7 +21,7 @@ struct SegmenterOptions {
     size_t maxIter;
     string regType;
     string dictionaryFilename;
-    bool isTraining;
+    bool hasLabels;
     bool concatenate;
     bool ignoreLatin;
     bool asciiSpaceOnly;

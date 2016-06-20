@@ -88,7 +88,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         bool isNBSP = uchar.getCodePoint() == 0xa0;
         bool isSpace = uchar.getCodePoint() == 0x20 || (!flags.asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || isNBSP));
 
-        if (flags.isTraining && flags.containsSpaces && isNBSP) {
+        if (flags.hasLabels && flags.containsSpaces && isNBSP) {
             prevIsNBSP = true;
             continue;
         }
@@ -106,7 +106,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         bool noCutFlag = false;
         
         if (flags.containsSpaces) {
-            if (flags.isTraining) {
+            if (flags.hasLabels) {
                 if ((flags.concatenate && (prevIsNBSP || prevIsSpace)) || (!flags.concatenate && prevIsSpace)) {
                     insertSpace = true;
                 }
@@ -139,7 +139,7 @@ shared_ptr<ObservationSequence<CharWithSpace>> convertLineToObservationSequence(
         }
         
         bool correctLabel = false;
-        if (flags.isTraining) {
+        if (flags.hasLabels) {
             if (flags.containsSpaces && !flags.concatenate) {
                 correctLabel = prevIsNBSP || prevIsSpace;
             }
@@ -228,7 +228,7 @@ const option::Descriptor usage[] =
     { CONCATENATE, "CONCATENATE", 0, "", "concatenate", Arg::None, "  --concatenate  \tConcatenates words." },
     { CALC_LIKELIHOOD, "CALC_LIKELIHOOD", 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },
     { ASCII_SPACE_ONLY, "ASCII_SPACE_ONLY", 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \tUses only ascii spaces for segmentation." },
-    { IGNORE_LATIN, "IGNORE_LATIN", 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters. Ignored when training or testing." },
+    { IGNORE_LATIN, "IGNORE_LATIN", 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \tPrevents the segmenter from cutting between latin characters." },
     { TEST, "TEST", 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, "TRAIN", 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
     { REGTYPE, "REGTYPE", 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
@@ -372,11 +372,11 @@ int mainProc(int argc, char **argv) {
     op.asciiSpaceOnly = optionMap.find("ASCII_SPACE_ONLY") != optionMap.end() ? true : false;
     op.containsSpaces = optionMap.find("CONTAINS_SPACES") != optionMap.end() ? true : false;
     op.concatenate = optionMap.find("CONCATENATE") != optionMap.end() ? true : false;
-    op.isTraining = false;
+    op.hasLabels = false;
         
     if (optionMap.find("TRAIN") != optionMap.end()) {
-        op.isTraining = true;
         string trainingFilename = optionMap["TRAIN"];
+        op.hasLabels = true;
 
         if (optionMap.find("COEFF") != optionMap.end()) {
             op.coeff = atof(optionMap["COEFF"].c_str());
@@ -401,6 +401,7 @@ int mainProc(int argc, char **argv) {
 
     if (optionMap.find("TEST") != optionMap.end()) {
         string testFilename = optionMap["TEST"];
+        op.hasLabels = true;
         Segmenter::SegmenterClass s(op);
         s.readModel(modelFilename);
         s.test(testFilename);
