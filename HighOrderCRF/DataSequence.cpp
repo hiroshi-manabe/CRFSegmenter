@@ -175,8 +175,8 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
         }
     }
 
-    auto patternListList = make_shared<vector<vector<Pattern>>>();
-    auto longestMatchIndexList = make_shared<vector<pattern_index_t>>();
+    auto patternListList = vector<vector<Pattern>>();
+    auto longestMatchIndexList = vector<pattern_index_t>();
     vector<label_t> reversedLabels;
     reverse_copy(labels.begin(), labels.end(), back_inserter(reversedLabels));
     
@@ -191,15 +191,15 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
         d.currentIndex = 0;
         
         curTrie.visitValidNodes(generatePatternSetProc, (void *)&d);
-        patternListList->push_back(move(patternList));
+        patternListList.push_back(move(patternList));
 
         pattern_index_t longestMatchIndex = 0;
         if (hasValidLabels) {
             longestMatchIndex = patternDataList[curTrie.findLongestMatch(reversedLabels.data() + this->length() - pos - 1, pos + 1)].patternIndex;
         }
-        longestMatchIndexList->push_back(longestMatchIndex);
+        longestMatchIndexList.push_back(longestMatchIndex);
     }
-    return make_shared<PatternSetSequence>(patternListList, longestMatchIndexList);
+    return make_shared<PatternSetSequence>(move(patternListList), move(longestMatchIndexList));
 }
 
 }  // namespace HighOrderCRF

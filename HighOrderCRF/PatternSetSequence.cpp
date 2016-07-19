@@ -1,13 +1,13 @@
-#include "PatternSetSequence.h"
-
-#include "Pattern.h"
-#include "Feature.h"
-
 #include <algorithm>
 #include <cfloat>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+
+#include "PatternSetSequence.h"
+
+#include "Pattern.h"
+#include "Feature.h"
 
 namespace HighOrderCRF {
 

@@ -1,12 +1,12 @@
-#include "../optionparser/optionparser.h"
-#include "../task/task_queue.hpp"
-#include "HighOrderCRFProcessor.h"
-#include "types.h"
-
 #include <cstdlib>
 #include <future>
 #include <iostream>
 #include <queue>
+
+#include "../optionparser/optionparser.h"
+#include "../task/task_queue.hpp"
+#include "HighOrderCRFProcessor.h"
+#include "types.h"
 
 namespace HighOrderCRF {
 
@@ -163,3 +163,7 @@ int mainProc(int argc, char **argv) {
 }
 
 } // namespace HighOrderCRF
+
+int main(int argc, char **argv) {
+    return HighOrderCRF::mainProc(argc, argv);
+}

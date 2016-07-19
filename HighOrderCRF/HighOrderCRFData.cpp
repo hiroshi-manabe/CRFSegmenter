@@ -1,8 +1,3 @@
-#include "HighOrderCRFData.h"
-
-#include "FeatureTemplate.h"
-#include "LabelSequence.h"
-
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -13,6 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "HighOrderCRFData.h"
+
+#include "FeatureTemplate.h"
+#include "LabelSequence.h"
 
 namespace HighOrderCRF {
 

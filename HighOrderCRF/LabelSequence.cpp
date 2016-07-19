@@ -1,8 +1,8 @@
-#include "LabelSequence.h"
-
 #include <algorithm>
 #include <memory>
 #include <vector>
+
+#include "LabelSequence.h"
 
 namespace HighOrderCRF {
 

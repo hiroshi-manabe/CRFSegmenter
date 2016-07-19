@@ -1,10 +1,10 @@
+#include <memory>
+#include <string>
+
 #include "FeatureTemplate.h"
 
 #include "Feature.h"
 #include "LabelSequence.h"
-
-#include <memory>
-#include <string>
 
 namespace HighOrderCRF {
 

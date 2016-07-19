@@ -1,14 +1,3 @@
-#include "HighOrderCRFProcessor.h"
-
-#include "../task/task_queue.hpp"
-#include "../Optimizer/OptimizerClass.h"
-#include "types.h"
-#include "PatternSetSequence.h"
-#include "DataSequence.h"
-#include "Feature.h"
-#include "HighOrderCRFData.h"
-#include "LabelSequence.h"
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -22,6 +11,17 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "HighOrderCRFProcessor.h"
+
+#include "../task/task_queue.hpp"
+#include "../Optimizer/OptimizerClass.h"
+#include "types.h"
+#include "PatternSetSequence.h"
+#include "DataSequence.h"
+#include "Feature.h"
+#include "HighOrderCRFData.h"
+#include "LabelSequence.h"
 
 namespace HighOrderCRF {
 
