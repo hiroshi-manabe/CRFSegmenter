@@ -24,19 +24,20 @@ class PatternSetSequence;
 class DataSequence
 {
 public:
-    DataSequence(shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> featureTemplateListList,
-                 shared_ptr<vector<label_t>> labels,
-                 shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList,
+    DataSequence(vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList,
+                 vector<label_t> labels,
+                 vector<unordered_set<label_t>> possibleLabelTypeSetList,
                  bool hasValidLabels);
     size_t length() const;
     shared_ptr<LabelSequence> getLabelSequence(size_t pos, size_t length) const;
     void accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> *featureTemplateToFeatureIndexListMap, unordered_map<shared_ptr<Feature>, uint32_t> *featureToFeatureIndexMap, vector<double> *featureCountList) const;
     shared_ptr<PatternSetSequence> generatePatternSetSequence(const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &featureTemplateToFeatureIndexListMap, const vector<uint32_t> &featureLabelSequenceIndexList, const vector<LabelSequence> &labelSequenceList) const;
+    vector<label_t> getAllLabels() const;
 private:
-    shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> featureTemplateListList;
-    shared_ptr<vector<label_t>> labels;
+    vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList;
+    vector<label_t> labels;
     bool hasValidLabels;
-    shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList;
+    vector<unordered_set<label_t>> possibleLabelSetList;
 private:
 };
 

@@ -18,14 +18,14 @@ using std::string;
 class FeatureTemplate
 {
 public:
-    FeatureTemplate(const string obs, size_t order);
+    FeatureTemplate(const string tag, size_t labelLength);
     size_t getLabelLength() const;
-    const string &getObservation() const;
+    const string &getTag() const;
     bool operator==(const FeatureTemplate &that) const;
     size_t hash() const;
 
 private:
-    string obs;
+    string tag;
     size_t labelLength;
 };
 

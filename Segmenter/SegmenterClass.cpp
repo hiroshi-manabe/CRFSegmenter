@@ -223,7 +223,6 @@ const option::Descriptor usage[] =
     { TYPE_L, "TYPE_L", 0, "", "typel", Arg::Required, "  --typel  <number>\tMaximum label length of character types. Defaults to 1." },
     { WORD_L, "WORD_L", 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of dictionary words. Defaults to 5." },
     { SEGMENT, "SEGMENT", 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { SEGMENT, "SEGMENT", 0, "", "segment", Arg::None, "  --segment  \tSegments text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { CONTAINS_SPACES, "CONTAINS_SPACES", 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \tIndicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
     { CONCATENATE, "CONCATENATE", 0, "", "concatenate", Arg::None, "  --concatenate  \tConcatenates words." },
     { CALC_LIKELIHOOD, "CALC_LIKELIHOOD", 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of cutting at each position." },

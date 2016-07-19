@@ -10,5 +10,4 @@ add_executable(
     UnicodeCharacter.cpp
 )
 set_property(TARGET Segmenter PROPERTY CXX_STANDARD 11)
-target_link_libraries(Segmenter HighOrderCRF)
 target_link_libraries(Segmenter Dictionary)

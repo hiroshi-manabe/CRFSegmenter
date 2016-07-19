@@ -262,7 +262,7 @@ void HighOrderCRFData::write(const string &filename) const {
     for (auto entry : featureTemplateToFeatureIndexListMap) {
         auto &ft = entry.first;
         auto &v = entry.second;
-        writeString(&out, ft->getObservation());
+        writeString(&out, ft->getTag());
         writeNumber<uint32_t>(&out, ft->getLabelLength());
         writeNumber<uint32_t>(&out, v.size());
         for (auto &i : v) {
@@ -307,7 +307,7 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
             if (outputWeights) {
                 out << weight_to_double(weightList[featureIndex]) << "\t";
             }
-            out << (ft->getObservation().empty() ? "LABEL" : ft->getObservation());
+            out << (ft->getTag());
             auto &labelSequence = labelSequenceList[featureIndex];
             for (size_t j = 0; j < labelSequence.getLength(); ++j) {
                 out << "\t" << labelStringList[labelSequence.getLabelAt(j)];

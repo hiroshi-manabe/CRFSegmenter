@@ -29,18 +29,18 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-DataSequence::DataSequence(shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> featureTemplateListList,
-                           shared_ptr<vector<label_t>> labels,
-                           shared_ptr<vector<unordered_set<label_t>>> possibleLabelTypeSetList,
+DataSequence::DataSequence(vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList,
+                           vector<label_t> labels,
+                           vector<unordered_set<label_t>> possibleLabelTypeSetList,
                            bool hasValidLabels) {
-    this->labels = labels;
-    this->featureTemplateListList = featureTemplateListList;
-    this->possibleLabelTypeSetList = possibleLabelTypeSetList;
+    this->labels = move(labels);
+    this->featureTemplateListList = move(featureTemplateListList);
+    this->possibleLabelSetList = move(possibleLabelTypeSetList);
     this->hasValidLabels = hasValidLabels;
 }
 
 size_t DataSequence::length() const {
-    return featureTemplateListList->size();
+    return featureTemplateListList.size();
 }
 
 shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t length) const {
@@ -52,9 +52,14 @@ shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t leng
     }
     vector<label_t> labels;
     for (size_t i = 0; i < length; ++i) {
-        labels.push_back(this->labels->at(pos - i));
+        labels.push_back(this->labels.at(pos - i));
     }
     return make_shared<LabelSequence>(move(labels));
+}
+
+vector<label_t> DataSequence::getAllLabels() const {
+    vector<label_t> ret(labels);
+    return move(ret);
 }
 
 void DataSequence::accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> *featureTemplateToFeatureIndexListMap,
@@ -63,12 +68,12 @@ void DataSequence::accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplat
     if (!hasValidLabels) {
         return;
     }
-    for (size_t pos = 0; pos < labels->size(); ++pos) {
-        for (auto &ft : (*featureTemplateListList)[pos]) {
+    for (size_t pos = 0; pos < labels.size(); ++pos) {
+        for (auto &ft : featureTemplateListList[pos]) {
             if (pos < ft->getLabelLength() - 1) {
                 continue;
             }
-            auto f = make_shared<Feature>(ft->getObservation(), getLabelSequence(pos, ft->getLabelLength()));
+            auto f = make_shared<Feature>(ft->getTag(), getLabelSequence(pos, ft->getLabelLength()));
             auto it = featureToFeatureIndexMap->find(f);
             if (it == featureToFeatureIndexMap->end()) {
                 auto index = (uint32_t)featureToFeatureIndexMap->size();
@@ -119,7 +124,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
     auto emptyLabelSequence = LabelSequence::createEmptyLabelSequence();
     
     for (size_t pos = 0; pos < this->length(); ++pos) {
-        const auto &curFeatureTemplateList = (*featureTemplateListList)[pos];
+        const auto &curFeatureTemplateList = featureTemplateListList[pos];
         auto &curTrie = trieList[pos];
         int dataIndex = curTrie.findOrInsert(emptyLabelSequence.getLabelData(), emptyLabelSequence.getLength(), patternDataList.size());
         if (dataIndex == patternDataList.size()) {
@@ -139,7 +144,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
 
                 bool labelsOK = true;
                 for (size_t i = 0; i < seq.getLength(); ++i) {
-                    if (!(*possibleLabelTypeSetList)[pos - i].empty() && (*possibleLabelTypeSetList)[pos - i].find(seq.getLabelAt(i)) == (*possibleLabelTypeSetList)[pos - i].end()) {
+                    if (!possibleLabelSetList[pos - i].empty() && possibleLabelSetList[pos - i].find(seq.getLabelAt(i)) == possibleLabelSetList[pos - i].end()) {
                         labelsOK = false;
                         break;
                     }
@@ -173,7 +178,7 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
     auto patternListList = make_shared<vector<vector<Pattern>>>();
     auto longestMatchIndexList = make_shared<vector<pattern_index_t>>();
     vector<label_t> reversedLabels;
-    reverse_copy(labels->begin(), labels->end(), back_inserter(reversedLabels));
+    reverse_copy(labels.begin(), labels.end(), back_inserter(reversedLabels));
     
     for (size_t pos = 0; pos < this->length(); ++pos) {
         Trie<label_t> &curTrie = trieList[pos];

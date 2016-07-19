@@ -18,14 +18,14 @@ using std::string;
 class Feature
 {
 public:
-    Feature(string obs, shared_ptr<LabelSequence> pat);
+    Feature(string tag, shared_ptr<LabelSequence> pat);
     shared_ptr<LabelSequence> getLabelSequence() const;
-    const string &getObservation() const;
+    const string &getTag() const;
     bool operator==(const Feature &that) const;
     size_t hash() const;
 
 private:
-    string obs;
+    string tag;
     shared_ptr<LabelSequence> seq;
 };
 
