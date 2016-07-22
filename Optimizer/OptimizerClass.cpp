@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <memory>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -14,9 +13,7 @@ namespace Optimizer {
 
 using std::cout;
 using std::endl;
-using std::make_shared;
 using std::move;
-using std::shared_ptr;
 using std::vector;
 
 double lbfgsEvaluate(void *instance,

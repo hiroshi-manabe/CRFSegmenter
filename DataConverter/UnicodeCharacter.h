@@ -1,12 +1,10 @@
-#ifndef HOCRF_SEGMENTER_UNICODE_CHARACTER_H
-#define HOCRF_SEGMENTER_UNICODE_CHARACTER_H
+#ifndef HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H
+#define HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H
 
 #include <cstdint>
 #include <string>
 
-namespace Segmenter {
-
-using std::string;
+namespace DataConverter {
 
 class UnicodeCharacter {
 public:
@@ -14,14 +12,14 @@ public:
     ~UnicodeCharacter();
     UnicodeCharacter(const UnicodeCharacter &uchar);
     UnicodeCharacter(uint32_t codePoint);
-    string toString() const;
+    std::string toString() const;
     uint32_t getCodePoint() const;
-    string getCharacterType() const;
+    std::string getCharacterType() const;
     static UnicodeCharacter fromString(const char *buf, size_t len, size_t *charCount);
 private:
     uint32_t codePoint;
 };
 
-}
+}  // namespace DataConverter
 
-#endif  // HOCRF_SEGMENTER_UNICODE_CHARACTER_H
+#endif  // HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H

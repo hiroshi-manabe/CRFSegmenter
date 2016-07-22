@@ -1,11 +1,11 @@
-#include "UnicodeCharacter.h"
-#include "script_data.h"
-
 #include <cassert>
 #include <cstdint>
 #include <string>
 
-namespace Segmenter {
+#include "UnicodeCharacter.h"
+#include "script_data.h"
+
+namespace DataConverter {
 
 using std::string;
 
@@ -94,4 +94,4 @@ ERROR:
     return UnicodeCharacter(codePoint);
 }
 
-}
+}  // namespace DataConverter

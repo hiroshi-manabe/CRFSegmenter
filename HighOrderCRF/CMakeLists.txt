@@ -3,7 +3,6 @@ add_executable(
     PatternSetSequence.cpp
     DataSequence.cpp
     Feature.cpp
-    FeatureTemplate.cpp
     HighOrderCRFData.cpp
     HighOrderCRFMain.cpp
     HighOrderCRFProcessor.cpp

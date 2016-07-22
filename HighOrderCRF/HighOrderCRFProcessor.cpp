@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -39,13 +40,13 @@ using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::stringstream;
-using std::transform;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 using Optimizer::OptimizerClass;
 
-vector<string> splitString(const string &s, char delim, int count = 0) {
+vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     vector<string> elems;
     stringstream ss(s);
     string item;
@@ -54,7 +55,7 @@ vector<string> splitString(const string &s, char delim, int count = 0) {
         elems.push_back(item);
         ++i;
     }
-    return move(elems);
+    return elems;
 }
 
 vector<string> readSequence(istream &is) {
@@ -63,7 +64,7 @@ vector<string> readSequence(istream &is) {
     while (getline(is, line) && !line.empty()) {
         ret.push_back(move(line));
     }
-    return move(ret);
+    return ret;
 }
 
 set<string> extractLabelSet(const vector<vector<string>> &seqList) {
@@ -78,7 +79,7 @@ set<string> extractLabelSet(const vector<vector<string>> &seqList) {
             ret.insert(fields[1]);
         }
     }
-    return move(ret);
+    return ret;
 }
 
 shared_ptr<DataSequence> stringListToDataSequence(const vector<string> &seq, unordered_map<string, label_t> &labelMap, bool hasValidLabels) {
@@ -249,7 +250,7 @@ vector<string> HighOrderCRFProcessor::tag(const vector<string> &seq) const {
     for (auto label : labelList) {
         ret.push_back(labelStringList[label]);
     }
-    return move(ret);
+    return ret;
 }
 
 vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<string> &seq) {
@@ -274,7 +275,7 @@ vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<string> 
         }
         ret.emplace_back(ss.str());
     }
-    return move(ret);
+    return ret;
 }
     
 void HighOrderCRFProcessor::test(const string &filename,

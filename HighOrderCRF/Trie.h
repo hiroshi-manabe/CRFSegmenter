@@ -9,13 +9,10 @@
 
 namespace HighOrderCRF {
 
-using std::shared_ptr;
-using std::vector;
-
 template<typename L>
 struct TrieNode {
     L label;
-    vector<TrieNode> children;
+    std::vector<TrieNode> children;
     int value;
 
     TrieNode(L label) : label(label) {
@@ -60,7 +57,7 @@ struct TrieNode {
 };
 
 template<typename L>
-void visitValidNodesRec(vector<L> &labels, TrieNode<L> *node, TrieNode<L> *validParent, void (*proc)(L *, size_t, int, int, void *), void *data) {
+void visitValidNodesRec(std::vector<L> &labels, TrieNode<L> *node, TrieNode<L> *validParent, void (*proc)(L *, size_t, int, int, void *), void *data) {
     TrieNode<L>* newParent;
     if (node->value != -1) {
         (*proc)(labels.data(), labels.size(), node->value, validParent->value, data);
@@ -130,7 +127,7 @@ public:
     }
 
     void visitValidNodes(void (*proc)(L *, size_t, int, int, void *), void *data) {
-        vector<L> v;
+        std::vector<L> v;
         visitValidNodesRec(v, &rootNode, &rootNode, proc, data);
     }
 

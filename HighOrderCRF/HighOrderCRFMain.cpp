@@ -2,6 +2,8 @@
 #include <future>
 #include <iostream>
 #include <queue>
+#include <string>
+#include <vector>
 
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
@@ -17,6 +19,8 @@ using std::cerr;
 using std::future;
 using std::getline;
 using std::queue;
+using std::string;
+using std::vector;
 
 enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, REGTYPE, COEFF, EPSILON, MAXITER };
 
@@ -33,19 +37,19 @@ struct Arg : public option::Arg
 
 const option::Descriptor usage[] =
 {
-    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "USAGE:  [options]\n\n"
+    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
-    { HELP, "HELP", 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded. Options will be saved to/loaded from <file>.options." },
-    { TAG, "TAG", 0, "", "tag", Arg::None, "  --tag  \tTag the text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { CALC_LIKELIHOOD, "CALC_LIKELIHOOD", 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of labels at each position." },
-    { TEST, "TEST", 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
-    { TRAIN, "TRAIN", 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, "REGTYPE", 0, "", "regtype", Arg::Required, "  --regtype  <type>\t(For training) Designates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, "COEFF", 0, "", "coeff", Arg::Required, "  --coeff  <number>\t(For training) Sets the regularization coefficient." },
-    { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\t(For training) Sets the epsilon for convergence." },
-    { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\t(For training) Sets the maximum iteration count." },
-    { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded. Options will be saved to/loaded from <file>.options." },
+    { TAG, 0, "", "tag", Arg::None, "  --tag  \tTag the text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of labels at each position." },
+    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
+    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\t(For training) Designates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\t(For training) Sets the regularization coefficient." },
+    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\t(For training) Sets the epsilon for convergence." },
+    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\t(For training) Sets the maximum iteration count." },
+    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -54,8 +58,8 @@ int mainProc(int argc, char **argv) {
     argc -= (argc > 0);
 
     option::Stats stats(usage, argc, argv);
-    vector<option::Option> options(stats.options_max);
-    vector<option::Option> buffer(stats.buffer_max);
+    std::vector<option::Option> options(stats.options_max);
+    std::vector<option::Option> buffer(stats.buffer_max);
     option::Parser parse(usage, argc, argv, options.data(), buffer.data());
 
     if (parse.error()) {
@@ -160,6 +164,7 @@ int mainProc(int argc, char **argv) {
             }
         }
     }
+    return 0;
 }
 
 } // namespace HighOrderCRF

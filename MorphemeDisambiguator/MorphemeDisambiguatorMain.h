@@ -1,0 +1,31 @@
+#ifndef MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_
+#define MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_
+
+#include "../MaxEnt/MaxEntProcessor.h"
+#include "../Dictionary/DictionaryClass.h"
+#include "MorphemeDisambiguatorOptions.h"
+
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace MorphemeDisambiguator {
+
+class MorphemeDisambiguatorClass {
+
+public:
+    MorphemeDisambiguatorClass(const MorphemeDisambiguatorOptions &taggerOptions);
+    void train(const std::string &trainingFilename, const std::string &modelFilename);
+    std::vector<std::vector<std::string>> tag(std::vector<std::string> sentence) const;
+    void test(const std::string &testFilename) const;
+    void readModel(const std::string &modelFilename);
+
+private:
+    std::shared_ptr<Dictionary::DictionaryClass> dictionary;
+    std::shared_ptr<MaxEnt::MaxEntProcessor> maxEntProcessor;
+    MorphemeDisambiguatorOptions options;
+};
+
+}
+
+#endif  // MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_

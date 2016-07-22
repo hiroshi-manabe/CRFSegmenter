@@ -1,14 +1,13 @@
-#ifndef SEGMENTER_SCRIPT_DATA_H_
-#define SEGMENTER_SCRIPT_DATA_H_
+#ifndef HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_
+#define HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_
 
 #include <cstdint>
 #include <string>
 
-namespace Segmenter {
+namespace DataConverter {
 
 namespace ScriptData {
 
-using std::string;
 
 typedef unsigned char script_type_t;
 
@@ -12341,11 +12340,11 @@ script_type_t SCRIPT_TABLE[] = {
     37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
     37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37};
 
-string scriptToScriptString(script_type_t script) {
+std::string scriptToScriptString(script_type_t script) {
     if (script > SEGMENTER_SCRIPT_DATA_MAX_SCRIPT) {
         return SCRIPT_STRING_TABLE[0];
     }
-    return string(SCRIPT_STRING_TABLE[script]);
+    return std::string(SCRIPT_STRING_TABLE[script]);
 }
 
 script_type_t codePointToScript(uint32_t codePoint) {
@@ -12355,11 +12354,11 @@ script_type_t codePointToScript(uint32_t codePoint) {
     return SCRIPT_TABLE[codePoint];
 }
 
-string codePointToScriptString(uint32_t codePoint) {
+std::string codePointToScriptString(uint32_t codePoint) {
     return scriptToScriptString(codePointToScript(codePoint));
 }
 
 }  // namespace ScriptData
 
-}  // namespace Segmenter
-#endif  // SEGMENTER_SCRIPT_DATA_H_
+}  // namespace DataConverter
+#endif  // HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_

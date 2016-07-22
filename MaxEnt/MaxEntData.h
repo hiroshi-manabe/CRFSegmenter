@@ -12,8 +12,8 @@
 #define UINT_PAIR_KEY
 namespace std {
     template<>
-    struct hash <pair<uint32_t, uint32_t>> {
-        size_t operator()(const pair<uint32_t, uint32_t> &p) const {
+    struct hash <std::pair<uint32_t, uint32_t>> {
+        size_t operator()(const std::pair<uint32_t, uint32_t> &p) const {
             return p.first ^ p.second;
         }
     };
@@ -22,33 +22,27 @@ namespace std {
 
 namespace MaxEnt {
 
-using std::pair;
-using std::shared_ptr;
-using std::string;
-using std::unordered_map;
-using std::vector;
-
 class MaxEntData
 {
 public:
     MaxEntData();
-    MaxEntData(unordered_map<string, uint32_t> labelToIndexMap,
-               unordered_map<string, uint32_t> attrToIndexMap,
-               unordered_map<pair<uint32_t, uint32_t>, uint32_t> indexPairToFeatureIndexMap,
-               vector<double> bestWeightList);
-    void read(const string &filename);
+    MaxEntData(std::unordered_map<std::string, uint32_t> labelToIndexMap,
+               std::unordered_map<std::string, uint32_t> attrToIndexMap,
+               std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t> indexPairToFeatureIndexMap,
+               std::vector<double> bestWeightList);
+    void read(const std::string &filename);
     void trim();
-    void write(const string &filename) const;
-    const vector<double> &getBestWeightList() const;
-    unordered_map<string, uint32_t> &getLabelToIndexMap();
-    unordered_map<string, uint32_t> &getAttrToIndexMap();
-    unordered_map<pair<uint32_t, uint32_t>, uint32_t> &getIndexPairToFeatureIndexMap();
+    void write(const std::string &filename) const;
+    const std::vector<double> &getBestWeightList() const;
+    std::unordered_map<std::string, uint32_t> &getLabelToIndexMap();
+    std::unordered_map<std::string, uint32_t> &getAttrToIndexMap();
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t> &getIndexPairToFeatureIndexMap();
     
 private:
-    unordered_map<string, uint32_t> labelToIndexMap;
-    unordered_map<string, uint32_t> attrToIndexMap;
-    unordered_map<pair<uint32_t, uint32_t>, uint32_t> indexPairToFeatureIndexMap;
-    vector<double> bestWeightList;
+    std::unordered_map<std::string, uint32_t> labelToIndexMap;
+    std::unordered_map<std::string, uint32_t> attrToIndexMap;
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t> indexPairToFeatureIndexMap;
+    std::vector<double> bestWeightList;
 };
 
 }  // namespace MaxEnt

@@ -9,24 +9,21 @@
 
 namespace HighOrderCRF {
 
-using std::unordered_map;
-using std::vector;
-
 class PatternSetSequence
 {
 public:
-    PatternSetSequence(vector<vector<Pattern>> &patternListList,
-                       vector<pattern_index_t> longestMatchIndexList) :
+    PatternSetSequence(std::vector<std::vector<Pattern>> &patternListList,
+                       std::vector<pattern_index_t> longestMatchIndexList) :
     patternListList(patternListList), longestMatchIndexList(longestMatchIndexList) {};
     void accumulateFeatureCounts(double *counts) const;
     double accumulateFeatureExpectations(const double *expWeights, double *expectations) const;
-    vector<unordered_map<label_t, double>> calcLabelLikelihoods(const double *expWeights) const;
-    vector<label_t> decode(const weight_t *expWeights) const;
+    std::vector<std::unordered_map<label_t, double>> calcLabelLikelihoods(const double *expWeights) const;
+    std::vector<label_t> decode(const weight_t *expWeights) const;
     
 private:
-    double calcScores(const double *expWeights, vector<vector<double>> *scores) const;
-    vector<vector<Pattern>> patternListList;
-    vector<pattern_index_t> longestMatchIndexList;
+    double calcScores(const double *expWeights, std::vector<std::vector<double>> *scores) const;
+    std::vector<std::vector<Pattern>> patternListList;
+    std::vector<pattern_index_t> longestMatchIndexList;
 };
 
 }  // namespace HighOrderCRF

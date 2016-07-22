@@ -22,7 +22,6 @@ using std::make_pair;
 using std::make_shared;
 using std::min;
 using std::move;
-using std::pair;
 using std::reverse_copy;
 using std::shared_ptr;
 using std::unordered_map;
@@ -58,8 +57,7 @@ shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t leng
 }
 
 vector<label_t> DataSequence::getAllLabels() const {
-    vector<label_t> ret(labels);
-    return move(ret);
+    return labels;
 }
 
 void DataSequence::accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> *featureTemplateToFeatureIndexListMap,

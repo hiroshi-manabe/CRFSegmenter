@@ -6,7 +6,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,12 +14,11 @@
 
 namespace MaxEnt {
 
-using std::endl;
 using std::ios;
 using std::ifstream;
 using std::make_pair;
-using std::make_shared;
 using std::ofstream;
+using std::pair;
 using std::string;
 using std::unordered_map;
 using std::vector;

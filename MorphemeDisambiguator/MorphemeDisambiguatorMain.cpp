@@ -1,11 +1,3 @@
-#include "MorphemeTaggerClass.h"
-
-#include "../Dictionary/DictionaryClass.h"
-#include "../MaxEnt/MaxEntProcessor.h"
-#include "../optionparser/optionparser.h"
-#include "../task/task_queue.hpp"
-#include "MorphemeTaggerOptions.h"
-
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -14,7 +6,6 @@
 #include <iostream>
 #include <istream>
 #include <iterator>
-#include <memory>
 #include <ostream>
 #include <queue>
 #include <set>
@@ -25,7 +16,15 @@
 #include <utility>
 #include <vector>
 
-namespace MorphemeTagger {
+#include "MorphemeDisambiguatorMain.h"
+
+#include "../Dictionary/DictionaryClass.h"
+#include "../MaxEnt/MaxEntProcessor.h"
+#include "../optionparser/optionparser.h"
+#include "../task/task_queue.hpp"
+#include "MorphemeDisambiguatorOptions.h"
+
+namespace MorphemeDisambiguator {
 
 using Dictionary::DictionaryClass;
 using MaxEnt::MaxEntProcessor;
@@ -43,10 +42,8 @@ using std::ifstream;
 using std::istream;
 using std::make_shared;
 using std::move;
-using std::ofstream;
 using std::queue;
 using std::set;
-using std::shared_ptr;
 using std::showpos;
 using std::string;
 using std::stringstream;
@@ -101,7 +98,7 @@ vector<vector<vector<string>>> lookupSentence(const vector<string> &sentence, co
     return ret;
 }
 
-vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vector<string> &sentence, const vector<vector<vector<string>>> &dictResultListList, const MorphemeTaggerOptions &opt) {
+vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vector<string> &sentence, const vector<vector<vector<string>>> &dictResultListList, const MorphemeDisambiguatorOptions &opt) {
     assert(sentence.size() == dictResultListList.size());
     vector<vector<string>> wordAndLabelList;
     
@@ -262,8 +259,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
     }
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMNS, REGTYPE, COEFF, EPSILON, MAXITER };
-vector<string> optionsToSave { "WORD_W", "LABEL_W", "COLUMN_W", "FCOLUMNS" };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -278,23 +274,23 @@ struct Arg : public option::Arg
 
 const option::Descriptor usage[] =
 {
-    { UNKNOWN, "UNKNOWN", 0, "", "", Arg::None, "USAGE:  [options]\n\n"
+    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
-    { HELP, "HELP", 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { MODEL, "MODEL", 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
-    { DICT, "DICT", 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
-    { WORD_W, "WORD_W", 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words." },
-    { LABEL_W, "LABEL_W", 0, "", "labelw", Arg::Required, "  --labelw  <number>\tWindow width for words." },
-    { COLUMN_W, "COLUMN_W", 0, "", "columnw", Arg::Required, "  --columnw  <number>\tWindow width for columns." },
-    { FCOLUMNS, "FCOLUMNS", 0, "", "fcolumns", Arg::Required, "  --fcolumns  <number>,[number ...]\tDesignates the columns to use as features." },
-    { TAG, "TAG", 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
-    { TEST, "TEST", 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
-    { TRAIN, "TRAIN", 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, "REGTYPE", 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, "COEFF", 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
-    { EPSILON, "EPSILON", 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
-    { MAXITER, "MAXITER", 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
-    { THREADS, "THREADS", 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
+    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded." },
+    { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\tDesignates the dictionary file to be loaded." },
+    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words." },
+    { LABEL_W, 0, "", "labelw", Arg::Required, "  --labelw  <number>\tWindow width for words." },
+    { COLUMN_W, 0, "", "columnw", Arg::Required, "  --columnw  <number>\tWindow width for columns." },
+    { FCOLUMN, 0, "", "fcolumn", Arg::Required, "  --fcolumn  <number>\tDesignates the column to use as features." },
+    { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
+    { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
+    { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
+    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
+    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
+    { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
+    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -303,44 +299,8 @@ bool fileExists(const string &filename) {
     return infile.good();
 }
 
-void readOptions(const string &filename, const vector<string> &optionsToSave, unordered_map<string, string> *optionMap) {
-    ifstream ifs(filename.c_str());
-    if (!ifs.is_open()) {
-        cerr << "Cannot read from file: " << filename << endl;
-        exit(1);
-    }
-    string line;
-    while (getline(ifs, line)) {
-        vector<string> elems = splitStringByTabs(line);
-        if (elems.size() != 2) {
-            cerr << "Corrupt file: " << filename << endl;
-            exit(1);
-        }
-        (*optionMap)[elems[0]] = elems[1];
-    }
-}
-
-void writeOptions(const string &filename, const vector<string> &optionsToSave, const unordered_map<string, string> &optionMap) {
-    ofstream ofs(filename.c_str());
-    if (!ofs.is_open()) {
-        cerr << "Cannot write to file: " << filename << endl;
-        exit(1);
-    }
-    for (const auto &entry : optionMap) {
-        bool flag = false;
-        for (const auto &elem : optionsToSave) {
-            if (elem == entry.first) {
-                flag = true;
-            }
-        }
-        if (flag) {
-            ofs << entry.first << "\t" << entry.second << endl;
-        }
-    }
-}
-
 int mainProc(int argc, char **argv) {
-    MorphemeTagger::MorphemeTaggerOptions op {};
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions op = { 2, 1, 1, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -351,35 +311,17 @@ int mainProc(int argc, char **argv) {
     option::Parser parse(usage, argc, argv, options.data(), buffer.data());
 
     if (parse.error()) {
-        option::printUsage(cerr, usage);
         return 1;
     }
 
-    unordered_map<string, string> optionMap {
-        {"WORD_W", "2"},
-        {"LABEL_W", "1"},
-        {"COLUMN_W", "1"}
-    };
-
-    for (auto &option : options) {
-        if (option.desc && option.desc->index == UNKNOWN) {
-            cerr << "Unknown option: " << option.name << endl;
-            option::printUsage(cout, usage);
-            return 1;
-        }
-        if (option.count() > 0) {
-            optionMap[option.desc->name] = (option.arg ? option.arg : "TRUE");
-        }
-    }
-
-    if (optionMap.find("HELP") != optionMap.end()) {
+    if (options[HELP]) {
         option::printUsage(cout, usage);
         return 0;
     }
 
     string modelFilename;
-    if (optionMap.find("MODEL") != optionMap.end()) {
-        modelFilename = optionMap["MODEL"];
+    if (options[MODEL]) {
+        modelFilename = options[MODEL].arg;
     }
     else {
         option::printUsage(cerr, usage);
@@ -387,70 +329,68 @@ int mainProc(int argc, char **argv) {
     }
 
     string dictFilename;
-    if (optionMap.find("DICT") != optionMap.end()) {
-        dictFilename = optionMap["DICT"];
+    if (options[DICT]) {
+        dictFilename = options[DICT].arg;
         op.dictionaryFilename = dictFilename;
     }
 
     op.numThreads = 1;
-    if (optionMap.find("THREADS") != optionMap.end()) {
-        int num = atoi(optionMap["THREADS"].c_str());
-        if (num < 1) {
-            cerr << "Illegal number of threads" << endl;
+    if (options[THREADS]) {
+        char* endptr;
+        int num = strtol(options[THREADS].arg, &endptr, 10);
+        if (endptr == options[THREADS].arg || *endptr != 0 || num < 1) {
+            cerr << "Illegal number of threads." << endl;
             exit(1);
         }
         op.numThreads = num;
     }
-    
-    if (optionMap.find("WORD_W") != optionMap.end()) {
-        op.wordMaxWindow = atoi(optionMap["WORD_W"].c_str());
-    }
-    if (optionMap.find("LABEL_W") != optionMap.end()) {
-        op.labelMaxWindow = atoi(optionMap["LABEL_W"].c_str());
-    }
-    if (optionMap.find("COLUMN_W") != optionMap.end()) {
-        op.columnMaxWindow = atoi(optionMap["COLUMN_W"].c_str());
-    }
+        
 
-    if (optionMap.find("FCOLUMNS") != optionMap.end()) {
-        auto fcolumns = splitStringByCommas(optionMap["FCOLUMNS"]);
-        for (const auto &fcolumn : fcolumns) {
-            op.featureColumnSet.insert((size_t)atoi(fcolumn.c_str()));
-        }
+    if (options[WORD_W]) {
+        op.wordMaxWindow = atoi(options[WORD_W].arg);
+    }
+    if (options[LABEL_W]) {
+        op.labelMaxWindow = atoi(options[LABEL_W].arg);
+    }
+    if (options[COLUMN_W]) {
+        op.columnMaxWindow = atoi(options[COLUMN_W].arg);
+    }
+    for (option::Option* opt = options[FCOLUMN]; opt; opt = opt->next()) {
+        op.featureColumnSet.insert((size_t)atoi(opt->arg));
     }
         
-    if (optionMap.find("TRAIN") != optionMap.end()) {
-        string trainingFilename = optionMap["TRAIN"];
+    if (options[TRAIN]) {
+        string trainingFilename = options[TRAIN].arg;
         
-        if (optionMap.find("COEFF") != optionMap.end()) {
-            op.coeff = atof(optionMap["COEFF"].c_str());
+        if (options[COEFF]) {
+            op.coeff = atof(options[COEFF].arg);
         }
-        if (optionMap.find("EPSILON") != optionMap.end()) {
-            op.epsilon = atof(optionMap["EPSILON"].c_str());
+        if (options[EPSILON]) {
+            op.epsilon = atof(options[EPSILON].arg);
         }
-        if (optionMap.find("MAXITER") != optionMap.end()) {
-            op.epsilon = atoi(optionMap["MAXITER"].c_str());
+        if (options[MAXITER]) {
+            op.epsilon = atoi(options[MAXITER].arg);
         }
-        if (optionMap.find("REGTYPE") != optionMap.end()) {
-            op.regType = optionMap["REGTYPE"];
+        if (options[REGTYPE]) {
+            op.regType = options[REGTYPE].arg;
         }
         
-        MorphemeTagger::MorphemeTaggerClass s(op);
+        MorphemeDisambiguator::MorphemeDisambiguatorClass s(op);
 
         s.train(trainingFilename, modelFilename);
         return 0;
     }
 
-    if (optionMap.find("TEST") != optionMap.end()) {
-        string testFilename = optionMap["TEST"];
-        MorphemeTagger::MorphemeTaggerClass s(op);
+    if (options[TEST]) {
+        string testFilename = options[TEST].arg;
+        MorphemeDisambiguator::MorphemeDisambiguatorClass s(op);
         s.readModel(modelFilename);
         s.test(testFilename);
         return 0;
     }
 
     // tags the inputs
-    MorphemeTagger::MorphemeTaggerClass s(op);
+    MorphemeDisambiguator::MorphemeDisambiguatorClass s(op);
     s.readModel(modelFilename);
     
     string line;
@@ -460,7 +400,7 @@ int mainProc(int argc, char **argv) {
     vector<string> sentence;
     while (getline(cin, line)) {
         if (line.empty()) {
-            auto f = tq.enqueue(&MorphemeTagger::MorphemeTaggerClass::tag, &s, sentence);
+            auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, sentence);
             futureQueue.push(move(f));
             if (op.numThreads == 1) {
                 futureQueue.front().wait();
@@ -504,14 +444,13 @@ int mainProc(int argc, char **argv) {
     return 0;
 }
 
-
-MorphemeTaggerClass::MorphemeTaggerClass(const MorphemeTaggerOptions &options) {
+MorphemeDisambiguatorClass::MorphemeDisambiguatorClass(const MorphemeDisambiguatorOptions &options) {
     this->options = options;
     assert(!options.dictionaryFilename.empty());
     dictionary = make_shared<DictionaryClass>(options.dictionaryFilename);
 };
 
-void MorphemeTaggerClass::train(const string &trainingFilename,
+void MorphemeDisambiguatorClass::train(const string &trainingFilename,
                                 const string &modelFilename) {
     ifstream ifs(trainingFilename);
     vector<Observation> observationList;
@@ -544,7 +483,7 @@ void MorphemeTaggerClass::train(const string &trainingFilename,
     maxent.writeModel(modelFilename);
 }
 
-vector<vector<string>> MorphemeTaggerClass::tag(vector<string> sentence) const {
+vector<vector<string>> MorphemeDisambiguatorClass::tag(vector<string> sentence) const {
     vector<vector<string>> ret;
     if (sentence.empty()) {
         return ret;
@@ -565,7 +504,7 @@ vector<vector<string>> MorphemeTaggerClass::tag(vector<string> sentence) const {
     return ret;
 }
 
-void MorphemeTaggerClass::test(const string &testFilename) const {
+void MorphemeDisambiguatorClass::test(const string &testFilename) const {
     ifstream ifs(testFilename);
 
     size_t correctCount = 0;
@@ -591,14 +530,14 @@ void MorphemeTaggerClass::test(const string &testFilename) const {
     printf("Accuracy: %d / %d (%1.4f)\n", correctCount, allCount, correctCount / (double)allCount);
 }
 
-void MorphemeTaggerClass::readModel(const string &modelFilename) {
+void MorphemeDisambiguatorClass::readModel(const string &modelFilename) {
     maxEntProcessor = make_shared<MaxEntProcessor>();
     maxEntProcessor->readModel(modelFilename);
 }
 
-}  // namespace MorphemeTagger
+}  // namespace MorphemeDisambiguator
 
 int main(int argc, char **argv) {
-    return MorphemeTagger::mainProc(argc, argv);
+    return MorphemeDisambiguator::mainProc(argc, argv);
 }
 

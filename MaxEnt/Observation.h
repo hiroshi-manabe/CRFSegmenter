@@ -14,8 +14,8 @@
 namespace std {
 
     template<>
-    struct hash<pair<uint32_t, uint32_t>> {
-        size_t operator()(const pair<uint32_t, uint32_t> &p) const {
+    struct hash<std::pair<uint32_t, uint32_t>> {
+        size_t operator()(const std::pair<uint32_t, uint32_t> &p) const {
             return p.first ^ p.second;
         }
     };
@@ -25,29 +25,22 @@ namespace std {
 
 namespace MaxEnt {
 
-using std::ostream;
-using std::pair;
-using std::set;
-using std::shared_ptr;
-using std::string;
-using std::unordered_map;
-using std::unordered_set;
 class CompiledData;
 
 class Observation
 {
 public:
-    Observation(unordered_set<string> attributeSet, string correctLabel, set<string> possibleLabelSet);
-    shared_ptr<CompiledData> compile(unordered_map<string, uint32_t> *labelToIndexMap,
-                                     unordered_map<string, uint32_t> *attrToIndexMap,
-                                     unordered_map<pair<uint32_t, uint32_t>, uint32_t> *indexPairToFeatureIndexMap,
+    Observation(std::unordered_set<std::string> attributeSet, std::string correctLabel, std::set<std::string> possibleLabelSet);
+    std::shared_ptr<CompiledData> compile(std::unordered_map<std::string, uint32_t> *labelToIndexMap,
+                                     std::unordered_map<std::string, uint32_t> *attrToIndexMap,
+                                     std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t> *indexPairToFeatureIndexMap,
                                      bool extendMap) const;
-    void output(ostream &os);
+    void output(std::ostream &os);
     
 private:
-    unordered_set<string> attributeSet;
-    string correctLabel;
-    set<string> possibleLabelSet;
+    std::unordered_set<std::string> attributeSet;
+    std::string correctLabel;
+    std::set<std::string> possibleLabelSet;
 };
 
 }  // namespace MaxEnt

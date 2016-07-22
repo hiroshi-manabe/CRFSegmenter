@@ -40,7 +40,7 @@ vector<vector<double>> getAccumulatedWeightListList(const vector<vector<Pattern>
         }
         ret.push_back(move(curWeightList));
     }
-    return move(ret);
+    return ret;
 }
 
 // for decoding
@@ -65,7 +65,7 @@ vector<vector<double>> getAccumulatedWeightListListForDecoding(const vector<vect
         }
         ret.push_back(move(curWeightList));
     }
-    return move(ret);
+    return ret;
 }
 
 void PatternSetSequence::accumulateFeatureCounts(double *counts) const {
@@ -294,7 +294,7 @@ vector<label_t> PatternSetSequence::decode(const weight_t *weights) const {
             if (curPattern.getLastLabel() != prevLabel) {
                 copy(prevTempScoreList->begin(), prevTempScoreList->begin() + prevListSize, prevTempScoreListForLabel.begin());
                 for (size_t i = 0; i < prevListSize; ++i) {
-                    bestPrefixIndexList[i] = i;
+                    bestPrefixIndexList[i] = (pattern_index_t)i;
                 }
                 prevIndex = prevListSize;
             }

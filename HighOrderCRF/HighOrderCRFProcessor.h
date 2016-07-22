@@ -10,11 +10,6 @@
 
 namespace HighOrderCRF {
 
-using std::shared_ptr;
-using std::string;
-using std::unordered_map;
-using std::vector;
-
 class DataSequence;
 class HighOrderCRFData;
 
@@ -22,31 +17,31 @@ class HighOrderCRFProcessor
 {
 public:
     HighOrderCRFProcessor();
-    void train(const string &filename,
+    void train(const std::string &filename,
                size_t concurrency,
                size_t maxIter,
                bool useL1Regularization,
                double regularizationCoefficient,
                double epsilonForConvergence);
     
-    vector<string> tag(const vector<string> &seq) const;
+    std::vector<std::string> tag(const std::vector<std::string> &seq) const;
 
-    vector<string> calcLabelLikelihoods(const vector<string> &seq);
+    std::vector<std::string> calcLabelLikelihoods(const std::vector<std::string> &seq);
     
-    void test(const string &filename,
+    void test(const std::string &filename,
               size_t concurrency) const;
 
-    void writeModel(const string &filename);
+    void writeModel(const std::string &filename);
 
-    void readModel(const string &filename);
+    void readModel(const std::string &filename);
 
 private:
-    vector<label_t> tagLabelType(const DataSequence &dataSequence) const;
+    std::vector<label_t> tagLabelType(const DataSequence &dataSequence) const;
 
     void prepareExpWeights();
 
-    shared_ptr<HighOrderCRFData> modelData;
-    shared_ptr<vector<double>> expWeights;  // only for likelihood calculation
+    std::shared_ptr<HighOrderCRFData> modelData;
+    std::shared_ptr<std::vector<double>> expWeights;  // only for likelihood calculation
 };
 
 } // namespace HighOrderCRF

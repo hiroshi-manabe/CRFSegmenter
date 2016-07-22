@@ -4,12 +4,9 @@
 #include <string>
 #include <unordered_set>
 
-namespace MorphemeTagger {
+namespace MorphemeDisambiguator {
 
-using std::string;
-using std::unordered_set;
-
-struct MorphemeTaggerOptions {
+struct MorphemeDisambiguatorOptions {
     size_t wordMaxWindow;
     size_t labelMaxWindow;
     size_t columnMaxWindow;
@@ -17,9 +14,9 @@ struct MorphemeTaggerOptions {
     double coeff;
     double epsilon;
     size_t maxIter;
-    string regType;
-    unordered_set<size_t> featureColumnSet;
-    string dictionaryFilename;
+    std::string regType;
+    std::unordered_set<size_t> featureColumnSet;
+    std::string dictionaryFilename;
 };
 
 }

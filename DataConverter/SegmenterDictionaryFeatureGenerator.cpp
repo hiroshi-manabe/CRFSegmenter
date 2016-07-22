@@ -1,11 +1,5 @@
-#include "DictionaryFeatureGenerator.h"
-
-#include "../Dictionary/DictionaryClass.h"
-#include "CharWithSpace.h"
-
 #include <algorithm>
 #include <cassert>
-#include <unordered_map>
 #include <unordered_set>
 #include <memory>
 #include <sstream>
@@ -13,27 +7,28 @@
 #include <utility>
 #include <vector>
 
-namespace Segmenter {
+#include "SegmenterDictionaryFeatureGenerator.h"
+
+#include "../Dictionary/DictionaryClass.h"
+#include "CharWithSpace.h"
+
+namespace DataConverter {
 
 using std::make_shared;
-using std::make_pair;
-using std::shared_ptr;
 using std::string;
-using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 
-DictionaryFeatureGenerator::DictionaryFeatureGenerator(const string &dictionaryFile, size_t maxLabelLength) {
+SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const string &dictionaryFile, size_t maxLabelLength) {
     dictionary = make_shared<DictionaryClass>(dictionaryFile);
-    resultCache = make_shared<unordered_map<shared_ptr<vector<CharWithSpace>>, shared_ptr<vector<shared_ptr<vector<shared_ptr<FeatureTemplate>>>>>>>();
     this->maxLabelLength = maxLabelLength;
 }
 
-shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerator::generateFeatureTemplates(shared_ptr<vector<CharWithSpace>> observationList) const {
-    auto templateListList = make_shared<vector<vector<shared_ptr<FeatureTemplate>>>>(observationList->size());
+vector<vector<FeatureTemplate>> SegmenterDictionaryFeatureGenerator::generateFeatureTemplates(const vector<CharWithSpace> &observationList) const {
+    vector<vector<FeatureTemplate>> featureTemplateListList(observationList.size());
 
     // Generates all the templates
         
@@ -41,7 +36,7 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
     string sentence;
     vector<size_t> startPosList;
         
-    for (auto uchar : *observationList) {
+    for (const auto uchar : observationList) {
         startPosList.push_back(sentence.length());
         sentence += uchar.toString();
     }
@@ -55,7 +50,7 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
 
     for (size_t i = 0; i < startPosList.size() - 1; ++i) {
         size_t startUtf8Pos = startPosList[i];
-        auto ch = observationList->at(i);
+        auto ch = observationList[i];
         // skip the space if there is one
         if (ch.hasSpace()) {
             ++startUtf8Pos;
@@ -85,7 +80,7 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
                 labelLength = maxLabelLength;
             }
             bool hasLeftSpace = ch.hasSpace();
-            bool hasRightSpace = (endCharPos < observationList->size() ? observationList->at(endCharPos).hasSpace() : true);
+            bool hasRightSpace = (endCharPos < observationList.size() ? observationList[endCharPos].hasSpace() : true);
             string spaceStr;
             if (hasLeftSpace) {
                 spaceStr += "LS";
@@ -96,30 +91,30 @@ shared_ptr<vector<vector<shared_ptr<FeatureTemplate>>>> DictionaryFeatureGenerat
             spaceStr += "-";
 
             // Feature template for the left position
-            auto &leftTemplateList = (*templateListList)[i];
+            auto &leftTemplateList = featureTemplateListList[i];
             for (const auto &featureStr : featureSet) {
-                leftTemplateList.push_back(make_shared<FeatureTemplate>(string("Rw-") + *featureStr, 1));
+                leftTemplateList.emplace_back(string("Rw-") + *featureStr, 1);
                 if (hasLeftSpace || hasRightSpace) {
-                    leftTemplateList.push_back(make_shared<FeatureTemplate>(string("Rw") + spaceStr + *featureStr, 1));
+                    leftTemplateList.emplace_back(string("Rw") + spaceStr + *featureStr, 1);
                 }
             }
 
-            if (endCharPos >= observationList->size()) {
+            if (endCharPos >= observationList.size()) {
                 continue;
             }
             // Feature templates for the right position
-            auto &rightTemplateList = (*templateListList)[endCharPos];
+            auto &rightTemplateList = featureTemplateListList[endCharPos];
             for (const auto &featureStr : featureSet) {
-                rightTemplateList.push_back(make_shared<FeatureTemplate>(string("Lw-") + *featureStr, 1));
-                rightTemplateList.push_back(make_shared<FeatureTemplate>(string("LW-") + *featureStr, labelLength));
+                rightTemplateList.emplace_back(string("Lw-") + *featureStr, 1);
+                rightTemplateList.emplace_back(string("LW-") + *featureStr, labelLength);
                 if (hasLeftSpace || hasRightSpace) {
-                    rightTemplateList.push_back(make_shared<FeatureTemplate>(string("Lw") + spaceStr + *featureStr, 1));
-                    rightTemplateList.push_back(make_shared<FeatureTemplate>(string("LW") + spaceStr + *featureStr, labelLength));
+                    rightTemplateList.emplace_back(string("Lw") + spaceStr + *featureStr, 1);
+                    rightTemplateList.emplace_back(string("LW") + spaceStr + *featureStr, labelLength);
                 }
             }
         }
     }
-    return templateListList;
+    return featureTemplateListList;
 }
 
-}  // namespace Segmenter
+}  // namespace DataConverter

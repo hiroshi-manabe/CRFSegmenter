@@ -69,7 +69,7 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
+HighOrderCRFData::HighOrderCRFData(unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
     this->featureTemplateToFeatureIndexListMap = move(featureTemplateToFeatureIndexListMap);
     this->featureLabelSequenceIndexList = move(featureLabelSequenceIndexList);
     this->labelSequenceList = move(labelSequenceList);
@@ -82,7 +82,7 @@ HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, ve
 
 HighOrderCRFData::HighOrderCRFData() {}
 
-const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
+const unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
     return featureTemplateToFeatureIndexListMap;
 }
 

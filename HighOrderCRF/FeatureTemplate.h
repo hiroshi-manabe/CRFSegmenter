@@ -1,31 +1,37 @@
 #ifndef HOCRF_HIGH_ORDER_CRF_FEATURE_TEMPLATE_H_
 #define HOCRF_HIGH_ORDER_CRF_FEATURE_TEMPLATE_H_
 
-#include "types.h"
-
-#include "Feature.h"
-#include "LabelSequence.h"
-
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 namespace HighOrderCRF {
-
-using std::shared_ptr;
-using std::string;
 
 class FeatureTemplate
 {
 public:
-    FeatureTemplate(const string tag, size_t labelLength);
-    size_t getLabelLength() const;
-    const string &getTag() const;
-    bool operator==(const FeatureTemplate &that) const;
-    size_t hash() const;
+    FeatureTemplate(const std::string tag, size_t labelLength) {
+        this->tag = tag;
+        this->labelLength = labelLength;
+    }
+
+    size_t getLabelLength() const {
+        return labelLength;
+    }
+        
+    const std::string &getTag() const {
+        return tag;
+    }
+    
+    bool operator==(const FeatureTemplate &that) const {
+        return this->getLabelLength() == that.getLabelLength() && this->tag == that.tag;
+    }
+    
+    size_t hash() const {
+        return std::hash<std::string>()(tag) ^ std::hash<size_t>()(labelLength);
+    }
 
 private:
-    string tag;
+    std::string tag;
     size_t labelLength;
 };
 
@@ -34,15 +40,15 @@ private:
 namespace std {
 
 template<>
-struct hash<shared_ptr<HighOrderCRF::FeatureTemplate>> {
-    size_t operator()(const shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
+struct hash<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
+    size_t operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate> &featureTemplate) const {
         return featureTemplate->hash();
     }
 };
 
 template<>
-struct equal_to<shared_ptr<HighOrderCRF::FeatureTemplate>> {
-    bool operator()(const shared_ptr<HighOrderCRF::FeatureTemplate>& left, const shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
+struct equal_to<std::shared_ptr<HighOrderCRF::FeatureTemplate>> {
+    bool operator()(const std::shared_ptr<HighOrderCRF::FeatureTemplate>& left, const std::shared_ptr<HighOrderCRF::FeatureTemplate> &right) const {
         return *left == *right;
     }
 };
