@@ -103,8 +103,8 @@ int mainProc(int argc, char **argv) {
     
     if (options[TRAIN]) {
         string filename = options[TRAIN].arg;
-        double coeff = 1.0;
-        double epsilon = 1.0;
+        double coeff = 0.0;
+        double epsilon = 0.0;
         int maxIter = 0;
         string regType;
 
