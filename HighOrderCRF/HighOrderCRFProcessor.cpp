@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -50,7 +51,7 @@ vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     vector<string> elems;
     stringstream ss(s);
     string item;
-    int i = 0;
+    int i = 1;
     while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
         elems.push_back(item);
         ++i;
@@ -82,7 +83,12 @@ set<string> extractLabelSet(const vector<vector<string>> &seqList) {
     return ret;
 }
 
-shared_ptr<DataSequence> stringListToDataSequence(const vector<string> &seq, unordered_map<string, label_t> &labelMap, bool hasValidLabels) {
+shared_ptr<DataSequence> stringListToDataSequence(
+    const vector<string> &seq,
+    unordered_map<string, label_t> &labelMap,
+    bool hasValidLabels,
+    vector<string> *originalStringList) {
+
     vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList;
     vector<label_t> labels;
     vector<unordered_set<label_t>> possibleLabelSetList;
@@ -93,16 +99,17 @@ shared_ptr<DataSequence> stringListToDataSequence(const vector<string> &seq, uno
 
     for (const auto &str : seq) {
         auto fields = splitString(str, '\t');
-        if (fields.size() < 3) {
+        if (fields.size() < 4) {
             cerr << "Invalid input format: " << str << endl;
             exit(1);
         }
+        originalStringList->emplace_back(move(fields[0]));
         
-        if (fields[0] == "*") {
+        if (fields[1] == "*") {
             possibleLabelSetList.emplace_back();
         }
         else {
-            auto strLabels = splitString(fields[0], ',');
+            auto strLabels = splitString(fields[1], ',');
             unordered_set<label_t> possibleLabelSet;
             for (auto &strLabel : strLabels) {
                 auto it = labelMap.find(strLabel);
@@ -113,7 +120,7 @@ shared_ptr<DataSequence> stringListToDataSequence(const vector<string> &seq, uno
             possibleLabelSetList.push_back(move(possibleLabelSet));
         }
         
-        auto it = labelMap.find(fields[1]);
+        auto it = labelMap.find(fields[2]);
         if (it != labelMap.end()) {
             labels.push_back(it->second);
         }
@@ -122,8 +129,8 @@ shared_ptr<DataSequence> stringListToDataSequence(const vector<string> &seq, uno
         }
 
         vector<shared_ptr<FeatureTemplate>> featureTemplateList;
-        featureTemplateList.reserve(fields.size() - 2);
-        for (auto it = fields.begin() + 2; it != fields.end(); ++it) {
+        featureTemplateList.reserve(fields.size() - 3);
+        for (auto it = fields.begin() + 3; it != fields.end(); ++it) {
             auto labelLengthAndTag = splitString(*it, ':', 2);
             if (labelLengthAndTag.size() != 2) {
                 cerr << "Invalid field " << *it << endl;
@@ -200,9 +207,10 @@ void HighOrderCRFProcessor::train(const string &filename,
 
     vector<shared_ptr<DataSequence>> dataSequenceList;
     dataSequenceList.reserve(seqList.size());
+    vector<string> dummy;
 
     for (const auto &seq : seqList) {
-        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true));
+        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true, &dummy));
     }
         
     unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
@@ -243,12 +251,14 @@ void HighOrderCRFProcessor::train(const string &filename,
 
 vector<string> HighOrderCRFProcessor::tag(const vector<string> &seq) const {
     auto labelMap = modelData->getLabelMap();
-    auto dataSequence = stringListToDataSequence(seq, labelMap, false);
+    vector<string> originalStringList;
+    auto dataSequence = stringListToDataSequence(seq, labelMap, false, &originalStringList);
     auto labelList = tagLabelType(*dataSequence);
     vector<string> ret;
     auto labelStringList = modelData->getLabelStringList();
-    for (auto label : labelList) {
-        ret.push_back(labelStringList[label]);
+    assert(labelList.size() == originalStringList.size());
+    for (size_t i = 0; i < labelList.size(); ++i) {
+        ret.push_back(originalStringList[i] + "\t" + labelStringList[labelList[i]]);
     }
     return ret;
 }
@@ -256,7 +266,8 @@ vector<string> HighOrderCRFProcessor::tag(const vector<string> &seq) const {
 vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<string> &seq) {
     prepareExpWeights();
     auto labelMap = modelData->getLabelMap();
-    auto dataSequence = stringListToDataSequence(seq, labelMap, false);
+    vector<string> dummy;
+    auto dataSequence = stringListToDataSequence(seq, labelMap, false, &dummy);
     auto likelihoodMap = dataSequence
         ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
         ->calcLabelLikelihoods(expWeights->data());
@@ -300,9 +311,10 @@ void HighOrderCRFProcessor::test(const string &filename,
     dataSequenceList.reserve(seqList.size());
 
     auto labelMap = modelData->getLabelMap();
+    vector<string> dummy;
 
     for (const auto &seq : seqList) {
-        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true));
+        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true, &dummy));
     }
         
     // number of distinct labels

@@ -1,5 +1,4 @@
 #include <cassert>
-#include <iostream>
 #include <istream>
 #include <sstream>
 #include <string>
@@ -36,7 +35,7 @@ static vector<string> splitString(const string &s, char delim = '\t', int count 
     vector<string> elems;
     stringstream ss(s);
     string item;
-    int i = 0;
+    int i = 1;
     while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
         elems.push_back(item);
         ++i;
@@ -80,9 +79,12 @@ vector<string> TaggerDataConverter::generateFeaturesFromStream(istream& is) cons
 
 vector<string> TaggerDataConverter::generateFeaturesFromSequence(const vector<string> &sequence) const {
     assert(optionSet);
+    vector<string> originalStringList;
     vector<string> observationList;
     vector<string> labelList;
     vector<unordered_set<string>> possibleLabelSetList;
+
+    originalStringList.reserve(sequence.size());
     observationList.reserve(sequence.size());
     labelList.reserve(sequence.size());
     possibleLabelSetList.reserve(sequence.size());
@@ -108,12 +110,13 @@ vector<string> TaggerDataConverter::generateFeaturesFromSequence(const vector<st
                 }
             }
         }
+        originalStringList.emplace_back(word);
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
         labelList.emplace_back(move(label));
         observationList.emplace_back(move(word));
     }
     
-    ObservationSequence<string> obs(observationList, labelList, possibleLabelSetList);
+    ObservationSequence<string> obs(observationList, labelList, possibleLabelSetList, originalStringList);
     return obs.generateSequence(generator);
 }
 

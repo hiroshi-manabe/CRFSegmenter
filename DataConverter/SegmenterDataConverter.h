@@ -20,7 +20,7 @@ public:
     std::unordered_map<std::string, std::string> options;
 
 private:
-    std::vector<std::string> generateFeaturesFromLine(const std::string &line) const;
+    std::vector<std::string> generateFeaturesFromSequence(const std::vector<std::string> &sequence) const;
     std::shared_ptr<FeatureTemplateGenerator<CharWithSpace>> generator;
     bool optionSet;
 };

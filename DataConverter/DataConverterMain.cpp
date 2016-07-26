@@ -26,7 +26,7 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, CONCATENATE, IS_TRAINING, ASCII_SPACE_ONLY, PRESERVE_SPACES, IGNORE_LATIN, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L };
 
 struct Arg : public option::Arg
 {
@@ -53,11 +53,8 @@ const option::Descriptor usage[] =
     { TYPE_L, 0, "", "typel", Arg::Required, "  --typel  <number>\t(Segmentation) Maximum label length of character types. Defaults to 1." },
     { DICT_L, 0, "", "dictl", Arg::Required, "  --dictl  <number>\t(Segmentation) Maximum label length of dictionary words. Defaults to 5." },
     { IS_TRAINING, 0, "", "training", Arg::None, "  --training  \t(Segmentation) Generates features for training." },
-    { CONTAINS_SPACES, 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \t(Segmentation) Indicates that the original text contains spaces (e.g. Korean). In this case, spaces in the original text should be represented by U+0020 and additional spaces should be represented by U+00A0." },
-    { CONCATENATE, 0, "", "concatenate", Arg::None, "  --concatenate  \t(Segmentation) Concatenates words." },
-    { ASCII_SPACE_ONLY, 0, "", "ascii-space-only", Arg::None, "  --ascii-space-only  \t(Segmentation) Uses only ascii spaces for segmentation." },
-    { IGNORE_LATIN, 0, "", "ignore-latin", Arg::None, "  --ignore-latin  \t(Segmentation) Prevents the segmenter from cutting between latin characters." },
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tGenerates features for segmentation." },
+    { CONTAINS_SPACES, 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \t(Segmentation) Indicates that the original text contains spaces (e.g. Korean)." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tGenerates features for tagging." },
     { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words. Defaults to 2." },
     { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words. Defaults to 2." },
@@ -125,20 +122,8 @@ int mainProc(int argc, char **argv) {
         if (options[DICT_L]) {
             op["dictMaxLabelLength"] = atoi(options[TYPE_L].arg);
         }
-        if (options[IS_TRAINING]) {
-            op["isTraining"] = "true";
-        }
-        if (options[ASCII_SPACE_ONLY]) {
-            op["asciiSpaceOnly"] = "true";
-        }
         if (options[CONTAINS_SPACES]) {
             op["containsSpaces"] = "true";
-        }
-        if (options[CONCATENATE]) {
-            op["concatenate"] = "true";
-        }
-        if (options[IGNORE_LATIN]) {
-            op["ignoreLatin"] = "true";
         }
     }
     else if (options[TAG]) {
@@ -158,8 +143,11 @@ int mainProc(int argc, char **argv) {
     }
     converter->setOptions(op);
 
-    while (!cin.eof()) {
+    while (true) {
         auto ret = converter->generateFeaturesFromStream(cin);
+        if (cin.eof()) {
+            break;
+        }
         for (const auto &str : ret) {
             cout << str << endl;
         }

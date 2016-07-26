@@ -21,6 +21,8 @@
 #include "SegmenterDictionaryFeatureGenerator.h"
 #include "UnconditionalFeatureTemplateGenerator.h"
 
+using std::cerr;
+using std::endl;
 using std::istream;
 using std::make_shared;
 using std::move;
@@ -37,7 +39,7 @@ static vector<string> splitString(const string &s, char delim = '\t', int count 
     vector<string> elems;
     stringstream ss(s);
     string item;
-    int i = 0;
+    int i = 1;
     while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
         elems.push_back(item);
         ++i;
@@ -86,127 +88,59 @@ void SegmenterDataConverter::setOptions(const unordered_map<string, string> &arg
 }
 
 vector<string> SegmenterDataConverter::generateFeaturesFromStream(istream& is) const {
+    vector<string> sequence;
     string line;
-    getline(is, line);
-    return generateFeaturesFromLine(line);
+    
+    while (getline(is, line) && !line.empty()) {
+        sequence.emplace_back(move(line));
+    }
+    return generateFeaturesFromSequence(sequence);
 }
 
-vector<string> SegmenterDataConverter::generateFeaturesFromLine(const string &line) const {
+vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector<string> &sequence) const {
     assert(optionSet);
-    
-    // flags
-    bool asciiSpaceOnly = options.find("asciiSpaceOnly") != options.end();
-    bool concatenate = options.find("concatenate") != options.end();
-    bool containsSpaces = options.find("containsSpaces") != options.end();
-    bool isTraining = options.find("isTraining") != options.end();
-    bool ignoreLatin = options.find("ignoreLatin") != options.end();
-    
-    const char *buf = line.c_str();
-    size_t len = line.size();
-    bool prevIsSpace = true;
-    bool prevIsNBSP = false;
+
+    vector<string> originalStringList;
     vector<CharWithSpace> observationList;
     vector<string> labelList;
-
-    size_t pos = 0;
-    bool isAfterSlash = false;
     vector<unordered_set<string>> possibleLabelSetList;
-    string prevCharType;
 
-    while (pos < len) {
+    originalStringList.reserve(sequence.size());
+    observationList.reserve(sequence.size());
+    labelList.reserve(sequence.size());
+    possibleLabelSetList.reserve(sequence.size());
+
+    for (const auto &str : sequence) {
+        auto fields = splitString(str, '\t');
+        if (fields.size() != 3) {
+            cerr << "A line must contain 3 fields: Character[TAB]Possible labels[TAB]label." << endl << str << endl;
+            exit(1);
+        }
+        string &character = fields[0];
+        string &possibleLabelStr = fields[1];
+        string &label = fields[2];
+
+        originalStringList.emplace_back(character);
+
+        bool hasSpace = (character.size() > 0 && character[0] == 0x20);
         size_t charCount = 0;
-        auto uchar = UnicodeCharacter::fromString(buf + pos, len, &charCount);
-        pos += charCount;
-        bool isNBSP = uchar.getCodePoint() == 0xa0;
-        bool isSpace = uchar.getCodePoint() == 0x20 || (!asciiSpaceOnly && (uchar.getCodePoint() == 0x3000 || isNBSP));
-
-        if (isTraining && containsSpaces && isNBSP) {
-            prevIsNBSP = true;
-            continue;
-        }
-        if (isSpace) {
-            prevIsSpace = true;
-            continue;
-        }
-        
-        if (observationList.empty()) {
-            prevIsSpace = true;
-        }
-        
-        bool insertSpace = false;
-        bool cutFlag = false;
-        bool noCutFlag = false;
-        
-        if (containsSpaces) {
-            if (isTraining) {
-                if ((concatenate && (prevIsNBSP || prevIsSpace)) || (!concatenate && prevIsSpace)) {
-                    insertSpace = true;
-                }
-            }
-            else {
-                insertSpace = prevIsSpace;
-            }
+        auto ch = UnicodeCharacter::fromString(character.data() + hasSpace, character.size() - hasSpace, &charCount);
+        if (charCount + hasSpace != character.size()) {
+            cerr << "Only one character is allowed. " << endl << str << endl;
+            exit(1);
         }
 
-        observationList.emplace_back(uchar, insertSpace);
-        string charType = uchar.getCharacterType();
-
-        if (containsSpaces) {
-            if (!concatenate) {
-                cutFlag = prevIsSpace;
-            }
-            else {
-                noCutFlag = !(prevIsSpace || prevIsNBSP);
-            }
-        }
-
-        bool isBetweenLatin = (prevCharType == "LATIN" && charType == "LATIN");
-        if (isBetweenLatin && ignoreLatin) {
-            if (prevIsSpace || prevIsNBSP) {
-                cutFlag = true;
-            }
-            else {
-                noCutFlag = true;
-            }
-        }
-        
-        bool correctLabel = false;
-        if (isTraining) {
-            if (containsSpaces && !concatenate) {
-                correctLabel = prevIsNBSP || prevIsSpace;
-            }
-            else {
-                correctLabel = prevIsSpace;
-            }
-        }
-        if (cutFlag) {
-            correctLabel = true;
-        }
-        if (noCutFlag) {
-            correctLabel = false;
-        }
-
-        labelList.emplace_back(correctLabel ? "1" : "0");
-        unordered_set<string> possibleLabelSet;
-
-        if (cutFlag) {
-            possibleLabelSet = decltype(possibleLabelSet){ "1" };
-        }
-        else if (noCutFlag) {
-            possibleLabelSet = decltype(possibleLabelSet){ "0" };
-        }
-        else {
-            possibleLabelSet = decltype(possibleLabelSet){ "0", "1" };
-        }
-
+        auto possibleLabels = splitString(possibleLabelStr);
+        unordered_set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
-        prevIsSpace = false;
-        prevIsNBSP = false;
-        prevCharType = move(charType);
+
+        labelList.emplace_back(move(label));
+
+        observationList.emplace_back(ch, hasSpace);
     }
-    ObservationSequence<CharWithSpace> obs(observationList, labelList, possibleLabelSetList);
+    
+    ObservationSequence<CharWithSpace> obs(observationList, labelList, possibleLabelSetList, originalStringList);
     return obs.generateSequence(generator);
 }
 
 }  // namespace DataConverter
-

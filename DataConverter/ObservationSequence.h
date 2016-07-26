@@ -13,10 +13,15 @@ namespace DataConverter {
 template<typename T> class ObservationSequence
 {
 public:
-    ObservationSequence(std::vector<T> observationList, std::vector<std::string> labelList, std::vector<std::unordered_set<std::string>> possibleLabelSetList) {
+    ObservationSequence(
+        std::vector<T> observationList,
+        std::vector<std::string> labelList,
+        std::vector<std::unordered_set<std::string>> possibleLabelSetList,
+        std::vector<std::string> originalStringList) {
         this->observationList = std::move(observationList);
         this->labelList = std::move(labelList);
         this->possibleLabelSetList = std::move(possibleLabelSetList);
+        this->originalStringList = std::move(originalStringList);
     }
 
     const std::vector<T> &getObservationListRef() const {
@@ -38,6 +43,7 @@ public:
 
         for (size_t pos = 0; pos < observationList.size(); ++pos) {
             stringstream ss;
+            ss << originalStringList[pos] << "\t";
 
             const auto &possibleLabelSet = possibleLabelSetList[pos];
             if (possibleLabelSet.empty()) {
@@ -77,6 +83,7 @@ private:
     std::vector<T> observationList;
     std::vector<std::string> labelList;
     std::vector<std::unordered_set<std::string>> possibleLabelSetList;
+    std::vector<std::string> originalStringList;
 };
 
 }  // namespace DataConverter

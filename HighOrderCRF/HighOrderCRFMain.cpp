@@ -101,9 +101,9 @@ int mainProc(int argc, char **argv) {
     
     if (options[TRAIN]) {
         string filename = options[TRAIN].arg;
-        double coeff;
-        double epsilon;
-        int maxIter;
+        double coeff = 1.0;
+        double epsilon = 1.0;
+        int maxIter = 0;
         string regType;
 
         if (options[COEFF]) {
@@ -118,9 +118,9 @@ int mainProc(int argc, char **argv) {
         if (options[REGTYPE]) {
             regType = options[REGTYPE].arg;
         }
-        HighOrderCRFProcessor proc;
-        proc.train(filename, numThreads, maxIter, regType == "L1", coeff, epsilon);
-        proc.writeModel(modelFilename);
+        HighOrderCRFProcessor processor;
+        processor.train(filename, numThreads, maxIter, regType == "L1", coeff, epsilon);
+        processor.writeModel(modelFilename);
         
         return 0;
     }
