@@ -22,7 +22,6 @@ using std::make_shared;
 using std::move;
 using std::stoi;
 using std::string;
-using std::stringstream;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
@@ -31,17 +30,7 @@ using Dictionary::DictionaryClass;
 
 namespace DataConverter {
 
-static vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
-    vector<string> elems;
-    stringstream ss(s);
-    string item;
-    int i = 1;
-    while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
-        elems.push_back(item);
-        ++i;
-    }
-    return elems;
-}
+extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
 void TaggerDataConverter::setOptions(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {

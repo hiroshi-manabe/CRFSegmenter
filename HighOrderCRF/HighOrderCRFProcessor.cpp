@@ -59,35 +59,44 @@ vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     return elems;
 }
 
-vector<string> readSequence(istream &is) {
-    vector<string> ret;
+static vector<vector<string>> readSequence(istream &is) {
+    vector<vector<string>> ret;
     string line;
     while (getline(is, line) && !line.empty()) {
-        ret.push_back(move(line));
+        ret.emplace_back(splitString(line));
     }
     return ret;
 }
 
-set<string> extractLabelSet(const vector<vector<string>> &seqList) {
+static set<string> extractLabelSet(const vector<vector<vector<string>>> &seqList) {
     set<string> ret;
     for (const auto &seq : seqList) {
-        for (const auto &str : seq) {
-            auto fields = splitString(str, '\t');
-            if (fields[0] != "*") {
-                auto possibleLabels = splitString(fields[0], ',');
+        for (const auto &fields : seq) {
+            if (fields[1] != "*") {
+                auto possibleLabels = splitString(fields[1], ',');
                 ret.insert(possibleLabels.begin(), possibleLabels.end());
             }
-            ret.insert(fields[1]);
+            ret.insert(fields[2]);
         }
     }
     return ret;
 }
 
-shared_ptr<DataSequence> stringListToDataSequence(
-    const vector<string> &seq,
+static void outputFields(const vector<string> &fields) {
+    bool isFirst = true;
+    for (const auto &field : fields) {
+        if (!isFirst) {
+            cerr << "\t";
+        }
+        cerr << field;
+        isFirst = false;
+    }
+}
+
+static shared_ptr<DataSequence> stringListListToDataSequence(
+    const vector<vector<string>> &seq,
     unordered_map<string, label_t> &labelMap,
-    bool hasValidLabels,
-    vector<string> *originalStringList) {
+    bool hasValidLabels) {
 
     vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList;
     vector<label_t> labels;
@@ -97,13 +106,12 @@ shared_ptr<DataSequence> stringListToDataSequence(
     labels.reserve(seq.size());
     possibleLabelSetList.reserve(seq.size());
 
-    for (const auto &str : seq) {
-        auto fields = splitString(str, '\t');
+    for (const auto &fields : seq) {
         if (fields.size() < 4) {
-            cerr << "Invalid input format: " << str << endl;
+            cerr << "Invalid input format: ";
+            outputFields(fields);
             exit(1);
         }
-        originalStringList->emplace_back(move(fields[0]));
         
         if (fields[1] == "*") {
             possibleLabelSetList.emplace_back();
@@ -133,7 +141,7 @@ shared_ptr<DataSequence> stringListToDataSequence(
         for (auto it = fields.begin() + 3; it != fields.end(); ++it) {
             auto labelLengthAndTag = splitString(*it, ':', 2);
             if (labelLengthAndTag.size() != 2) {
-                cerr << "Invalid field " << *it << endl;
+                cerr << "Invalid field :" << *it << endl;
                 exit(1);
             }
             int labelLength = stoi(labelLengthAndTag[0]);
@@ -186,9 +194,9 @@ void HighOrderCRFProcessor::train(const string &filename,
         exit(1);
     }
 
-    vector<vector<string>> seqList;
+    vector<vector<vector<string>>> seqList;
     while (true) {
-        vector<string> seq = readSequence(ifs);
+        vector<vector<string>> seq = readSequence(ifs);
         if (ifs.eof()) {
             break;
         }
@@ -210,7 +218,7 @@ void HighOrderCRFProcessor::train(const string &filename,
     vector<string> dummy;
 
     for (const auto &seq : seqList) {
-        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true, &dummy));
+        dataSequenceList.push_back(stringListListToDataSequence(seq, labelMap, true));
     }
         
     unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
@@ -249,25 +257,23 @@ void HighOrderCRFProcessor::train(const string &filename,
     modelData = make_shared<HighOrderCRFData>(move(featureTemplateToFeatureIndexListMap), move(bestWeightList), move(featureLabelSequenceIndexList), move(labelSequenceList), move(labelMap));
 }
 
-vector<string> HighOrderCRFProcessor::tag(const vector<string> &seq) const {
+vector<string> HighOrderCRFProcessor::tag(const vector<vector<string>> &seq) const {
     auto labelMap = modelData->getLabelMap();
-    vector<string> originalStringList;
-    auto dataSequence = stringListToDataSequence(seq, labelMap, false, &originalStringList);
+    auto dataSequence = stringListListToDataSequence(seq, labelMap, false);
     auto labelList = tagLabelType(*dataSequence);
     vector<string> ret;
     auto labelStringList = modelData->getLabelStringList();
-    assert(labelList.size() == originalStringList.size());
     for (size_t i = 0; i < labelList.size(); ++i) {
-        ret.push_back(originalStringList[i] + "\t" + labelStringList[labelList[i]]);
+        ret.push_back(seq[i][0] + "\t" + labelStringList[labelList[i]]);
     }
     return ret;
 }
 
-vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<string> &seq) {
+vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<vector<string>> &seq) {
     prepareExpWeights();
     auto labelMap = modelData->getLabelMap();
     vector<string> dummy;
-    auto dataSequence = stringListToDataSequence(seq, labelMap, false, &dummy);
+    auto dataSequence = stringListListToDataSequence(seq, labelMap, false);
     auto likelihoodMap = dataSequence
         ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
         ->calcLabelLikelihoods(expWeights->data());
@@ -297,9 +303,9 @@ void HighOrderCRFProcessor::test(const string &filename,
         exit(1);
     }
 
-    vector<vector<string>> seqList;
+    vector<vector<vector<string>>> seqList;
     while (true) {
-        vector<string> seq = readSequence(ifs);
+        vector<vector<string>> seq = readSequence(ifs);
         if (ifs.eof()) {
             break;
         }
@@ -314,7 +320,7 @@ void HighOrderCRFProcessor::test(const string &filename,
     vector<string> dummy;
 
     for (const auto &seq : seqList) {
-        dataSequenceList.push_back(stringListToDataSequence(seq, labelMap, true, &dummy));
+        dataSequenceList.push_back(stringListListToDataSequence(seq, labelMap, true));
     }
         
     // number of distinct labels

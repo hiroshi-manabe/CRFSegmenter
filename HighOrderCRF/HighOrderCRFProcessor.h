@@ -24,9 +24,9 @@ public:
                double regularizationCoefficient,
                double epsilonForConvergence);
     
-    std::vector<std::string> tag(const std::vector<std::string> &seq) const;
+    std::vector<std::string> tag(const std::vector<std::vector<std::string>> &seq) const;
 
-    std::vector<std::string> calcLabelLikelihoods(const std::vector<std::string> &seq);
+    std::vector<std::string> calcLabelLikelihoods(const std::vector<std::vector<std::string>> &seq);
     
     void test(const std::string &filename,
               size_t concurrency) const;

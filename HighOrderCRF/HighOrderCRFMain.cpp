@@ -22,6 +22,8 @@ using std::queue;
 using std::string;
 using std::vector;
 
+extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
+
 enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, REGTYPE, COEFF, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
@@ -140,7 +142,7 @@ int mainProc(int argc, char **argv) {
         hwm::task_queue tq(numThreads);
         queue<future<vector<string>>> futureQueue;
 
-        vector<string> seq;
+        vector<vector<string>> seq;
         string line;
         while (getline(cin, line)) {
             if (line.empty()) {
@@ -160,7 +162,7 @@ int mainProc(int argc, char **argv) {
                 seq.clear();
             }
             else {
-                seq.emplace_back(move(line));
+                seq.emplace_back(splitString(line));
             }
         }
     }

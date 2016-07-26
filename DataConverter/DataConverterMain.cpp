@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,12 +20,26 @@ using std::endl;
 using std::cin;
 using std::cout;
 using std::cerr;
+using std::getline;
 using std::ifstream;
 using std::shared_ptr;
 using std::string;
+using std::stringstream;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
+
+vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
+    vector<string> elems;
+    stringstream ss(s);
+    string item;
+    int i = 1;
+    while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
+        elems.push_back(item);
+        ++i;
+    }
+    return elems;
+}
 
 enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L };
 
