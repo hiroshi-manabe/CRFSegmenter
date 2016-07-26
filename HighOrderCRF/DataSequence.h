@@ -6,6 +6,7 @@
 #include "Feature.h"
 #include "FeatureTemplate.h"
 #include "LabelSequence.h"
+#include "PatternSetSequence.h"
 
 #include <memory>
 #include <unordered_map>
@@ -13,8 +14,6 @@
 #include <vector>
 
 namespace HighOrderCRF {
-
-class PatternSetSequence;
 
 class DataSequence
 {

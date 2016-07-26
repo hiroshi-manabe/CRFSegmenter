@@ -12,9 +12,9 @@ namespace HighOrderCRF {
 class PatternSetSequence
 {
 public:
-    PatternSetSequence(std::vector<std::vector<Pattern>> &patternListList,
+    PatternSetSequence(std::vector<std::vector<Pattern>> patternListList,
                        std::vector<pattern_index_t> longestMatchIndexList) :
-    patternListList(patternListList), longestMatchIndexList(longestMatchIndexList) {};
+    patternListList(move(patternListList)), longestMatchIndexList(longestMatchIndexList) {};
     void accumulateFeatureCounts(double *counts) const;
     double accumulateFeatureExpectations(const double *expWeights, double *expectations) const;
     std::vector<std::unordered_map<label_t, double>> calcLabelLikelihoods(const double *expWeights) const;
