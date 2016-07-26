@@ -20,7 +20,7 @@ while (<STDIN>) {
         my $sp = $1;
         my $ch = $2;
         
-        my $print_sp = (not $opt_concat and $sp eq "\x20" or $opt_concat and $sp ne "") ? " " : "";
+        my $print_sp = ($is_first or (not $opt_concat and $sp eq "\x20") or ($opt_concat and $sp ne "")) ? " " : "";
         
         my $possible_labels = "0,1";
         if ($is_first) {
