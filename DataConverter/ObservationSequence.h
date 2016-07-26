@@ -42,7 +42,7 @@ public:
         ret.reserve(observationList.size());
 
         for (size_t pos = 0; pos < observationList.size(); ++pos) {
-            stringstream ss;
+            std::stringstream ss;
             ss << originalStringList[pos] << "\t";
 
             const auto &possibleLabelSet = possibleLabelSetList[pos];
