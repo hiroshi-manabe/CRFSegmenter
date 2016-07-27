@@ -369,6 +369,9 @@ int mainProc(int argc, char **argv) {
     if (optionMap.find("TYPE_L") != optionMap.end()) {
         op.charTypeMaxLabelLength = atoi(optionMap["TYPE_L"].c_str());
     }
+    if (optionMap.find("WORD_L") != optionMap.end()) {
+        op.wordMaxLabelLength = atoi(optionMap["WORD_L"].c_str());
+    }
     op.asciiSpaceOnly = optionMap.find("ASCII_SPACE_ONLY") != optionMap.end() ? true : false;
     op.containsSpaces = optionMap.find("CONTAINS_SPACES") != optionMap.end() ? true : false;
     op.concatenate = optionMap.find("CONCATENATE") != optionMap.end() ? true : false;
