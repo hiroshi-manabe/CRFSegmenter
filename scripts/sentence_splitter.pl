@@ -8,9 +8,10 @@ use open ':std';
 use Getopt::Long;
 
 my $opt_concat = 0;
+my $opt_ignore_latin = 0;
 my $opt_help = 0;
 
-GetOptions('concatenate' => \$opt_concat);
+GetOptions('concatenate' => \$opt_concat, 'ignore-latin' => \$opt_ignore_latin);
 
 while (<STDIN>) {
     chomp;
@@ -33,8 +34,10 @@ while (<STDIN>) {
             $possible_labels = "0";
         }
         elsif (not $opt_concat and
+               $opt_ignore_latin and
                (($prev =~ m{^\d$} and $ch =~ m{^\d$}) or
-                ($prev =~ m{^\p{Latin}$} and $ch =~ m{^\p{Latin}$}))) {
+               ($prev =~ m{^\p{Latin}$} and $ch =~ m{^\p{Latin}$}))) {
+            print STDERR "$opt_ignore_latin\n";
             $possible_labels = "0";
         }
 
