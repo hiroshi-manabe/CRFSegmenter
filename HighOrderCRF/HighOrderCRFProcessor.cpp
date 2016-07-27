@@ -59,11 +59,28 @@ vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     return elems;
 }
 
+static void outputFields(const vector<string> &fields) {
+    bool isFirst = true;
+    for (const auto &field : fields) {
+        if (!isFirst) {
+            cerr << "\t";
+        }
+        cerr << field;
+        isFirst = false;
+    }
+}
+
 static vector<vector<string>> readSequence(istream &is) {
     vector<vector<string>> ret;
     string line;
     while (getline(is, line) && !line.empty()) {
-        ret.emplace_back(splitString(line));
+        auto fields = splitString(line);
+            if (fields.size() < 4) {
+            cerr << "Invalid input format: ";
+            outputFields(fields);
+            exit(1);
+        }
+        ret.emplace_back(move(fields));
     }
     return ret;
 }
@@ -82,17 +99,6 @@ static set<string> extractLabelSet(const vector<vector<vector<string>>> &seqList
     return ret;
 }
 
-static void outputFields(const vector<string> &fields) {
-    bool isFirst = true;
-    for (const auto &field : fields) {
-        if (!isFirst) {
-            cerr << "\t";
-        }
-        cerr << field;
-        isFirst = false;
-    }
-}
-
 static shared_ptr<DataSequence> stringListListToDataSequence(
     const vector<vector<string>> &seq,
     unordered_map<string, label_t> &labelMap,
@@ -107,12 +113,6 @@ static shared_ptr<DataSequence> stringListListToDataSequence(
     possibleLabelSetList.reserve(seq.size());
 
     for (const auto &fields : seq) {
-        if (fields.size() < 4) {
-            cerr << "Invalid input format: ";
-            outputFields(fields);
-            exit(1);
-        }
-        
         if (fields[1] == "*") {
             possibleLabelSetList.emplace_back();
         }
