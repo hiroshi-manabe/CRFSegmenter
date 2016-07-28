@@ -23,6 +23,8 @@ while (<STDIN>) {
         
         my $print_sp = ($is_first or (not $opt_concat and $sp eq "\x20") or ($opt_concat and $sp ne "")) ? " " : "";
         
+        my $correct_label =($is_first or ((not $opt_concat and $sp ne "") or $opt_concat and $sp eq " ")) ? "1" : "0";
+        
         my $possible_labels = "0,1";
         if ($is_first) {
             $possible_labels = "1";
@@ -35,13 +37,11 @@ while (<STDIN>) {
         }
         elsif (not $opt_concat and
                $opt_ignore_latin and
+               $correct_label == "0" and
                (($prev =~ m{^\d$} and $ch =~ m{^\d$}) or
                ($prev =~ m{^\p{Latin}$} and $ch =~ m{^\p{Latin}$}))) {
-            print STDERR "$opt_ignore_latin\n";
             $possible_labels = "0";
         }
-
-        my $correct_label =($is_first or ((not $opt_concat and $sp ne "") or $opt_concat and $sp eq " ")) ? "1" : "0";
 
         print join("\t", $print_sp.$ch, $possible_labels, $correct_label)."\n";
         $is_first = 0;
