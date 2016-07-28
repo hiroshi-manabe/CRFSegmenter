@@ -5,8 +5,6 @@ use utf8;
 use open IO => ':utf8';
 use open ':std';
 
-use Getopt::Long;
-
 my $sentence = '';
 my $is_first = 1;
 while (<STDIN>) {
