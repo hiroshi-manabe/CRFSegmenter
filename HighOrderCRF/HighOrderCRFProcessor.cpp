@@ -281,21 +281,18 @@ vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<vector<s
     auto labelMap = modelData->getLabelMap();
     vector<string> dummy;
     auto dataSequence = stringListListToDataSequence(seq, labelMap, false);
-    auto likelihoodMap = dataSequence
+    auto likelihoodMapList = dataSequence
         ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
         ->calcLabelLikelihoods(expWeights->data());
     auto labelStringList = modelData->getLabelStringList();
     vector<string> ret;
     ret.reserve(seq.size());
-    for (const auto &m : likelihoodMap) {
+    for (size_t i = 0; i < seq.size(); ++i) {
         stringstream ss;
-        bool isFirst = true;
-        for (const auto &entry : m) {
-            if (!isFirst) {
-                ss << "\t";
-            }
+        ss << seq[i][0] << "\t";
+        for (const auto &entry : likelihoodMapList[i]) {
+            ss << "\t";
             ss << labelStringList[entry.first] << ":" << entry.second;
-            isFirst = false;
         }
         ret.emplace_back(ss.str());
     }
