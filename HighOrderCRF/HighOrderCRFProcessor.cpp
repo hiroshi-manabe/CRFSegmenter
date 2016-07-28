@@ -353,7 +353,7 @@ void HighOrderCRFProcessor::test(const string &filename,
         auto inferredLabelList = futureList[i].get();
         bool isAllCorrect = true;
         for (size_t j = 0; j < correctLabelList.size(); ++j) {
-            auto correctLabel = correctLabelList[i];
+            auto correctLabel = correctLabelList[j];
             if (inferredLabelList[j] == correctLabel) {
                 ++correctLabelCounts[correctLabel];
                 ++correctLabelCount;
