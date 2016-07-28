@@ -157,6 +157,7 @@ int mainProc(int argc, char **argv) {
                     for (const auto &str : ret) {
                         cout << str << endl;
                     }
+                    cout << endl;
                     futureQueue.pop();
                 }
                 seq.clear();
