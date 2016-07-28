@@ -9,7 +9,6 @@ use Getopt::Long;
 
 my $opt_concat = 0;
 my $opt_ignore_latin = 0;
-my $opt_help = 0;
 
 GetOptions('concatenate' => \$opt_concat, 'ignore-latin' => \$opt_ignore_latin);
 
