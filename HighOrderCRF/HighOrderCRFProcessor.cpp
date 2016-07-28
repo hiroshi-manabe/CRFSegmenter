@@ -113,6 +113,14 @@ static shared_ptr<DataSequence> stringListListToDataSequence(
     possibleLabelSetList.reserve(seq.size());
 
     for (const auto &fields : seq) {
+        auto it = labelMap.find(fields[2]);
+        if (it != labelMap.end()) {
+            labels.push_back(it->second);
+        }
+        else {
+            labels.push_back(INVALID_LABEL);
+        }
+
         if (fields[1] == "*") {
             possibleLabelSetList.emplace_back();
         }
@@ -125,17 +133,16 @@ static shared_ptr<DataSequence> stringListListToDataSequence(
                     possibleLabelSet.insert(it->second);
                 }
             }
+            if (hasValidLabels &&
+                possibleLabelSet.find(labels.back()) == possibleLabelSet.end()) {
+                cerr << "Correct label \"" << labels.back()
+                     << "\" is not included in the possible label set: ";
+                outputFields(fields);
+                exit(1);
+            }
             possibleLabelSetList.push_back(move(possibleLabelSet));
         }
         
-        auto it = labelMap.find(fields[2]);
-        if (it != labelMap.end()) {
-            labels.push_back(it->second);
-        }
-        else {
-            labels.push_back(INVALID_LABEL);
-        }
-
         vector<shared_ptr<FeatureTemplate>> featureTemplateList;
         featureTemplateList.reserve(fields.size() - 3);
         for (auto it = fields.begin() + 3; it != fields.end(); ++it) {
