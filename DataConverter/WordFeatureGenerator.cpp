@@ -30,17 +30,17 @@ vector<vector<FeatureTemplate>> WordFeatureGenerator::generateFeatureTemplates(c
     vector<vector<FeatureTemplate>> featureTemplateListList(observationList.size());
     for (size_t pos = 0; pos < observationList.size(); ++pos) {
         int startPos = max(0, (int)pos - (int)maxWindow);
-        size_t endPos = min(observationList.size(), pos + maxWindow);
+        size_t endPos = min(observationList.size(), pos + maxWindow + 1);
         assert(startPos >= 0);
 
-        for (size_t curPos = startPos; curPos <= pos; ++curPos) {
+        for (size_t curPos = startPos; curPos <= pos + 1; ++curPos) {
             size_t maxN = min(endPos - curPos, maxNgram);
             int curPosOffset = curPos - pos;
 
             stringstream prefix;
             prefix << "W" << showpos << curPosOffset << "/";
             for (size_t n = 1; n <= maxN; ++n) {
-                if (curPos + n < pos || curPos > pos) {
+                if (curPos + n < pos || curPos > pos + 1) {
                     continue;
                 }
                 string obs(prefix.str());
