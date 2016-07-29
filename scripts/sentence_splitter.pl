@@ -6,6 +6,7 @@ use open IO => ':utf8';
 use open ':std';
 
 use Getopt::Long;
+use IO::Handle;
 
 my $opt_concat = 0;
 my $opt_ignore_latin = 0;
@@ -47,4 +48,5 @@ while (<STDIN>) {
         $prev = $ch;
     }
     print "\n";
+    STDOUT->flush();
 }

@@ -5,6 +5,8 @@ use utf8;
 use open IO => ':utf8';
 use open ':std';
 
+$| = 1;
+
 my $sentence = '';
 my $is_first = 1;
 while (<STDIN>) {
