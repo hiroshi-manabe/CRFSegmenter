@@ -164,7 +164,7 @@ int mainProc(int argc, char **argv) {
             break;
         }
         for (const auto &str : ret) {
-            cout << str << endl;
+            cout << str << "\n";
         }
         cout << endl;
     }
@@ -176,5 +176,6 @@ int mainProc(int argc, char **argv) {
 }  // namespace DataConverter
 
 int main(int argc, char **argv) {
+    std::ios_base::sync_with_stdio(false);
     return DataConverter::mainProc(argc, argv);
 }

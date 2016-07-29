@@ -155,7 +155,7 @@ int mainProc(int argc, char **argv) {
                 while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
                     auto ret = futureQueue.front().get();
                     for (const auto &str : ret) {
-                        cout << str << endl;
+                        cout << str << "\n";
                     }
                     cout << endl;
                     futureQueue.pop();
@@ -173,5 +173,6 @@ int mainProc(int argc, char **argv) {
 } // namespace HighOrderCRF
 
 int main(int argc, char **argv) {
+    std::ios_base::sync_with_stdio(false);
     return HighOrderCRF::mainProc(argc, argv);
 }
