@@ -15,6 +15,8 @@
 #include "FeatureTemplateGenerator.h"
 #include "ObservationSequence.h"
 #include "UnconditionalFeatureTemplateGenerator.h"
+#include "WordCharacterFeatureGenerator.h"
+#include "WordCharacterTypeFeatureGenerator.h"
 #include "WordFeatureGenerator.h"
 
 using std::istream;
@@ -34,6 +36,8 @@ extern vector<string> splitString(const string &s, char delim = '\t', int count 
 
 void TaggerDataConverter::setOptions(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {
+        {"characterLength", "2"},
+        {"characterTypeLength", "2"},
         {"wordMaxNgram", "2"},
         {"wordMaxWindow", "2"},
         {"wordMaxLabelLength", "4"},
@@ -46,6 +50,14 @@ void TaggerDataConverter::setOptions(const unordered_map<string, string> &argOpt
     gen->addFeatureTemplateGenerator(make_shared<WordFeatureGenerator>(stoi(options["wordMaxNgram"]),
                                                                        stoi(options["wordMaxWindow"]),
                                                                        stoi(options["wordMaxLabelLength"])));
+    size_t characterLength = stoi(options["characterLength"]);
+    if (characterLength > 0) {
+        gen->addFeatureTemplateGenerator(make_shared<WordCharacterFeatureGenerator>(characterLength));
+    }
+    size_t characterTypeLength = stoi(options["characterTypeLength"]);
+    if (characterTypeLength > 0) {
+        gen->addFeatureTemplateGenerator(make_shared<WordCharacterTypeFeatureGenerator>(characterTypeLength));
+    }
     
     auto it = options.find("dictionaryFilename");
     if (it != options.end()) {

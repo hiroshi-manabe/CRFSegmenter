@@ -11,6 +11,8 @@ add_executable(
     SegmenterDictionaryFeatureGenerator.cpp
     TaggerDataConverter.cpp
     UnicodeCharacter.cpp
+    WordCharacterFeatureGenerator.cpp
+    WordCharacterTypeFeatureGenerator.cpp
     WordFeatureGenerator.cpp
 )
 set_property(TARGET DataConverter PROPERTY CXX_STANDARD 11)

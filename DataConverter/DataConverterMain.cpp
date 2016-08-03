@@ -41,7 +41,7 @@ vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     return elems;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L };
+enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L, CHAR, CHAR_TYPE };
 
 struct Arg : public option::Arg
 {
@@ -71,9 +71,11 @@ const option::Descriptor usage[] =
     { SEGMENT, 0, "", "segment", Arg::None, "  --segment  \tGenerates features for segmentation." },
     { CONTAINS_SPACES, 0, "", "contains-spaces", Arg::None, "  --contains-spaces  \t(Segmentation) Indicates that the original text contains spaces (e.g. Korean)." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tGenerates features for tagging." },
-    { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\tN-gram length of words. Defaults to 2." },
-    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\tWindow width for words. Defaults to 2." },
-    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\tMaximum label length of words. Defaults to 4." },
+    { WORD_N, 0, "", "wordn", Arg::Required, "  --wordn  <number>\t(Tagging) N-gram length of words. Defaults to 2." },
+    { WORD_W, 0, "", "wordw", Arg::Required, "  --wordw  <number>\t(Tagging) Window width for words. Defaults to 2." },
+    { WORD_L, 0, "", "wordl", Arg::Required, "  --wordl  <number>\t(Tagging) Maximum label length of words. Defaults to 4." },
+    { CHAR, 0, "", "char", Arg::Required, "  --char  <number>\t(Tagging) Maximum length of word prefixes and suffixes to generate features." },
+    { CHAR_TYPE, 0, "", "char-type", Arg::Required, "  --char-type  <number>\t(Tagging) Maximum length of character types of prefixes and suffixes to generate features." },
     { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -147,13 +149,19 @@ int mainProc(int argc, char **argv) {
             op["dictionaryFilename"] = options[DICT].arg;
         }
         if (options[WORD_N]) {
-            op["wordMaxNgram"] = atoi(options[CHAR_N].arg);
+            op["wordMaxNgram"] = atoi(options[WORD_N].arg);
         }
         if (options[WORD_W]) {
-            op["wordMaxWindow"] = atoi(options[CHAR_W].arg);
+            op["wordMaxWindow"] = atoi(options[WORD_W].arg);
         }
         if (options[WORD_L]) {
-            op["wordMaxLabelLength"] = atoi(options[CHAR_L].arg);
+            op["wordMaxLabelLength"] = atoi(options[WORD_L].arg);
+        }
+        if (options[CHAR]) {
+            op["characterLength"] = atoi(options[CHAR].arg);
+        }
+        if (options[CHAR_TYPE]) {
+            op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
     }
     converter->setOptions(op);

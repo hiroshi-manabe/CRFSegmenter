@@ -15,7 +15,7 @@ public:
     std::string toString() const;
     uint32_t getCodePoint() const;
     std::string getCharacterType() const;
-    static UnicodeCharacter fromString(const char *buf, size_t len, size_t *charCount);
+    static UnicodeCharacter fromString(std::string::const_iterator it, size_t len, size_t *charCount);
 private:
     uint32_t codePoint;
 };

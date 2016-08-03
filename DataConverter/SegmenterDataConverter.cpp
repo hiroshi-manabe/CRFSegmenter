@@ -113,7 +113,7 @@ vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector
 
         bool hasSpace = (character.size() > 0 && character[0] == 0x20);
         size_t charCount = 0;
-        auto ch = UnicodeCharacter::fromString(character.data() + hasSpace, character.size() - hasSpace, &charCount);
+        auto ch = UnicodeCharacter::fromString(character.begin() + hasSpace, character.size() - hasSpace, &charCount);
         if (charCount + hasSpace != character.size()) {
             cerr << "Only one character is allowed. " << endl << str << endl;
             exit(1);
