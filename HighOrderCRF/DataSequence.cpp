@@ -180,6 +180,16 @@ shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const un
     
     for (size_t pos = 0; pos < this->length(); ++pos) {
         Trie<label_t> &curTrie = trieList[pos];
+        if (curTrie.isEmpty()) {
+            label_t l = 0;
+            if (!possibleLabelSetList[pos].empty()) {
+                l = *(possibleLabelSetList[pos].begin());
+            }
+            int dataIndex = curTrie.findOrInsert(&l, 1, patternDataList.size());
+            if (dataIndex == patternDataList.size()) {
+                patternDataList.emplace_back();
+            }
+        }
 
         vector<Pattern> patternList;
         PatternGenerationData<label_t> d;
