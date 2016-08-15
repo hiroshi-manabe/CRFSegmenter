@@ -4,7 +4,7 @@ use strict;
 use utf8;
 
 use File::Basename;
-use Getopt::Long;
+use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 
 my @possible_output_types = qw(segment postag analyze);
 my $pos_table;

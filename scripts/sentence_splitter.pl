@@ -5,7 +5,7 @@ use utf8;
 use open IO => ':utf8';
 use open ':std';
 
-use Getopt::Long;
+use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use IO::Handle;
 
 my $opt_concat = 0;
