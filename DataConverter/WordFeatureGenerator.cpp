@@ -50,7 +50,7 @@ vector<vector<FeatureTemplate>> WordFeatureGenerator::generateFeatureTemplates(c
                         obs += "_";
                     }
                 }
-                size_t maxLen = min(maxLabelLength, pos - curPos + 2);
+                size_t maxLen = min(maxLabelLength, pos - curPos + 1);
                 for (size_t labelLength = 1; labelLength <= maxLen; ++labelLength) {
                     featureTemplateListList[pos].emplace_back(obs, labelLength);
                 }
