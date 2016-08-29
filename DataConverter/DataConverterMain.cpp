@@ -164,6 +164,11 @@ int mainProc(int argc, char **argv) {
             op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
     }
+    else {
+        cerr << "You must specify --segment or --tag option." << endl;
+        option::printUsage(cout, usage);
+        return 1;
+    }
     converter->setOptions(op);
 
     while (true) {
