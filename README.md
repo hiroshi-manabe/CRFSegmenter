@@ -154,7 +154,7 @@ Each line of input data should follow the following format:
 
     <Original text>[TAB]<Possible labels>[TAB]<Correct label>[TAB]<Feature 1 label length:Feature 1 string>[TAB]<Feature 2 label length:Feature 2 string>...[LF]
 
-<Original text> field is not used in tagging.
+```<Original text>``` field is not used in tagging.
 
 Below are some example data.
 
