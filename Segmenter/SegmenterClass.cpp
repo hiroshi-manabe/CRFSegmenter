@@ -361,16 +361,13 @@ int mainProc(int argc, char **argv) {
         op.charMaxLabelLength = atoi(optionMap["CHAR_L"].c_str());
     }
     if (optionMap.find("TYPE_N") != optionMap.end()) {
-        op.charTypeMaxNgram = atoi(optionMap["TYPE_N"].c_str());
+        op.charMaxNgram = atoi(optionMap["TYPE_N"].c_str());
     }
     if (optionMap.find("TYPE_W") != optionMap.end()) {
-        op.charTypeMaxWindow = atoi(optionMap["TYPE_W"].c_str());
+        op.charMaxWindow = atoi(optionMap["TYPE_W"].c_str());
     }
     if (optionMap.find("TYPE_L") != optionMap.end()) {
-        op.charTypeMaxLabelLength = atoi(optionMap["TYPE_L"].c_str());
-    }
-    if (optionMap.find("WORD_L") != optionMap.end()) {
-        op.wordMaxLabelLength = atoi(optionMap["WORD_L"].c_str());
+        op.charMaxLabelLength = atoi(optionMap["TYPE_L"].c_str());
     }
     op.asciiSpaceOnly = optionMap.find("ASCII_SPACE_ONLY") != optionMap.end() ? true : false;
     op.containsSpaces = optionMap.find("CONTAINS_SPACES") != optionMap.end() ? true : false;
