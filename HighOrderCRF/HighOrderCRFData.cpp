@@ -1,8 +1,3 @@
-#include "HighOrderCRFData.h"
-
-#include "FeatureTemplate.h"
-#include "LabelSequence.h"
-
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -13,6 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "HighOrderCRFData.h"
+
+#include "FeatureTemplate.h"
+#include "LabelSequence.h"
 
 namespace HighOrderCRF {
 
@@ -70,7 +69,7 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
+HighOrderCRFData::HighOrderCRFData(unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
     this->featureTemplateToFeatureIndexListMap = move(featureTemplateToFeatureIndexListMap);
     this->featureLabelSequenceIndexList = move(featureLabelSequenceIndexList);
     this->labelSequenceList = move(labelSequenceList);
@@ -83,7 +82,7 @@ HighOrderCRFData::HighOrderCRFData(unordered_map<shared_ptr<FeatureTemplate>, ve
 
 HighOrderCRFData::HighOrderCRFData() {}
 
-const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
+const unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
     return featureTemplateToFeatureIndexListMap;
 }
 
@@ -262,7 +261,7 @@ void HighOrderCRFData::write(const string &filename) const {
     for (auto entry : featureTemplateToFeatureIndexListMap) {
         auto &ft = entry.first;
         auto &v = entry.second;
-        writeString(&out, ft->getObservation());
+        writeString(&out, ft->getTag());
         writeNumber<uint32_t>(&out, ft->getLabelLength());
         writeNumber<uint32_t>(&out, v.size());
         for (auto &i : v) {
@@ -307,7 +306,7 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
             if (outputWeights) {
                 out << weight_to_double(weightList[featureIndex]) << "\t";
             }
-            out << (ft->getObservation().empty() ? "LABEL" : ft->getObservation());
+            out << (ft->getTag());
             auto &labelSequence = labelSequenceList[featureIndex];
             for (size_t j = 0; j < labelSequence.getLength(); ++j) {
                 out << "\t" << labelStringList[labelSequence.getLabelAt(j)];

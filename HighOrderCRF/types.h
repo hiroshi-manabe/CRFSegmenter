@@ -5,7 +5,6 @@
 #include <cmath>
 
 typedef int32_t label_t;
-typedef uint32_t label_t_unsigned;
 #define INVALID_LABEL -1
 
 typedef uint16_t pattern_index_t;

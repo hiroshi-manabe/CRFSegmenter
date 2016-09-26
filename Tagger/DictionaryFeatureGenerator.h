@@ -3,7 +3,7 @@
 
 #include "../Dictionary/DictionaryClass.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
-#include "../HighOrderCRF/FeatureTemplateGenerator.h"
+#include "FeatureTemplateGenerator.h"
 
 #include <map>
 #include <memory>

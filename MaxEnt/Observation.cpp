@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace MaxEnt {
@@ -18,6 +19,7 @@ using std::make_pair;
 using std::make_shared;
 using std::move;
 using std::ostream;
+using std::pair;
 using std::set;
 using std::shared_ptr;
 using std::stringstream;

@@ -1,14 +1,11 @@
-#include "LabelSequence.h"
-
 #include <algorithm>
-#include <memory>
 #include <vector>
+
+#include "LabelSequence.h"
 
 namespace HighOrderCRF {
 
-using std::make_shared;
 using std::min;
-using std::shared_ptr;
 using std::vector;
 
 LabelSequence::LabelSequence(vector<label_t> labels) {

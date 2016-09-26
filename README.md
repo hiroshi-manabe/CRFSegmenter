@@ -4,9 +4,9 @@ CRFSegmenter
 What's this?
 ------------
 
-**CRFSegmenter** is a high-order-CRF-based multi-language text segmenter.
+**CRFSegmenter** is an implementation of [high-order CRF](http://vocrf.net/docs/thesis_en.pdf) paired with utility programs that facilitate word segmentation and POS-tagging.
 
-It also contains a POS tagger (high-order-CRF-based) and morphological disambiguator (maximum-entropy-based).
+It also contains a morphological disambiguator (maximum-entropy-based).
 
 Requirements
 ------------
@@ -19,93 +19,94 @@ How to build the executables
     $ cmake
     $ make
 
-The executables will be generated in their directories (Segmenter, Tagger, MorphemeTagger).
+The executables will be generated in their directories (DataConverter, HighOrderCRF and MorphemeTagger).
 
 How to use
 ----------
 
-###Segmenter
+All data must be encoded in UTF-8.
 
-####Commands
+### Word segmentation
 
-Training:
+#### Data Format
 
-    ./Segmenter/Segmenter --train <training data file> --model <model file> [--dict <dictionary file>] --regtype L1 --coeff 0.05
-    
-Test:
+Training data should be separated with non-breaking spaces (\xa0), like:
 
-    ./Segmenter/Segmenter --test <test data file> --model <model file> [--dict <dictionary file>]
+    今天[\xa0]天气[\xa0]很[\xa0]好 。[LF]
 
-Segmentation:
+Input data for segmentations is a plain text, like:
 
-    ./Segmenter/Segmenter --segment --model <model file> [--dict <dictionary file] < <input file> > <output file>
+    今天天气很好。[LF]
 
-For more details, please type `./Segmenter/Segmenter --help`.
+Output data will be separated with spaces (\x20) and not non-breaking spaces (\xa0). The (ideal) result for the data above will be like:
 
-####Text file format
+    今天 天气 很 好 。[LF]
 
-The training file is a space-separated plain text file, like:
+#### Dictionary Format
 
-    This is an example .
+A dictionary file should be in tab-separated form, like:
 
-The input file is a text file before segmentation, like:
+    天气[TAB]LEN:2[TAB]POS:NN[TAB]...[LF]
+    好[TAB]LEN:1[TAB]POS:JJ[TAB]...[LF]
+    ....
 
-    Thisisanexample.
+The first column should contain words. You can add an arbitrary number of features in other columns, but the number of columns should be consistent throughout the file.
 
-The training / input files must be encoded in UTF-8.
+#### Training
 
-####Dictionary file format
+    cat <input file> | ./scripts/sentence_splitter.pl | DataConverter/DataConverter --segment [--dict <dictionary file] > <temporary file>
+    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file> --regtype <regtype> --coeff <coefficient>
 
-The dictionary file is a tab-separated plain text file with one or more features, like:
+Recommended regularization type and its coefficient are L1 and 0.05, respectively.
 
-    word1[TAB]feature1-1[TAB]feature2-1
-    word2[TAB]feature1-2[TAB]feature2-2
+#### Performing segmentation
+
+    cat <input file> | ./scripts/sentence_splitter.pl [--ignore-latin] | DataConverter/DataConverter --segment [--dict <dictionary file>] | ./HighOrderCRF/HighOrderCRF --tag --model <model file> | ./scripts/sentence_joiner.pl
+
+If you use --ignore-latin option, the result will never be split between latin characters, which is often the desired behavior when processing CJK texts.
+
+### POS-tagging
+
+#### Data Format
+
+Each line of training data should be a word and its POS-tag (tab-separated). Sentences should be separated with an empty line.
+
+Training Data will look like:
+
+    time[TAB]NN[LF]
+    flies[TAB]VBS[LF]
+    like[TAB]IN[LF]
+    an[TAB]DT[LF]
+    arrow[TAB]NN[LF]
+    .[TAB].[LF]
+    [LF]
     ...
 
-The number of columns must be consistent throughout the file.
+Input data for POS-tagging only contains one word in each line.
 
-###POS Tagger
-
-####Commands
-
-Training:
-
-    ./Tagger/Tagger --train <training data file> --tagset <tag set file> --model <model file> [--dict <dictionary file>] --regtype L1 --coeff 0.05
-    
-Test:
-
-    ./Tagger/Tagger --test <test data file> --model <model file> [--dict <dictionary file>]
-
-Tagging:
-
-    ./Tagger/Tagger --tag --model <model file> [--dict <dictionary file] [--newline] < <input file> > <output file>
-
-For more details, please type `./Tagger/Tagger --help`.
-
-####Text file format
-
-The training file should contain space-separated words with POS tags, like:
-
-     This/DT is/VBZ an/DT example/NN ./.
-
-The input file should contain space-separated words like:
-
-    This is an example .
-
-The output file is basically in the same format as the training file, but you can make it newline-separated by using `--newline` option. This way, you can pass it to the morphological disambiguator.
-
-####Tag set file format
-
-The tag set file is a text file in which each line contains a tag used in the training file, like:
-
-    CC
-    CD
-    DT
+    time[LF]
+    flies[LF]
+    like[LF]
+    an[LF]
+    arrow[LF]
+    .[LF]
+    [LF]
     ...
 
-####Dictionary format
+Output data format is the same as that of training data.
 
-The dictionary file should list words and their possible tags like in the following example:
+    time[TAB]NN[LF]
+    flies[TAB]VBS[LF]
+    like[TAB]IN[LF]
+    an[TAB]DT[LF]
+    arrow[TAB]NN[LF]
+    .[TAB].[LF]
+    [LF]
+    ...
+
+#### Dictionary Format
+
+The dictionary file should list words and their possible tags, like in the following example:
 
     time[TAB]NN
     time[TAB]VB
@@ -113,18 +114,67 @@ The dictionary file should list words and their possible tags like in the follow
     files[TAB]VBS
     ...
 
-###Morphological Disambiguator
+"Possible tags" means the tags with which the word is tagged. In the above example, the word "time" will always be tagged with NN or VB and never with NNS or VBS.
 
-####Commands
+#### Training
+
+    cat <input file> | DataConverter/DataConverter --tag [--dict <dictionary file] > <temporary file>
+    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file> --regtype <regtype> --coeff <coefficient>
+    
+Recommended regularization type and its coefficient are L1 and 0.05, respectively.
+
+#### Performing POS-tagging
+
+    cat <input file> | DataConverter/DataConverter --tag [--dict <dictionary file] | ./HighOrderCRF/HighOrderCRF --tag --model <model file>
+
+### Directly using high-order CRF
+
+#### Data Format
+
+Input data should follow the following format:
+
+    <Sentence 1 line 1>[LF]
+    <Sentence 1 line 2>[LF]
+    ...
+    <Sentence 1 line k>[LF]
+    [LF]
+    <Sentence 2 line 1>[LF]
+    <Sentence 2 line 2>[LF]
+    ...
+    <Sentence 2 line l>[LF]
+    [LF]
+    ...
+    <Sentence n line 1>[LF]
+    <Sentence n line 2>[LF]
+    ...
+    <Sentence n line m>[LF]
+    [LF]
+
+Each line of input data should follow the following format:
+
+    <Original text>[TAB]<Possible labels>[TAB]<Correct label>[TAB]<Feature 1 label length:Feature 1 string>[TAB]<Feature 2 label length:Feature 2 string>...[LF]
+
+<Original text> field is not used in tagging.
+
+Below are some example data.
+
+    time	VB,NN	NN	1:*	1:W+0/time	1:W+0/time_flies	1:C+1/t	1:C+2/ti	1:C-1/e	1:C-2/me	1:T+1/LATIN	1:T+2/LATIN_LATIN	1:T-1/LATIN	1:T-2/LATIN_LATIN	1:D-NN	1:D-VB
+    flies	VBS,NNS	VBS	1:*	2:*	1:W-1/time	2:W-1/time	1:W-1/time_flies	2:W-1/time_flies	1:W+0/flies	1:W+0/flies_like	1:C+1/f	1:C+2/fl	1:C-1/s	1:C-2/es	1:T+1/LATIN	1:T+2/LATIN_LATIN	1:T-1/LATIN	1:T-2/LATIN_LATIN	1:D-NNS	1:D-VBS
+    like	VB,IN	IN	1:*	2:*	1:W-2/time_flies	2:W-2/time_flies	3:W-2/time_flies	1:W-1/flies	2:W-1/flies	1:W-1/flies_like	2:W-1/flies_like	1:W+0/like	1:W+0/like_an	1:C+1/l	1:C+2/li	1:C-1/e	1:C-2/ke	1:T+1/LATIN	1:T+2/LATIN_LATIN	1:T-1/LATIN	1:T-2/LATIN_LATIN	1:D-IN	1:D-VB
+    an	DT	DT	1:*	2:*	1:W-2/flies_like	2:W-2/flies_like	3:W-2/flies_like	1:W-1/like	2:W-1/like	1:W-1/like_an	2:W-1/like_an	1:W+0/an	1:W+0/an_arrow	1:C+1/a	1:C+2/an	1:C-1/n	1:C-2/an	1:T+1/LATIN	1:T+2/LATIN_LATIN	1:T-1/LATIN	1:T-2/LATIN_LATIN	1:D-DT
+    arrow	NN	*	1:*	2:*	1:W-2/like_an	2:W-2/like_an	3:W-2/like_an	1:W-1/an	2:W-1/an	1:W-1/an_arrow	2:W-1/an_arrow	1:W+0/arrow	1:W+0/arrow_.	1:C+1/a	1:C+2/ar	1:C-1/w	1:C-2/ow	1:T+1/LATIN	1:T+2/LATIN_LATIN	1:T-1/LATIN	1:T-2/LATIN_LATIN	1:D-NN
+    .	.	.	1:*	2:*	1:W-2/an_arrow	2:W-2/an_arrow	3:W-2/an_arrow	1:W-1/arrow	2:W-1/arrow	1:W-1/arrow_.	2:W-1/arrow_.	1:W+0/.	1:C+1/.	1:C-1/.	1:T+1/COMMON	1:T-1/COMMON	1:D-.
+
+Each line of output data will be in the following format:
+
+    <Original text>[TAB]<Inferred label>
 
 Training:
 
-    ./MorphemeTagger/MorphemeTagger --train <training data file> --model <model file> [--fcolumns <comma-separated numbers>] [--dict <dictionary file>] --regtype L1 --coeff 0.05
+    ./HighOrderCRF/HighOrderCRF --train <training data> --model <model output file> [--regtype <regularization type>] [--coeff <regularization coefficient>]
 
-Test:
-
-    ./MorphemeTagger/MorphemeTagger --test <test data file> --model <model file> [--dict <dictionary file>]
+Recommended regularization type and its coefficient are L1 and 0.05, respectively.
 
 Tagging:
 
-    ./MorphemeTagger/MorphemeTagger --tag --model <model file> [--dict <dictionary file] < <input file> > <output file>
+    cat <input file> | ./HighOrderCRF/HighOrderCRF --tag --model <model file>

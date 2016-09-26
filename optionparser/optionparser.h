@@ -328,8 +328,6 @@ struct Descriptor
    */
   const unsigned index;
 
-  const char* name;
-
   /**
    * @brief Used to distinguish between options with the same @ref index.
    * See @ref index for details.

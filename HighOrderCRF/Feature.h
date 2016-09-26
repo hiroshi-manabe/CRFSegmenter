@@ -12,21 +12,18 @@ namespace HighOrderCRF {
 
 class FeatureTemplate;
 
-using std::shared_ptr;
-using std::string;
-
 class Feature
 {
 public:
-    Feature(string obs, shared_ptr<LabelSequence> pat);
-    shared_ptr<LabelSequence> getLabelSequence() const;
-    const string &getObservation() const;
+    Feature(std::string tag, std::shared_ptr<LabelSequence> pat);
+    std::shared_ptr<LabelSequence> getLabelSequence() const;
+    const std::string &getTag() const;
     bool operator==(const Feature &that) const;
     size_t hash() const;
 
 private:
-    string obs;
-    shared_ptr<LabelSequence> seq;
+    std::string tag;
+    std::shared_ptr<LabelSequence> seq;
 };
 
 }  // namespace HighOrderCRF
@@ -34,15 +31,15 @@ private:
 namespace std {
 
 template<> 
-struct hash<shared_ptr<HighOrderCRF::Feature>> {
-    size_t operator()(const shared_ptr<HighOrderCRF::Feature> &feature) const {
+struct hash<std::shared_ptr<HighOrderCRF::Feature>> {
+    size_t operator()(const std::shared_ptr<HighOrderCRF::Feature> &feature) const {
         return feature->hash();
     }
 };
 
 template<>
-struct equal_to<shared_ptr<HighOrderCRF::Feature>> {
-    bool operator()(const shared_ptr<HighOrderCRF::Feature>& left, const shared_ptr<HighOrderCRF::Feature> &right) const {
+struct equal_to<std::shared_ptr<HighOrderCRF::Feature>> {
+    bool operator()(const std::shared_ptr<HighOrderCRF::Feature>& left, const std::shared_ptr<HighOrderCRF::Feature> &right) const {
         return *left == *right;
     }
 };

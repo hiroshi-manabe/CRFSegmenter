@@ -9,14 +9,11 @@
 
 namespace HighOrderCRF {
 
-using std::shared_ptr;
-using std::vector;
-
 class LabelSequence
 {
 public:
     LabelSequence() {};
-    LabelSequence(vector<label_t> labels);
+    LabelSequence(std::vector<label_t> labels);
     size_t getLength() const;
     label_t getLabelAt(size_t pos) const;
     const label_t *getLabelData() const;
@@ -29,7 +26,7 @@ public:
     size_t hash() const;
 
 private:
-    vector<label_t> labels;
+    std::vector<label_t> labels;
 };
 
 }  // namespace HighOrderCRF
@@ -37,15 +34,15 @@ private:
 namespace std {
 
 template<> 
-struct hash<shared_ptr<HighOrderCRF::LabelSequence>> {
-    size_t operator()(const shared_ptr<HighOrderCRF::LabelSequence> &seq) const {
+struct hash<std::shared_ptr<HighOrderCRF::LabelSequence>> {
+    size_t operator()(const std::shared_ptr<HighOrderCRF::LabelSequence> &seq) const {
         return seq->hash();
     }
 };
 
 template<>
-struct equal_to<shared_ptr<HighOrderCRF::LabelSequence>> {
-    bool operator()(const shared_ptr<HighOrderCRF::LabelSequence>& left, const shared_ptr<HighOrderCRF::LabelSequence> &right) const {
+struct equal_to<std::shared_ptr<HighOrderCRF::LabelSequence>> {
+    bool operator()(const std::shared_ptr<HighOrderCRF::LabelSequence>& left, const std::shared_ptr<HighOrderCRF::LabelSequence> &right) const {
         return *left == *right;
     }
 };
