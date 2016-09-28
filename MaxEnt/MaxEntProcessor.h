@@ -50,8 +50,8 @@ public:
     void train(const std::vector<Observation> &observationList,
                size_t concurrency,
                size_t maxIters,
-               bool useL1Regularization,
-               double regularizationCoefficient,
+               double regularizationCoefficientL1,
+               double regularizationCoefficientL2,
                double epsilonForConvergence) {
 
         auto compiledDataList = std::make_shared<std::vector<std::shared_ptr<CompiledData>>>();
@@ -68,7 +68,7 @@ public:
             data->accumulateFeatureCounts(featureCountList.data());
         }
         
-        auto optimizer = std::make_shared<Optimizer::OptimizerClass>(maxEntUpdateProc, static_cast<void *>(&compiledDataList), std::move(featureCountList), concurrency, maxIters, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
+        auto optimizer = std::make_shared<Optimizer::OptimizerClass>(maxEntUpdateProc, static_cast<void *>(&compiledDataList), std::move(featureCountList), concurrency, maxIters, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
         std::vector<double> initialWeightList(featureCountList.size());
         optimizer->optimize(initialWeightList.data());
         auto bestWeightList = optimizer->getBestWeightList();

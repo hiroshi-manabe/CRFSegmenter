@@ -15,7 +15,13 @@ class MorphemeDisambiguatorClass {
 
 public:
     MorphemeDisambiguatorClass(const MorphemeDisambiguatorOptions &taggerOptions);
-    void train(const std::string &trainingFilename, const std::string &modelFilename);
+    void train(const std::string &trainingFilename,
+               size_t concurrency,
+               size_t maxIter,
+               double regularizationCoefficientL1,
+               double regularizationCoefficientL2,
+               double epsilonForConvergence,
+               const std::string &modelFilename);
     std::vector<std::vector<std::string>> tag(std::vector<std::string> sentence) const;
     void test(const std::string &testFilename) const;
     void readModel(const std::string &modelFilename);

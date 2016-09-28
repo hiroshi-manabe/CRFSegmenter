@@ -9,7 +9,7 @@ namespace Optimizer {
 class OptimizerClass
 {
 public:
-    OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, std::vector<double> featureCountList, size_t concurrency, size_t maxIters, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence);
+    OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, std::vector<double> featureCountList, size_t concurrency, size_t maxIters, double  regularizationCoefficientL1, double regularizationCoefficientL2, double epsilonForConvergence);
     double evaluate(const double *x, double *g);
     void optimize(const double *featureWeights);
     int progress(const double *x, const double *g, const double fx, const double xnorm, const double gnorm, const double step, int n, int k, int ls);
@@ -23,8 +23,8 @@ private:
     std::vector<double> bestWeightList;
     size_t concurrency;
     size_t maxIter;
-    bool useL1Optimization;
-    double regularizationCoefficient;
+    double regularizationCoefficientL1;
+    double regularizationCoefficientL2;
     double epsilonForConvergence;
 };
 

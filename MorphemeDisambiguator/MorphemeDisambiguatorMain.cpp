@@ -259,7 +259,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
     }
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN, C1, C2, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -286,8 +286,8 @@ const option::Descriptor usage[] =
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTags the text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\tDesignates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\tSets the regularization coefficient." },
+    { C1, 0, "", "c1", Arg::Required, "  --c1  <number>\t(For training) Sets the coefficient for L1 regularization. The default value is 0.05 (defaults to 0 if the c2 is explicitly set)." },
+    { C2, 0, "", "c2", Arg::Required, "  --c2  <number>\t(For training) Sets the coefficient for L2 regularization. The default value is 0 (no L2 regularization)." },
     { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\tSets the epsilon for convergence." },
     { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\tSets the maximum iteration count." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
@@ -300,7 +300,7 @@ bool fileExists(const string &filename) {
 }
 
 int mainProc(int argc, char **argv) {
-    MorphemeDisambiguator::MorphemeDisambiguatorOptions op = { 2, 1, 1, 1 };
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions op = { 2, 1, 1 };
 
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -334,7 +334,7 @@ int mainProc(int argc, char **argv) {
         op.dictionaryFilename = dictFilename;
     }
 
-    op.numThreads = 1;
+    size_t numThreads = 1;
     if (options[THREADS]) {
         char* endptr;
         int num = strtol(options[THREADS].arg, &endptr, 10);
@@ -342,7 +342,7 @@ int mainProc(int argc, char **argv) {
             cerr << "Illegal number of threads." << endl;
             exit(1);
         }
-        op.numThreads = num;
+        numThreads = num;
     }
         
 
@@ -361,23 +361,30 @@ int mainProc(int argc, char **argv) {
         
     if (options[TRAIN]) {
         string trainingFilename = options[TRAIN].arg;
+        double c1 = 0.0;
+        double c2 = 0.0;
+        double epsilon = 0.0;
+        int maxIter = 0;
         
-        if (options[COEFF]) {
-            op.coeff = atof(options[COEFF].arg);
-        }
         if (options[EPSILON]) {
-            op.epsilon = atof(options[EPSILON].arg);
+            epsilon = atof(options[EPSILON].arg);
         }
         if (options[MAXITER]) {
-            op.epsilon = atoi(options[MAXITER].arg);
+            maxIter = atoi(options[MAXITER].arg);
         }
-        if (options[REGTYPE]) {
-            op.regType = options[REGTYPE].arg;
+        if (options[C1]) {
+            c1 = atof(options[C1].arg);
+        }
+        if (options[C2]) {
+            c2 = atof(options[C2].arg);
+        }
+        if (c1 == 0.0 && c2 == 0.0) {
+            c1 = 0.05;
         }
         
         MorphemeDisambiguator::MorphemeDisambiguatorClass s(op);
 
-        s.train(trainingFilename, modelFilename);
+        s.train(trainingFilename, numThreads, maxIter, c1, c2, epsilon, modelFilename);
         return 0;
     }
 
@@ -394,7 +401,7 @@ int mainProc(int argc, char **argv) {
     s.readModel(modelFilename);
     
     string line;
-    hwm::task_queue tq(op.numThreads);
+    hwm::task_queue tq(numThreads);
     queue<future<vector<vector<string>>>> futureQueue;
 
     vector<string> sentence;
@@ -402,7 +409,7 @@ int mainProc(int argc, char **argv) {
         if (line.empty()) {
             auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, sentence);
             futureQueue.push(move(f));
-            if (op.numThreads == 1) {
+            if (numThreads == 1) {
                 futureQueue.front().wait();
             }
             while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -451,7 +458,12 @@ MorphemeDisambiguatorClass::MorphemeDisambiguatorClass(const MorphemeDisambiguat
 };
 
 void MorphemeDisambiguatorClass::train(const string &trainingFilename,
-                                const string &modelFilename) {
+                                       size_t concurrency,
+                                       size_t maxIter,
+                                       double regularizationCoefficientL1,
+                                       double regularizationCoefficientL2,
+                                       double epsilonForConvergence,
+                                       const std::string &modelFilename) {
     ifstream ifs(trainingFilename);
     vector<Observation> observationList;
 
@@ -474,12 +486,7 @@ void MorphemeDisambiguatorClass::train(const string &trainingFilename,
     ifs.close();
 
     MaxEntProcessor maxent;
-    bool isL1 = false;
-    if (!options.regType.empty() && options.regType != "L1" && options.regType != "L2") {
-        cerr << "Unsupported regularization type: " << options.regType;
-    }
-    isL1 = (options.regType == "L1");
-    maxent.train(observationList, options.numThreads, options.maxIter, isL1, options.coeff, options.epsilon);
+    maxent.train(observationList, concurrency, maxIter, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
     maxent.writeModel(modelFilename);
 }
 

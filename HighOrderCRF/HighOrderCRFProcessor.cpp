@@ -192,8 +192,8 @@ HighOrderCRFProcessor::HighOrderCRFProcessor() : modelData(new HighOrderCRFData)
 void HighOrderCRFProcessor::train(const string &filename,
                                   size_t concurrency,
                                   size_t maxIter,
-                                  bool useL1Regularization,
-                                  double regularizationCoefficient,
+                                  double regularizationCoefficientL1,
+                                  double regularizationCoefficientL2,
                                   double epsilonForConvergence) {
     ifstream ifs(filename);
     if (!ifs.is_open()) {
@@ -256,7 +256,7 @@ void HighOrderCRFProcessor::train(const string &filename,
         patternSetSequenceList.push_back(dataSequence->generatePatternSetSequence(featureTemplateToFeatureIndexListMap, featureLabelSequenceIndexList, labelSequenceList));
     }
         
-    auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, useL1Regularization, regularizationCoefficient, epsilonForConvergence);
+    auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
     auto initialWeightList = make_shared<vector<double>>(featureCountList.size());
     optimizer->optimize(initialWeightList->data());
     auto bestWeightList = optimizer->getBestWeightList();

@@ -24,7 +24,7 @@ using std::vector;
 
 extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, REGTYPE, COEFF, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, C1, C2, EPSILON, MAXITER };
 
 struct Arg : public option::Arg
 {
@@ -47,8 +47,8 @@ const option::Descriptor usage[] =
     { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of labels at each position." },
     { TEST, 0, "", "test", Arg::Required, "  --test  <file>\tTests the model with the given file." },
     { TRAIN, 0, "", "train", Arg::Required, "  --train  <file>\tTrains the model on the given file." },
-    { REGTYPE, 0, "", "regtype", Arg::Required, "  --regtype  <type>\t(For training) Designates the regularization type (\"L1\" / \"L2\") for optimization." },
-    { COEFF, 0, "", "coeff", Arg::Required, "  --coeff  <number>\t(For training) Sets the regularization coefficient." },
+    { C1, 0, "", "c1", Arg::Required, "  --c1  <number>\t(For training) Sets the coefficient for L1 regularization. The default value is 0.05 (defaults to 0 if the c2 is explicitly set)." },
+    { C2, 0, "", "c2", Arg::Required, "  --c2  <number>\t(For training) Sets the coefficient for L2 regularization. The default value is 0 (no L2 regularization)." },
     { EPSILON, 0, "", "epsilon", Arg::Required, "  --epsilon  <number>\t(For training) Sets the epsilon for convergence." },
     { MAXITER, 0, "", "maxiter", Arg::Required, "  --maxiter  <number>\t(For training) Sets the maximum iteration count." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
@@ -103,25 +103,29 @@ int mainProc(int argc, char **argv) {
     
     if (options[TRAIN]) {
         string filename = options[TRAIN].arg;
-        double coeff = 0.0;
+        double c1 = 0.0;
+        double c2 = 0.0;
         double epsilon = 0.0;
         int maxIter = 0;
-        string regType;
 
-        if (options[COEFF]) {
-            coeff = atof(options[COEFF].arg);
-        }
         if (options[EPSILON]) {
             epsilon = atof(options[EPSILON].arg);
         }
         if (options[MAXITER]) {
             maxIter = atoi(options[MAXITER].arg);
         }
-        if (options[REGTYPE]) {
-            regType = options[REGTYPE].arg;
+        if (options[C1]) {
+            c1 = atof(options[C1].arg);
         }
+        if (options[C2]) {
+            c2 = atof(options[C2].arg);
+        }
+        if (c1 == 0.0 && c2 == 0.0) {
+            c1 = 0.05;
+        }
+        
         HighOrderCRFProcessor processor;
-        processor.train(filename, numThreads, maxIter, regType == "L1", coeff, epsilon);
+        processor.train(filename, numThreads, maxIter, c1, c2, epsilon);
         processor.writeModel(modelFilename);
         
         return 0;

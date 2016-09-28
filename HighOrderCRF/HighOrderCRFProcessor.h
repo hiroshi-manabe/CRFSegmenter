@@ -20,8 +20,8 @@ public:
     void train(const std::string &filename,
                size_t concurrency,
                size_t maxIter,
-               bool useL1Regularization,
-               double regularizationCoefficient,
+               double regularizationCoefficientL1,
+               double regularizationCoefficientL2,
                double epsilonForConvergence);
     
     std::vector<std::string> tag(const std::vector<std::vector<std::string>> &seq) const;

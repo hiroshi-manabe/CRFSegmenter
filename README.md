@@ -55,9 +55,9 @@ The first column should contain words. You can add an arbitrary number of featur
 #### Training
 
     cat <input file> | ./scripts/sentence_splitter.pl | DataConverter/DataConverter --segment [--dict <dictionary file] > <temporary file>
-    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file> --regtype <regtype> --coeff <coefficient>
+    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file> --c1 <L1 regularization coefficient> --c2 <L2 regularization coefficient>
 
-Recommended regularization type and its coefficient are L1 and 0.05, respectively.
+If you omit both ```--c1``` and ```c2```, L1 regularization coefficient will be set to 0.05 and L2 regularization coefficient will be set to 0.
 
 #### Performing segmentation
 
@@ -119,9 +119,9 @@ The dictionary file should list words and their possible tags, like in the follo
 #### Training
 
     cat <input file> | DataConverter/DataConverter --tag [--dict <dictionary file] > <temporary file>
-    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file> --regtype <regtype> --coeff <coefficient>
+    ./HighOrderCRF/HighOrderCRF --train <temporary file> --model <model file>  --c1 <L1 regularization coefficient> --c2 <L2 regularization coefficient>
     
-Recommended regularization type and its coefficient are L1 and 0.05, respectively.
+If you omit both ```--c1``` and ```c2```, L1 regularization coefficient will be set to 0.05 and L2 regularization coefficient will be set to 0.
 
 #### Performing POS-tagging
 
@@ -171,9 +171,9 @@ Each line of output data will be in the following format:
 
 Training:
 
-    ./HighOrderCRF/HighOrderCRF --train <training data> --model <model output file> [--regtype <regularization type>] [--coeff <regularization coefficient>]
+    ./HighOrderCRF/HighOrderCRF --train <training data> --model <model output file>  --c1 <L1 regularization coefficient> --c2 <L2 regularization coefficient>
 
-Recommended regularization type and its coefficient are L1 and 0.05, respectively.
+If you omit both ```--c1``` and ```c2```, L1 regularization coefficient will be set to 0.05 and L2 regularization coefficient will be set to 0.
 
 Tagging:
 

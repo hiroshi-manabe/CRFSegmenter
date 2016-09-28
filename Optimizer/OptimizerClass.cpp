@@ -38,14 +38,14 @@ int lbfgsProgress(void *instance,
 }
 
 OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, vector<double> featureCountList,
-    size_t concurrency, size_t maxIter, bool useL1Optimization, double regularizationCoefficient, double epsilonForConvergence) {
+    size_t concurrency, size_t maxIter, double regularizationCoefficientL1, double regularizationCoefficientL2, double epsilonForConvergence) {
     this->updateProc = updateProc;
     this->updateData = updateData;
     this->featureCountList = move(featureCountList);
     this->concurrency = concurrency;
     this->maxIter = maxIter;
-    this->useL1Optimization = useL1Optimization;
-    this->regularizationCoefficient = regularizationCoefficient;
+    this->regularizationCoefficientL1 = regularizationCoefficientL1;
+    this->regularizationCoefficientL2 = regularizationCoefficientL2;
     this->epsilonForConvergence = epsilonForConvergence;
 }
 
@@ -66,11 +66,8 @@ void OptimizerClass::optimize(const double* featureWeights) {
     if (epsilonForConvergence != 0.0) {
         lbfgsParam.epsilon = epsilonForConvergence;
     }
-    if (regularizationCoefficient == 0.0) {
-        regularizationCoefficient = 1.0;
-    }
-    if (useL1Optimization) {
-        lbfgsParam.orthantwise_c = regularizationCoefficient;
+    if (regularizationCoefficientL1 > 0.0) {
+        lbfgsParam.orthantwise_c = regularizationCoefficientL1;
         lbfgsParam.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
     } else {
         lbfgsParam.orthantwise_c = 0.0;
@@ -100,10 +97,10 @@ double OptimizerClass::evaluate(const double *x, double *g) {
 
     double logLikelihood = updateProc(updateData, expWeights.data(), g, concurrency);
 
-    if (!useL1Optimization) {
+    if (regularizationCoefficientL2 > 0.0) {
         for (size_t i = 0; i < featureListSize; ++i) {
-            g[i] += x[i] * 2 * regularizationCoefficient;
-            logLikelihood -= x[i] * x[i] * regularizationCoefficient;
+            g[i] += x[i] * 2 * regularizationCoefficientL2;
+            logLikelihood -= x[i] * x[i] * regularizationCoefficientL2;
         }
     }
 
