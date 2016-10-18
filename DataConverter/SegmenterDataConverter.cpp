@@ -111,7 +111,7 @@ vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector
 
         originalStringList.emplace_back(character);
 
-        bool hasSpace = (character.size() > 0 && character[0] == 0x20);
+        bool hasSpace = (character.size() > 1 && character[0] == 0x20);
         size_t charCount = 0;
         auto ch = UnicodeCharacter::fromString(character.begin() + hasSpace, character.size() - hasSpace, &charCount);
         if (charCount + hasSpace != character.size()) {
