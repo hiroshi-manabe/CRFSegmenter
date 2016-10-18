@@ -15,6 +15,7 @@ GetOptions('concatenate' => \$opt_concat, 'ignore-latin' => \$opt_ignore_latin);
 
 while (<STDIN>) {
     chomp;
+    s/\t/ /g;
     my $is_first = 1;
     my $prev = "";
     while (s/^([\x20\xa0]?)(.)//) {
