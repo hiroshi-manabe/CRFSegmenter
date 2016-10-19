@@ -265,10 +265,13 @@ void HighOrderCRFProcessor::train(const string &filename,
 }
 
 vector<string> HighOrderCRFProcessor::tag(const vector<vector<string>> &seq) const {
+    vector<string> ret;
+    if (seq.empty()) {
+        return ret;
+    }
     auto labelMap = modelData->getLabelMap();
     auto dataSequence = stringListListToDataSequence(seq, labelMap, false);
     auto labelList = tagLabelType(*dataSequence);
-    vector<string> ret;
     auto labelStringList = modelData->getLabelStringList();
     for (size_t i = 0; i < labelList.size(); ++i) {
         ret.push_back(seq[i][0] + "\t" + labelStringList[labelList[i]]);
@@ -277,6 +280,10 @@ vector<string> HighOrderCRFProcessor::tag(const vector<vector<string>> &seq) con
 }
 
 vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<vector<string>> &seq) {
+    vector<string> ret;
+    if (seq.empty()) {
+        return ret;
+    }
     prepareExpWeights();
     auto labelMap = modelData->getLabelMap();
     vector<string> dummy;
@@ -285,7 +292,6 @@ vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<vector<s
         ->generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
         ->calcLabelLikelihoods(expWeights->data());
     auto labelStringList = modelData->getLabelStringList();
-    vector<string> ret;
     ret.reserve(seq.size());
     for (size_t i = 0; i < seq.size(); ++i) {
         stringstream ss;
