@@ -35,8 +35,8 @@ while (<STDIN>) {
 
     my $preprocessed = $_;
     if ($opt_preprocess) {
-        $preprocessed =~ s{([a-z]+://[-_.!~*'()a-zA-Z0-9;/?:\@&=+\$,%#]+)}{ rotate_nonchar(); $nonchar x length($1); }ge;
-        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge;
+        $preprocessed =~ s{([a-zａ-ｚ]+[:：][/／][/／][\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#－＿．！〜～＊’（）ａ-ｚＡ-Ｚ０-９；／？：＠＆＝＋＄，％＃]+)}{ rotate_nonchar(); $nonchar x length($1); }ge;
+        $preprocessed =~ s{((?:(?:mailto:|ｍａｉｌｔｏ：))?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-ａ-ｚＡ-Ｚ０-９．！＃＄％＆’＊＋／＝？＾＿｀｛｜｝〜～－]+[@＠][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+(?:[\.．][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge;
         $preprocessed =~ s{([\(\[\{（［〔【《](\p{LC}|\d+)[\)\]\}）］〕】》])}{ rotate_nonchar(); $nonchar x length($1); }ge;
         $preprocessed =~ s{([\d\.．,，]*[\d\.．])}{ rotate_nonchar(); $nonchar x length($1); }ge;
     }
