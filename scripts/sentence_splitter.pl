@@ -10,8 +10,10 @@ use IO::Handle;
 
 my $opt_concat = 0;
 my $opt_ignore_latin = 0;
-my $opt_preprocess = 0;
-
+my $opt_ignore_url = 0;
+my $opt_ignore_parentheses = 0;
+my $opt_ignore_numbers = 0;
+my $preprocess = 0;
 
 my $nonchar_base = 0xfdd0;
 my $nonchar_code = -1;
@@ -25,7 +27,11 @@ sub rotate_nonchar {
 
 GetOptions('concatenate' => \$opt_concat,
            'ignore-latin' => \$opt_ignore_latin,
-           'preprocess' => \$opt_preprocess);
+           'ignore-url' => \$opt_ignore_url,
+           'ignore-parentheses' => \$opt_ignore_parentheses,
+           'ignore-numbers' => \$opt_ignore_numbers);
+
+$preprocess = ($opt_ignore_url || $opt_ignore_parentheses || $opt_ignore_numbers);
 
 while (<STDIN>) {
     chomp;
@@ -34,11 +40,11 @@ while (<STDIN>) {
     my $prev = "";
 
     my $preprocessed = $_;
-    if ($opt_preprocess) {
-        $preprocessed =~ s{([a-zａ-ｚ]+[:：][/／][/／][\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#－＿．！〜～＊’（）ａ-ｚＡ-Ｚ０-９；／？：＠＆＝＋＄，％＃]+)}{ rotate_nonchar(); $nonchar x length($1); }ge;
-        $preprocessed =~ s{((?:(?:mailto:|ｍａｉｌｔｏ：))?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-ａ-ｚＡ-Ｚ０-９．！＃＄％＆’＊＋／＝？＾＿｀｛｜｝〜～－]+[@＠][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+(?:[\.．][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge;
-        $preprocessed =~ s{([\(\[\{（［〔【《](\p{LC}|\d+)[\)\]\}）］〕】》])}{ rotate_nonchar(); $nonchar x length($1); }ge;
-        $preprocessed =~ s{([\d\.．,，]*[\d\.．])}{ rotate_nonchar(); $nonchar x length($1); }ge;
+    if ($preprocess) {
+        $preprocessed =~ s{([a-zａ-ｚ]+[:：][/／][/／][\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#－＿．！〜～＊’（）ａ-ｚＡ-Ｚ０-９；／？：＠＆＝＋＄，％＃]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
+        $preprocessed =~ s{((?:(?:mailto:|ｍａｉｌｔｏ：))?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-ａ-ｚＡ-Ｚ０-９．！＃＄％＆’＊＋／＝？＾＿｀｛｜｝〜～－]+[@＠][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+(?:[\.．][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
+        $preprocessed =~ s{([\(\[\{（［〔【《](\p{LC}|\d+)[\)\]\}）］〕】》])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_parentheses;
+        $preprocessed =~ s{([\d\.．,，]*[\d\.．])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_numbers;
     }
 
     my $prev_preprocessed_char = '';
@@ -62,7 +68,7 @@ while (<STDIN>) {
         elsif ($opt_concat and $sp eq "") {
             $possible_labels = "0";
         }
-        elsif ($opt_preprocess and
+        elsif ($preprocess and
                ($prev_preprocessed_char =~ m{$nonchar_regex} or
                 $preprocessed_char =~ m{$nonchar_regex})) {
             if ($prev_preprocessed_char eq $preprocessed_char) {
@@ -83,7 +89,7 @@ while (<STDIN>) {
         my %possible_label_dict = ();
         @possible_label_dict{split(/,/, $possible_labels)} = ();
         if (not exists $possible_label_dict{$correct_label}) {
-            if ($opt_preprocess) {
+            if ($preprocess) {
                 $correct_label = (keys %possible_label_dict)[0];
             }
             else {
