@@ -8,6 +8,7 @@
 #include "Trie.h"
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <memory>
 #include <unordered_map>
@@ -18,6 +19,8 @@
 namespace HighOrderCRF {
 
 using std::back_inserter;
+using std::cerr;
+using std::endl;
 using std::make_pair;
 using std::make_shared;
 using std::min;
@@ -36,6 +39,18 @@ DataSequence::DataSequence(vector<vector<shared_ptr<FeatureTemplate>>> featureTe
     this->featureTemplateListList = move(featureTemplateListList);
     this->possibleLabelSetList = move(possibleLabelTypeSetList);
     this->hasValidLabels = hasValidLabels;
+    if (this->featureTemplateListList.size() != labels.size() || labels.size() != this->possibleLabelSetList.size()) {
+        cerr << "Sizes does not match." << endl;
+        exit(1);
+    }
+    if (this->hasValidLabels) {
+        for (size_t i = 0; i < labels.size(); ++i) {
+            if (this->possibleLabelSetList[i].find(labels[i]) == possibleLabelSetList[i].end()) {
+                cerr << "Correct label is not included in the possible label set.";
+                exit(1);
+            }
+        }
+    }
 }
 
 size_t DataSequence::length() const {

@@ -6,11 +6,13 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace HighOrderCRF {
 
 class DataSequence;
+class FeatureTemplate;
 class HighOrderCRFData;
 
 class HighOrderCRFProcessor
@@ -26,6 +28,8 @@ public:
     
     std::vector<std::string> tag(const std::vector<std::vector<std::string>> &seq) const;
 
+    std::vector<std::string> tagFeatureTemplates(std::vector<std::vector<std::shared_ptr<FeatureTemplate>>> seq, std::vector<std::unordered_set<std::string>> possibleLabelSetList) const;
+
     std::vector<std::string> calcLabelLikelihoods(const std::vector<std::vector<std::string>> &seq);
     
     void test(const std::string &filename,
@@ -36,7 +40,8 @@ public:
     void readModel(const std::string &filename);
 
 private:
-    std::vector<label_t> tagLabelType(const DataSequence &dataSequence) const;
+    std::vector<label_t> tagDataSequenceWithLabelType(const DataSequence &dataSequence) const;
+    std::vector<string> tagDataSequence(const DataSequence &dataSequence) const;
 
     void prepareExpWeights();
 

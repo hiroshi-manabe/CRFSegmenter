@@ -22,6 +22,7 @@
 #include "PatternSetSequence.h"
 #include "DataSequence.h"
 #include "Feature.h"
+#include "FeatureTemplate.h"
 #include "HighOrderCRFData.h"
 #include "LabelSequence.h"
 
@@ -99,47 +100,59 @@ static set<string> extractLabelSet(const vector<vector<vector<string>>> &seqList
     return ret;
 }
 
+static vector<label_t> toLabelTypeList(const unordered_map<string, label_t> &labelMap, const vector<string> &labelList) {
+    vector<label_t> labels;
+    for (const auto &label : labelList) {
+        auto it = labelMap.find(label);
+        labels.push_back(it != labelMap.end() ? it->second : INVALID_LABEL);
+    }
+    return labels;
+}
+
+static vector<string> toLabelStringList(const vector<string> &labelTypeToStringList, const vector<label_t> &labelTypeList) {
+    vector<string> labels;
+    for (const auto &label : labelTypeList) {
+        labels.push_back(labelTypeToStringList[label]);
+    }
+    return labels;
+}
+
+static vector<unordered_set<label_t>> convertPossibleLabelSetList(const unordered_map<string, label_t> &labelMap, const vector<unordered_set<string>> possibleLabelSetList) {
+    vector<unordered_set<label_t>> possibleLabelTypeSetList;
+    for (const auto &possibleLabelSet : possibleLabelSetList) {
+        unordered_set<label_t> possibleLabelTypeSet;
+        for (const auto &label : possibleLabelSet) {
+            auto it = labelMap.find(label);
+            possibleLabelTypeSet.insert(it != labelMap.end() ? it->second : INVALID_LABEL);
+        }
+        possibleLabelTypeSetList.emplace_back(move(possibleLabelTypeSet));
+    }
+    return possibleLabelTypeSetList;
+}
+
 static shared_ptr<DataSequence> stringListListToDataSequence(
     const vector<vector<string>> &seq,
-    unordered_map<string, label_t> &labelMap,
+    const unordered_map<string, label_t> &labelMap,
     bool hasValidLabels) {
 
     vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList;
-    vector<label_t> labels;
-    vector<unordered_set<label_t>> possibleLabelSetList;
+    vector<string> labelList;
+    vector<unordered_set<string>> possibleLabelSetList;
 
     featureTemplateListList.reserve(seq.size());
-    labels.reserve(seq.size());
+    labelList.reserve(seq.size());
     possibleLabelSetList.reserve(seq.size());
 
     for (const auto &fields : seq) {
-        auto it = labelMap.find(fields[2]);
-        if (it != labelMap.end()) {
-            labels.push_back(it->second);
-        }
-        else {
-            labels.push_back(INVALID_LABEL);
-        }
+        labelList.push_back(fields[2]);
 
         if (fields[1] == "*") {
             possibleLabelSetList.emplace_back();
         }
         else {
             auto strLabels = splitString(fields[1], ',');
-            unordered_set<label_t> possibleLabelSet;
-            for (auto &strLabel : strLabels) {
-                auto it = labelMap.find(strLabel);
-                if (it != labelMap.end()) {
-                    possibleLabelSet.insert(it->second);
-                }
-            }
-            if (hasValidLabels &&
-                possibleLabelSet.find(labels.back()) == possibleLabelSet.end()) {
-                cerr << "Correct label \"" << labels.back()
-                     << "\" is not included in the possible label set: ";
-                outputFields(fields);
-                exit(1);
-            }
+            unordered_set<string> possibleLabelSet;
+            possibleLabelSet.insert(strLabels.begin(), strLabels.end());
             possibleLabelSetList.push_back(move(possibleLabelSet));
         }
         
@@ -160,7 +173,9 @@ static shared_ptr<DataSequence> stringListListToDataSequence(
         }
         featureTemplateListList.push_back(move(featureTemplateList));
     }
-    return make_shared<DataSequence>(move(featureTemplateListList), move(labels), move(possibleLabelSetList), hasValidLabels);
+    auto labels = toLabelTypeList(labelMap, labelList);
+    auto possibleLabelTypeSetList = convertPossibleLabelSetList(labelMap, possibleLabelSetList);
+    return make_shared<DataSequence>(move(featureTemplateListList), move(labels), move(possibleLabelTypeSetList), hasValidLabels);
 }
 
 double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t concurrency) {
@@ -270,14 +285,29 @@ vector<string> HighOrderCRFProcessor::tag(const vector<vector<string>> &seq) con
         return ret;
     }
     auto labelMap = modelData->getLabelMap();
+    auto labelTypeToLabelStringList = modelData->getLabelStringList();
     auto dataSequence = stringListListToDataSequence(seq, labelMap, false);
-    auto labelList = tagLabelType(*dataSequence);
-    auto labelStringList = modelData->getLabelStringList();
+    auto labelList = tagDataSequence(*dataSequence);
     for (size_t i = 0; i < labelList.size(); ++i) {
-        ret.push_back(seq[i][0] + "\t" + labelStringList[labelList[i]]);
+        ret.push_back(seq[i][0] + "\t" + labelList[i]);
     }
     return ret;
 }
+
+vector<string> HighOrderCRFProcessor::tagFeatureTemplates(vector<vector<shared_ptr<FeatureTemplate>>> seq, vector<unordered_set<string>> possibleLabelSetList) const {
+    vector<string> ret;
+    if (seq.empty()) {
+        return ret;
+    }
+    auto labelMap = modelData->getLabelMap();
+    auto labelTypeToLabelStringList = modelData->getLabelStringList();
+    vector<label_t> labels(seq.size());
+    auto possibleLabelTypeSetList = convertPossibleLabelSetList(labelMap, possibleLabelSetList);
+    
+    DataSequence dataSequence(move(seq), move(labels), move(possibleLabelTypeSetList), false);
+    return tagDataSequence(dataSequence);
+}
+
 
 vector<string> HighOrderCRFProcessor::calcLabelLikelihoods(const vector<vector<string>> &seq) {
     vector<string> ret;
@@ -347,7 +377,7 @@ void HighOrderCRFProcessor::test(const string &filename,
     hwm::task_queue tq(concurrency);
     vector<future<vector<label_t>>> futureList;
     for (size_t i = 0 ; i < sequenceCount; ++i) {
-        future<vector<label_t>> f = tq.enqueue(&HighOrderCRFProcessor::tagLabelType, this, *dataSequenceList[i]);
+        future<vector<label_t>> f = tq.enqueue(&HighOrderCRFProcessor::tagDataSequenceWithLabelType, this, *dataSequenceList[i]);
         futureList.push_back(move(f));
     }
 
@@ -407,10 +437,15 @@ void HighOrderCRFProcessor::readModel(const string &filename) {
     modelData->read(filename);
 }
 
-vector<label_t> HighOrderCRFProcessor::tagLabelType(const DataSequence &dataSequence) const {
+vector<label_t> HighOrderCRFProcessor::tagDataSequenceWithLabelType(const DataSequence &dataSequence) const {
     return dataSequence
         .generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList())
         ->decode(modelData->getWeightList().data());
+}
+
+vector<string> HighOrderCRFProcessor::tagDataSequence(const DataSequence &dataSequence) const {
+    auto labelTypeToLabelStringList = modelData->getLabelStringList();
+    return toLabelStringList(labelTypeToLabelStringList, tagDataSequenceWithLabelType(dataSequence));
 }
 
 void HighOrderCRFProcessor::prepareExpWeights() {
