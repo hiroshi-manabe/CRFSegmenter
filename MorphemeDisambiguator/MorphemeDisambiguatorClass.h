@@ -1,13 +1,16 @@
 #ifndef MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_
 #define MORPHEME_TAGGER_MORPHEME_TAGGER_CLASS_H_
 
-#include "../MaxEnt/MaxEntProcessor.h"
 #include "../Dictionary/DictionaryClass.h"
 #include "MorphemeDisambiguatorOptions.h"
 
 #include <memory>
 #include <string>
 #include <vector>
+
+namespace MaxEnt {
+class MaxEntProcessor;
+}
 
 namespace MorphemeDisambiguator {
 

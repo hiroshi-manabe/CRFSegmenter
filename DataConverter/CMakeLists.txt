@@ -1,11 +1,15 @@
 add_executable(
+    DataConverterMain
+    DataConverterMain.cpp
+)
+
+add_library(
     DataConverter
     CharacterFeatureGenerator.cpp
     CharacterTypeFeatureGenerator.cpp
     CharWithSpace.cpp
     CharWithSpaceFeatureGenerator.cpp
     CharWithSpaceTypeFeatureGenerator.cpp
-    DataConverterMain.cpp
     DictionaryFeatureGenerator.cpp
     SegmenterDataConverter.cpp
     SegmenterDictionaryFeatureGenerator.cpp
@@ -15,5 +19,8 @@ add_executable(
     WordCharacterTypeFeatureGenerator.cpp
     WordFeatureGenerator.cpp
 )
+
 set_property(TARGET DataConverter PROPERTY CXX_STANDARD 11)
+set_property(TARGET DataConverterMain PROPERTY CXX_STANDARD 11)
 target_link_libraries(DataConverter Dictionary)
+target_link_libraries(DataConverterMain DataConverter)

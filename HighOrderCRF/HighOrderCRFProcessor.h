@@ -41,7 +41,7 @@ public:
 
 private:
     std::vector<label_t> tagDataSequenceWithLabelType(const DataSequence &dataSequence) const;
-    std::vector<string> tagDataSequence(const DataSequence &dataSequence) const;
+    std::vector<std::string> tagDataSequence(const DataSequence &dataSequence) const;
 
     void prepareExpWeights();
 
