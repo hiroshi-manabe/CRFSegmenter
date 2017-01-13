@@ -53,13 +53,13 @@ DataSequence::DataSequence(istream &is) {
             exit(1);
         }
         originalStringList.emplace_back(move(fields[0]));
-        labels.emplace_back(move(fields[1]));
-        if (fields[2] != "*") {
-            auto possibleLabelList = splitString(fields[2], ',');
+        if (fields[1] != "*") {
+            auto possibleLabelList = splitString(fields[1], ',');
             unordered_set<string> possibleLabelSet(possibleLabelList.begin(),
                                                    possibleLabelList.end());
             possibleLabelSetList.emplace_back(move(possibleLabelSet));
         }
+        labels.emplace_back(move(fields[2]));
         vector<FeatureTemplate> featureTemplateList;
         for (size_t i = 3; i < fields.size(); ++i) {
             featureTemplateList.emplace_back(fields[i]);
@@ -76,8 +76,7 @@ DataSequence::DataSequence(istream &is) {
 
 void DataSequence::write(ostream &os) const {
     for (size_t i = 0; i < labels.size(); ++i) {
-        os << originalStringList[i] << "\t"
-           << labels[i] << "\t";
+        os << originalStringList[i] << "\t";
         if (possibleLabelSetList.empty()) {
             os << "*";
         }
@@ -91,6 +90,7 @@ void DataSequence::write(ostream &os) const {
                 os << *it;
             }
         }
+        os << "\t" << labels[i];
         for (const auto &ft : featureTemplateListList[i]) {
             os << "\t";
             os << ft.toString();
