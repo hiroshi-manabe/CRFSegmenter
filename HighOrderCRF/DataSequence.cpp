@@ -31,8 +31,10 @@ DataSequence::DataSequence(vector<string> originalStringList,
     this->labels = move(labels);
     this->possibleLabelSetList = move(possibleLabelSetList);
     this->featureTemplateListList = move(featureTemplateListList);
-    if (labels.size() != this->featureTemplateListList.size() || labels.size() != this->possibleLabelSetList.size() || labels.size() != originalStringList.size()) {
-        cerr << "Sizes does not match." << endl;
+    if (this->labels.size() != this->featureTemplateListList.size() ||
+        this->labels.size() != this->possibleLabelSetList.size() ||
+        this->labels.size() != this->originalStringList.size()) {
+        cerr << "Sizes do not match." << endl;
         exit(1);
     }
 }

@@ -170,7 +170,7 @@ int mainProc(int argc, char **argv) {
             op["containsSpaces"] = "true";
         }
         c->setOptions(op);
-//        converter.reset(c);
+        converter.reset(c);
     }
     else if (options[TAG]) {
         auto c = new TaggerDataConverter();
@@ -193,7 +193,7 @@ int mainProc(int argc, char **argv) {
             op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
         c->setOptions(op);
-//        converter.reset(c);
+        converter.reset(c);
     }
     else {
         cerr << "You must specify --segment or --tag option." << endl;
