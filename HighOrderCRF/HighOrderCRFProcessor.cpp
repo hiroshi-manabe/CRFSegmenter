@@ -245,12 +245,15 @@ void HighOrderCRFProcessor::readModel(const string &filename) {
 }
 
 vector<string> HighOrderCRFProcessor::tag(DataSequence *dataSequence) const {
+    vector<string> ret;
+    if (dataSequence->empty()) {
+        return ret;
+    }
     auto labelStringList = modelData->getLabelStringList();
     auto l = dataSequence
         ->toInternalDataSequence(modelData->getLabelMap())
         .generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList(), false)
         ->decode(modelData->getWeightList().data());
-    vector<string> ret;
     ret.reserve(l.size());
     for (auto label : l) {
         ret.emplace_back(labelStringList[label]);
