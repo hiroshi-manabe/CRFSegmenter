@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -11,15 +10,14 @@
 namespace HighOrderCRF {
 
 using std::move;
-using std::shared_ptr;
 using std::string;
 
-Feature::Feature(string tag, shared_ptr<LabelSequence> seq) {
+Feature::Feature(string tag, LabelSequence seq) {
     this->tag = move(tag);
-    this->seq = seq;
+    this->seq = move(seq);
 }
 
-shared_ptr<LabelSequence> Feature::getLabelSequence() const {
+const LabelSequence &Feature::getLabelSequence() const {
     return seq;
 }
 
@@ -28,12 +26,12 @@ const string &Feature::getTag() const {
 }
 
 bool Feature::operator==(const Feature &that) const {
-    return this->getTag() == that.getTag() && *this->getLabelSequence() == *that.getLabelSequence();
+    return this->getTag() == that.getTag() && this->getLabelSequence() == that.getLabelSequence();
 }
 
 size_t Feature::hash() const
 {
-    return std::hash<string>()(tag) ^ seq->hash();
+    return std::hash<string>()(tag) ^ seq.hash();
 };
 
 }  // namespace HighOrderCRF

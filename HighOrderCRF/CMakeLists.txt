@@ -5,12 +5,15 @@ add_executable(
 
 add_library(
     HighOrderCRF
-    PatternSetSequence.cpp
     DataSequence.cpp
     Feature.cpp
+    FeatureTemplate.cpp
     HighOrderCRFData.cpp
     HighOrderCRFProcessor.cpp
+    InternalDataSequence.cpp
     LabelSequence.cpp
+    PatternSetSequence.cpp
+    Utility.cpp
 )
 
 set_property(TARGET HighOrderCRF PROPERTY CXX_STANDARD 11)

@@ -23,4 +23,5 @@ add_library(
 set_property(TARGET DataConverter PROPERTY CXX_STANDARD 11)
 set_property(TARGET DataConverterMain PROPERTY CXX_STANDARD 11)
 target_link_libraries(DataConverter Dictionary)
+target_link_libraries(DataConverter HighOrderCRF)
 target_link_libraries(DataConverterMain DataConverter)

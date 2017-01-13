@@ -1,16 +1,11 @@
 #include "DataSequence.h"
 
-#include "Pattern.h"
-#include "PatternSetSequence.h"
-#include "Feature.h"
 #include "FeatureTemplate.h"
-#include "LabelSequence.h"
-#include "Trie.h"
+#include "Utility.h"
 
-#include <algorithm>
 #include <iostream>
-#include <iterator>
-#include <memory>
+#include <istream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -18,211 +13,136 @@
 
 namespace HighOrderCRF {
 
-using std::back_inserter;
 using std::cerr;
 using std::endl;
-using std::make_pair;
-using std::make_shared;
-using std::min;
+using std::istream;
 using std::move;
-using std::reverse_copy;
-using std::shared_ptr;
+using std::ostream;
+using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-DataSequence::DataSequence(vector<vector<shared_ptr<FeatureTemplate>>> featureTemplateListList,
-                           vector<label_t> labels,
-                           vector<unordered_set<label_t>> possibleLabelTypeSetList,
-                           bool hasValidLabels) {
+DataSequence::DataSequence(vector<string> originalStringList,
+                           vector<string> labels,
+                           vector<unordered_set<string>> possibleLabelSetList,
+                           vector<vector<FeatureTemplate>> featureTemplateListList) {
+    this->originalStringList = move(originalStringList);
     this->labels = move(labels);
+    this->possibleLabelSetList = move(possibleLabelSetList);
     this->featureTemplateListList = move(featureTemplateListList);
-    this->possibleLabelSetList = move(possibleLabelTypeSetList);
-    this->hasValidLabels = hasValidLabels;
-    if (this->featureTemplateListList.size() != labels.size() || labels.size() != this->possibleLabelSetList.size()) {
+    if (labels.size() != this->featureTemplateListList.size() || labels.size() != this->possibleLabelSetList.size() || labels.size() != originalStringList.size()) {
         cerr << "Sizes does not match." << endl;
         exit(1);
     }
-    if (this->hasValidLabels) {
-        for (size_t i = 0; i < labels.size(); ++i) {
-            if (this->possibleLabelSetList[i].find(labels[i]) == possibleLabelSetList[i].end()) {
-                cerr << "Correct label is not included in the possible label set.";
-                exit(1);
+}
+
+DataSequence::DataSequence(istream &is) {
+    string line;
+    bool isOK = false;
+    while (getline(is, line)) {
+        if (line.empty()) {
+            isOK = true;
+            break;
+        }
+        auto fields = splitString(line);
+        if (fields.size() < 3) {
+            cerr << "Not enough fields: " << line << endl;
+            exit(1);
+        }
+        originalStringList.emplace_back(move(fields[0]));
+        labels.emplace_back(move(fields[1]));
+        if (fields[2] != "*") {
+            auto possibleLabelList = splitString(fields[2], ',');
+            unordered_set<string> possibleLabelSet(possibleLabelList.begin(),
+                                                   possibleLabelList.end());
+            possibleLabelSetList.emplace_back(move(possibleLabelSet));
+        }
+        vector<FeatureTemplate> featureTemplateList;
+        for (size_t i = 3; i < fields.size(); ++i) {
+            featureTemplateList.emplace_back(fields[i]);
+        }
+        featureTemplateListList.emplace_back(featureTemplateList);
+    }
+    if (!isOK) {
+        originalStringList.clear();
+        labels.clear();
+        possibleLabelSetList.clear();
+        featureTemplateListList.clear();
+    }
+}
+
+void DataSequence::write(ostream &os) const {
+    for (size_t i = 0; i < labels.size(); ++i) {
+        os << originalStringList[i] << "\t"
+           << labels[i] << "\t";
+        if (possibleLabelSetList.empty()) {
+            os << "*";
+        }
+        else {
+            for (auto it = possibleLabelSetList[i].begin();
+                 it != possibleLabelSetList[i].end();
+                 ++it) {
+                if (it != possibleLabelSetList[i].begin()) {
+                    os << ",";
+                }
+                os << *it;
             }
         }
+        for (const auto &ft : featureTemplateListList[i]) {
+            os << "\t";
+            os << ft.toString();
+        }
+        os << "\n";
     }
+    os << endl;
+}
+
+InternalDataSequence DataSequence::toInternalDataSequence(const unordered_map<string, label_t> &labelMap) {
+    vector<label_t> l;
+    l.reserve(labels.size());
+    for (const auto &str : labels) {
+        l.emplace_back(labelMap.at(str));
+    }
+    
+    vector<unordered_set<label_t>> p;
+    p.reserve(possibleLabelSetList.size());
+    for (const auto &labelSet : possibleLabelSetList) {
+        unordered_set<label_t> s;
+        for (const auto &str : labelSet) {
+            s.insert(labelMap.at(str));
+        }
+        p.emplace_back(move(s));
+    }
+    
+    return InternalDataSequence(l, p, move(featureTemplateListList));
+}
+
+const vector<string> &DataSequence::getLabels() const {
+    return labels;
+}
+
+const vector<string> &DataSequence::getOriginalStringList() const {
+    return originalStringList;
+}
+
+unordered_set<string> DataSequence::getUsedLabelSet() const {
+    unordered_set<string> ret;
+    for (const auto &l : labels) {
+        ret.insert(l);
+    }
+    for (const auto &s : possibleLabelSetList) {
+        ret.insert(s.begin(), s.end());
+    }
+    return ret;
 }
 
 size_t DataSequence::length() const {
     return featureTemplateListList.size();
 }
 
-shared_ptr<LabelSequence> DataSequence::getLabelSequence(size_t pos, size_t length) const {
-    if (!hasValidLabels) {
-        return make_shared<LabelSequence>();
-    }
-    if (pos < length - 1) {
-        return make_shared<LabelSequence>();
-    }
-    vector<label_t> labels;
-    for (size_t i = 0; i < length; ++i) {
-        labels.push_back(this->labels.at(pos - i));
-    }
-    return make_shared<LabelSequence>(move(labels));
-}
-
-vector<label_t> DataSequence::getAllLabels() const {
-    return labels;
-}
-
-void DataSequence::accumulateFeatureData(unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> *featureTemplateToFeatureIndexListMap,
-                                         unordered_map<shared_ptr<Feature>, uint32_t> *featureToFeatureIndexMap,
-                                         vector<double> *featureCountList) const {
-    if (!hasValidLabels) {
-        return;
-    }
-    for (size_t pos = 0; pos < labels.size(); ++pos) {
-        for (auto &ft : featureTemplateListList[pos]) {
-            if (pos < ft->getLabelLength() - 1) {
-                continue;
-            }
-            auto f = make_shared<Feature>(ft->getTag(), getLabelSequence(pos, ft->getLabelLength()));
-            auto it = featureToFeatureIndexMap->find(f);
-            if (it == featureToFeatureIndexMap->end()) {
-                auto index = (uint32_t)featureToFeatureIndexMap->size();
-                it = featureToFeatureIndexMap->insert(make_pair(f, index)).first;
-                featureCountList->push_back(0);
-                auto it2 = featureTemplateToFeatureIndexListMap->find(ft);
-                if (it2 == featureTemplateToFeatureIndexListMap->end()) {
-                    it2 = featureTemplateToFeatureIndexListMap->insert(make_pair(ft, vector<uint32_t>())).first;
-                }
-                it2->second.push_back(it->second);
-            }
-            ++(*featureCountList)[it->second];
-        }
-    }
-}
-
-struct PatternData {
-    vector<feature_index_t> featureIndexList;
-    pattern_index_t patternIndex;
-};
-
-template<typename L>
-struct PatternGenerationData {
-    vector<PatternData> *patternDataList;
-    vector<Pattern> *patternList;
-    Trie<L> *prevTrie;
-    pattern_index_t currentIndex;
-};
-
-void generatePatternSetProc(label_t *labels, size_t size, int dataIndex, int parentDataIndex, void *data) {
-    auto generationData = static_cast<PatternGenerationData<label_t> *>(data);
-    pattern_index_t prevPatternIndex = 0;
-    if (generationData->prevTrie && size > 0) {
-        prevPatternIndex = (*generationData->patternDataList)[generationData->prevTrie->find(labels + 1, size - 1)].patternIndex;
-    }
-    PatternData &thisPatternData = (*generationData->patternDataList)[dataIndex];
-    thisPatternData.patternIndex = generationData->currentIndex;
-    ++generationData->currentIndex;
-    PatternData &suffixPatternData = (*generationData->patternDataList)[parentDataIndex];
-    pattern_index_t suffixPatternIndex = suffixPatternData.patternIndex;
-    generationData->patternList->emplace_back(prevPatternIndex, suffixPatternIndex, size ? labels[0] : INVALID_LABEL, vector<feature_index_t>(thisPatternData.featureIndexList));
-}
-
-shared_ptr<PatternSetSequence> DataSequence::generatePatternSetSequence(const unordered_map<shared_ptr<FeatureTemplate>, vector<uint32_t>> &featureTemplateToFeatureIndexListMap, const vector<uint32_t> &featureLabelSequenceIndexList, const vector<LabelSequence> &labelSequenceList) const {
-    
-    vector<Trie<label_t>> trieList(this->length());
-    vector<PatternData> patternDataList;
-    auto emptyLabelSequence = LabelSequence::createEmptyLabelSequence();
-    
-    for (size_t pos = 0; pos < this->length(); ++pos) {
-        const auto &curFeatureTemplateList = featureTemplateListList[pos];
-        auto &curTrie = trieList[pos];
-        int dataIndex = curTrie.findOrInsert(emptyLabelSequence.getLabelData(), emptyLabelSequence.getLength(), patternDataList.size());
-        if (dataIndex == patternDataList.size()) {
-            patternDataList.emplace_back();
-        }
-
-        for (const auto &featureTemplate : curFeatureTemplateList) {
-            if (featureTemplate->getLabelLength() > pos + 1) {
-                continue;
-            }
-            auto featureIndexList = featureTemplateToFeatureIndexListMap.find(featureTemplate);
-            if (featureIndexList == featureTemplateToFeatureIndexListMap.end()) {
-                continue;
-            }
-            for (auto &featureIndex : featureIndexList->second) {
-                auto seq = labelSequenceList[featureLabelSequenceIndexList[featureIndex]];
-
-                bool labelsOK = true;
-                for (size_t i = 0; i < seq.getLength(); ++i) {
-                    if (!possibleLabelSetList[pos - i].empty() && possibleLabelSetList[pos - i].find(seq.getLabelAt(i)) == possibleLabelSetList[pos - i].end()) {
-                        labelsOK = false;
-                        break;
-                    }
-                }
-                if (!labelsOK) {
-                    continue;
-                }
-                int dataIndex = curTrie.findOrInsert(seq.getLabelData(), seq.getLength(), patternDataList.size());
-                if (dataIndex == patternDataList.size()) {
-                    patternDataList.emplace_back();
-                }
-
-                patternDataList[dataIndex].featureIndexList.push_back(featureIndex);
-
-                if (pos > 0) {
-                    size_t labelLength = seq.getLength();
-                    for (size_t i = 1; i <= min(labelLength - 1, pos); ++i) {
-                        auto &prevTrie = trieList[pos - i];
-                        int prevDataIndex = prevTrie.findOrInsert(seq.getLabelData() + i, seq.getLength() - i, patternDataList.size());
-                        if (prevDataIndex == patternDataList.size()) {
-                            patternDataList.emplace_back();
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    auto patternListList = vector<vector<Pattern>>();
-    auto longestMatchIndexList = vector<pattern_index_t>();
-    vector<label_t> reversedLabels;
-    reverse_copy(labels.begin(), labels.end(), back_inserter(reversedLabels));
-    
-    for (size_t pos = 0; pos < this->length(); ++pos) {
-        Trie<label_t> &curTrie = trieList[pos];
-        if (curTrie.isEmpty()) {
-            label_t l = 0;
-            if (!possibleLabelSetList[pos].empty()) {
-                l = *(possibleLabelSetList[pos].begin());
-            }
-            int dataIndex = curTrie.findOrInsert(&l, 1, patternDataList.size());
-            if (dataIndex == patternDataList.size()) {
-                patternDataList.emplace_back();
-            }
-        }
-
-        vector<Pattern> patternList;
-        PatternGenerationData<label_t> d;
-        d.patternDataList = &patternDataList;
-        d.patternList = &patternList;
-        d.prevTrie = pos ? &trieList[pos - 1] : 0;
-        d.currentIndex = 0;
-        
-        curTrie.visitValidNodes(generatePatternSetProc, (void *)&d);
-        patternListList.push_back(move(patternList));
-
-        pattern_index_t longestMatchIndex = 0;
-        if (hasValidLabels) {
-            longestMatchIndex = patternDataList[curTrie.findLongestMatch(reversedLabels.data() + this->length() - pos - 1, pos + 1)].patternIndex;
-        }
-        longestMatchIndexList.push_back(longestMatchIndex);
-    }
-    return make_shared<PatternSetSequence>(move(patternListList), move(longestMatchIndexList));
+bool DataSequence::empty() const {
+    return length() == 0;
 }
 
 }  // namespace HighOrderCRF

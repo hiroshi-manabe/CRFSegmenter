@@ -5,9 +5,12 @@
 
 #include "Feature.h"
 #include "FeatureTemplate.h"
+#include "InternalDataSequence.h"
 #include "LabelSequence.h"
 #include "PatternSetSequence.h"
 
+#include <istream>
+#include <ostream>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,21 +21,24 @@ namespace HighOrderCRF {
 class DataSequence
 {
 public:
-    DataSequence(std::vector<std::vector<std::shared_ptr<FeatureTemplate>>> featureTemplateListList,
-                 std::vector<label_t> labels,
-                 std::vector<std::unordered_set<label_t>> possibleLabelTypeSetList,
-                 bool hasValidLabels);
+    DataSequence(std::vector<std::string> originalStringList,
+                 std::vector<std::string> labels,
+                 std::vector<std::unordered_set<std::string>> possibleLabelTypeSetList,
+                 std::vector<std::vector<FeatureTemplate>> featureTemplateListList);
+    DataSequence(std::istream &is);
+    void write(std::ostream &os) const;
+    // This method destroys the original object
+    InternalDataSequence toInternalDataSequence(const std::unordered_map<std::string, label_t> &labelMap);
+    const std::vector<std::string> &getLabels() const;
+    const std::vector<std::string> &getOriginalStringList() const;
+    std::unordered_set<std::string> getUsedLabelSet() const;
     size_t length() const;
-    std::shared_ptr<LabelSequence> getLabelSequence(size_t pos, size_t length) const;
-    void accumulateFeatureData(std::unordered_map<std::shared_ptr<FeatureTemplate>, std::vector<uint32_t>> *featureTemplateToFeatureIndexListMap, std::unordered_map<std::shared_ptr<Feature>, uint32_t> *featureToFeatureIndexMap, std::vector<double> *featureCountList) const;
-    std::shared_ptr<PatternSetSequence> generatePatternSetSequence(const std::unordered_map<std::shared_ptr<FeatureTemplate>, std::vector<uint32_t>> &featureTemplateToFeatureIndexListMap, const std::vector<uint32_t> &featureLabelSequenceIndexList, const std::vector<LabelSequence> &labelSequenceList) const;
-    std::vector<label_t> getAllLabels() const;
+    bool empty() const;
 private:
-    std::vector<std::vector<std::shared_ptr<FeatureTemplate>>> featureTemplateListList;
-    std::vector<label_t> labels;
-    bool hasValidLabels;
-    std::vector<std::unordered_set<label_t>> possibleLabelSetList;
-private:
+    std::vector<std::string> originalStringList;
+    std::vector<std::string> labels;
+    std::vector<std::unordered_set<std::string>> possibleLabelSetList;
+    std::vector<std::vector<FeatureTemplate>> featureTemplateListList;
 };
 
 }  // namespace HighOrderCRF

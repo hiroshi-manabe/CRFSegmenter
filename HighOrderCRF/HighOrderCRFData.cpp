@@ -1,7 +1,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -20,7 +19,6 @@ using std::endl;
 using std::ios;
 using std::ifstream;
 using std::make_pair;
-using std::make_shared;
 using std::move;
 using std::ofstream;
 using std::string;
@@ -69,25 +67,37 @@ void writeString(ofstream *ofs, const string &str) {
     ofs->write(str.data(), str.size());
 }
 
-HighOrderCRFData::HighOrderCRFData(unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
+HighOrderCRFData::HighOrderCRFData(unordered_map<FeatureTemplate, vector<uint32_t>> featureTemplateToFeatureIndexListMap, vector<double> weightList, vector<uint32_t> featureLabelSequenceIndexList, vector<LabelSequence> labelSequenceList, unordered_map<string, label_t> labelMap) {
     this->featureTemplateToFeatureIndexListMap = move(featureTemplateToFeatureIndexListMap);
     this->featureLabelSequenceIndexList = move(featureLabelSequenceIndexList);
     this->labelSequenceList = move(labelSequenceList);
     this->labelMap = move(labelMap);
     this->weightList.reserve(weightList.size());
     for (auto w : weightList) {
-        this->weightList.push_back(double_to_weight(w));
+        this->weightList.emplace_back(double_to_weight(w));
     }
+    setExpWeightList();
 }
 
 HighOrderCRFData::HighOrderCRFData() {}
 
-const unordered_map<std::shared_ptr<FeatureTemplate>, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
+const unordered_map<FeatureTemplate, vector<uint32_t>> &HighOrderCRFData::getFeatureTemplateToFeatureIndexMapList() const {
     return featureTemplateToFeatureIndexListMap;
 }
 
 const vector<weight_t> &HighOrderCRFData::getWeightList() const {
     return weightList;
+}
+
+const vector<double> &HighOrderCRFData::getExpWeightList() const {
+    return expWeightList;
+}
+
+void HighOrderCRFData::setExpWeightList() {
+    expWeightList.reserve(weightList.size());
+    for (auto w : weightList) {
+        expWeightList.emplace_back(exp(weight_to_double(w)));
+    }
 }
 
 const vector<uint32_t> &HighOrderCRFData::getFeatureLabelSequenceIndexList() const {
@@ -131,14 +141,14 @@ void HighOrderCRFData::read(const string &filename) {
 
         // reads the label length
         uint32_t labelLength =  readNumber<uint32_t>(&in);
-        auto ft = make_shared<FeatureTemplate>(obs, labelLength);
+        FeatureTemplate ft(obs, labelLength);
 
         // reads the feature indexes
         uint32_t featureIndexCount = readNumber<uint32_t>(&in);
         vector<uint32_t> featureIndexes;
         featureIndexes.reserve(featureIndexCount);
         for (size_t j = 0; j < featureIndexCount; ++j) {
-            featureIndexes.push_back(readNumber<uint32_t>(&in));
+            featureIndexes.emplace_back(readNumber<uint32_t>(&in));
         }
         featureTemplateToFeatureIndexListMap.insert(make_pair(ft, featureIndexes));
     }
@@ -151,9 +161,10 @@ void HighOrderCRFData::read(const string &filename) {
     featureLabelSequenceIndexList.reserve(numFeatures);
     for (size_t i = 0; i < numFeatures; ++i) {
         weight_t t = readNumber<weight_t>(&in);
-        weightList.push_back(t);
-        featureLabelSequenceIndexList.push_back(readNumber<uint32_t>(&in));
+        weightList.emplace_back(t);
+        featureLabelSequenceIndexList.emplace_back(readNumber<uint32_t>(&in));
     }
+    setExpWeightList();
 
     // read label sequences
     uint32_t numLabelSequences = readNumber<uint32_t>(&in);
@@ -163,9 +174,9 @@ void HighOrderCRFData::read(const string &filename) {
         uint32_t len = readNumber<uint32_t>(&in);
         vector<label_t> v;
         for (size_t j = 0; j < len; ++j) {
-            v.push_back(readNumber<uint32_t>(&in));
+            v.emplace_back(readNumber<uint32_t>(&in));
         }
-        labelSequenceList.push_back(move(v));
+        labelSequenceList.emplace_back(move(v));
     }
 
     // reads the label map
@@ -188,7 +199,7 @@ void HighOrderCRFData::trim() {
     validFeatureIndexList.reserve(weightList.size());
     unordered_set<uint32_t> labelFeatureSet;
 
-    auto emptyFeatureTemplate = make_shared<FeatureTemplate>("", 1);
+    FeatureTemplate emptyFeatureTemplate("", 1);
     auto it = featureTemplateToFeatureIndexListMap.find(emptyFeatureTemplate);
     if (it != featureTemplateToFeatureIndexListMap.end()) {
         const auto &features = it->second;
@@ -203,11 +214,11 @@ void HighOrderCRFData::trim() {
             labelFlagList[featureLabelSequenceIndexList[i]] = true;
             weightList[validFeatureCount] = weightList[i];
             featureLabelSequenceIndexList[validFeatureCount] = featureLabelSequenceIndexList[i];
-            validFeatureIndexList.push_back(validFeatureCount);
+            validFeatureIndexList.emplace_back(validFeatureCount);
             ++validFeatureCount;
         }
         else {
-            validFeatureIndexList.push_back(UINT32_MAX);
+            validFeatureIndexList.emplace_back(UINT32_MAX);
         }
     }
     weightList.resize(validFeatureCount);
@@ -218,7 +229,7 @@ void HighOrderCRFData::trim() {
     vector<uint32_t> validLabelSequenceIndexList;
     validLabelSequenceIndexList.reserve(labelSequenceList.size());
     for (size_t i = 0; i < labelSequenceList.size(); ++i) {
-        validLabelSequenceIndexList.push_back(labelFlagList[i] ? validLabelSequenceCount : UINT32_MAX);
+        validLabelSequenceIndexList.emplace_back(labelFlagList[i] ? validLabelSequenceCount : UINT32_MAX);
         if (labelFlagList[i]) {
             if (validLabelSequenceCount != i) {
                 labelSequenceList[validLabelSequenceCount] = move(labelSequenceList[i]);
@@ -240,7 +251,7 @@ void HighOrderCRFData::trim() {
         for (auto i : v) {
             auto newIndex = validFeatureIndexList[i];
             if (newIndex != UINT32_MAX) {
-                validFeatureIndexes.push_back(newIndex);
+                validFeatureIndexes.emplace_back(newIndex);
             }
         }
         if (validFeatureIndexes.empty()) {
@@ -258,13 +269,13 @@ void HighOrderCRFData::write(const string &filename) const {
 
     // write feature templates
     writeNumber<uint32_t>(&out, featureTemplateToFeatureIndexListMap.size());
-    for (auto entry : featureTemplateToFeatureIndexListMap) {
-        auto &ft = entry.first;
-        auto &v = entry.second;
-        writeString(&out, ft->getTag());
-        writeNumber<uint32_t>(&out, ft->getLabelLength());
+    for (const auto entry : featureTemplateToFeatureIndexListMap) {
+        const auto &ft = entry.first;
+        const auto &v = entry.second;
+        writeString(&out, ft.getTag());
+        writeNumber<uint32_t>(&out, ft.getLabelLength());
         writeNumber<uint32_t>(&out, v.size());
-        for (auto &i : v) {
+        for (const auto &i : v) {
             writeNumber<uint32_t>(&out, i);
         }
     }
@@ -278,7 +289,7 @@ void HighOrderCRFData::write(const string &filename) const {
 
     // write label sequences
     writeNumber<uint32_t>(&out, labelSequenceList.size());
-    for (auto &l : labelSequenceList) {
+    for (const auto &l : labelSequenceList) {
         writeNumber<uint32_t>(&out, l.getLength());
         for (size_t j = 0; j < l.getLength(); ++j) {
             writeNumber<label_t>(&out, l.getLabelAt(j));
@@ -287,7 +298,7 @@ void HighOrderCRFData::write(const string &filename) const {
 
     auto labelStringList = getLabelStringList();
     writeNumber<uint32_t>(&out, labelStringList.size());
-    for (auto &str : labelStringList) {
+    for (const auto &str : labelStringList) {
         writeString(&out, str);
     }
     
@@ -297,16 +308,16 @@ void HighOrderCRFData::write(const string &filename) const {
 void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) const {
     ofstream out(filename, ios::binary);
     out.precision(15);
-    auto labelStringList = getLabelStringList();
-    for (auto &entry : featureTemplateToFeatureIndexListMap) {
-        auto &ft = entry.first;
-        auto &v = entry.second;
+    const auto labelStringList = getLabelStringList();
+    for (const auto &entry : featureTemplateToFeatureIndexListMap) {
+        const auto &ft = entry.first;
+        const auto &v = entry.second;
 
-        for (auto &featureIndex : v) {
+        for (const auto &featureIndex : v) {
             if (outputWeights) {
                 out << weight_to_double(weightList[featureIndex]) << "\t";
             }
-            out << (ft->getTag());
+            out << (ft.getTag());
             auto &labelSequence = labelSequenceList[featureIndex];
             for (size_t j = 0; j < labelSequence.getLength(); ++j) {
                 out << "\t" << labelStringList[labelSequence.getLabelAt(j)];

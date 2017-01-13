@@ -36,7 +36,7 @@ public:
         return possibleLabelSetList;
     }
 
-    std::vector<std::string> generateSequence(std::shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
+    std::vector<std::string> generateFeatureTemplates(std::shared_ptr<FeatureTemplateGenerator<T>> featureTemplateGenerator) {
         auto featureTemplateListList = featureTemplateGenerator->generateFeatureTemplates(observationList);
         std::vector<std::string> ret;
         ret.reserve(observationList.size());

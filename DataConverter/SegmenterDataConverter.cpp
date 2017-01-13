@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include <istream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -10,6 +10,8 @@
 
 #include "SegmenterDataConverter.h"
 
+#include "../HighOrderCRF/DataSequence.h"
+#include "../HighOrderCRF/FeatureTemplate.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
@@ -23,9 +25,9 @@
 
 using std::cerr;
 using std::endl;
-using std::istream;
 using std::make_shared;
 using std::move;
+using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
@@ -76,17 +78,7 @@ void SegmenterDataConverter::setOptions(const unordered_map<string, string> &arg
     generator = gen;
 }
 
-vector<string> SegmenterDataConverter::generateFeaturesFromStream(istream& is) const {
-    vector<string> sequence;
-    string line;
-    
-    while (getline(is, line) && !line.empty()) {
-        sequence.emplace_back(move(line));
-    }
-    return generateFeaturesFromSequence(sequence);
-}
-
-vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector<string> &sequence) const {
+shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(const vector<string> &sequence) const {
     assert(optionSet);
 
     vector<string> originalStringList;
@@ -108,7 +100,6 @@ vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector
         string &character = fields[0];
         string &possibleLabelStr = fields[1];
         string &label = fields[2];
-
         originalStringList.emplace_back(character);
 
         bool hasSpace = (character.size() > 1 && character[0] == 0x20);
@@ -118,18 +109,13 @@ vector<string> SegmenterDataConverter::generateFeaturesFromSequence(const vector
             cerr << "Only one character is allowed. " << endl << str << endl;
             exit(1);
         }
-
-        auto possibleLabels = splitString(possibleLabelStr);
+        auto possibleLabels = splitString(possibleLabelStr, ',');
         unordered_set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
-
         labelList.emplace_back(move(label));
-
         observationList.emplace_back(ch, hasSpace);
     }
-    
-    ObservationSequence<CharWithSpace> obs(observationList, labelList, possibleLabelSetList, originalStringList);
-    return obs.generateSequence(generator);
+    return make_shared<HighOrderCRF::DataSequence>(move(originalStringList), move(labelList), move(possibleLabelSetList), generator->generateFeatureTemplates(observationList));
 }
 
 }  // namespace DataConverter

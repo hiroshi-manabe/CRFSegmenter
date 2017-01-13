@@ -1,5 +1,5 @@
 #include <cassert>
-#include <istream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -19,16 +19,14 @@
 #include "WordCharacterTypeFeatureGenerator.h"
 #include "WordFeatureGenerator.h"
 
-using std::istream;
 using std::make_shared;
 using std::move;
+using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
-
-using Dictionary::DictionaryClass;
 
 namespace DataConverter {
 
@@ -61,24 +59,14 @@ void TaggerDataConverter::setOptions(const unordered_map<string, string> &argOpt
     
     auto it = options.find("dictionaryFilename");
     if (it != options.end()) {
-        dictionary = make_shared<DictionaryClass>(it->second);
+        dictionary = make_shared<Dictionary::DictionaryClass>(it->second);
         gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(dictionary));
     }
     optionSet = true;
     generator = gen;
 }
 
-vector<string> TaggerDataConverter::generateFeaturesFromStream(istream& is) const {
-    vector<string> sequence;
-    string line;
-    
-    while (getline(is, line) && !line.empty()) {
-        sequence.emplace_back(move(line));
-    }
-    return generateFeaturesFromSequence(sequence);
-}
-
-vector<string> TaggerDataConverter::generateFeaturesFromSequence(const vector<string> &sequence) const {
+shared_ptr<HighOrderCRF::DataSequence> TaggerDataConverter::toDataSequence(const vector<string> &sequence) const {
     assert(optionSet);
     vector<string> originalStringList;
     vector<string> observationList;
@@ -117,8 +105,7 @@ vector<string> TaggerDataConverter::generateFeaturesFromSequence(const vector<st
         observationList.emplace_back(move(word));
     }
     
-    ObservationSequence<string> obs(observationList, labelList, possibleLabelSetList, originalStringList);
-    return obs.generateSequence(generator);
+    return make_shared<HighOrderCRF::DataSequence>(move(originalStringList), move(labelList), move(possibleLabelSetList), generator->generateFeatureTemplates(observationList));
 }
 
 }  // namespace DataConverter

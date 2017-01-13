@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -9,10 +8,8 @@
 
 namespace DataConverter {
 
-using std::make_shared;
 using std::max;
 using std::min;
-using std::shared_ptr;
 using std::showpos;
 using std::string;
 using std::stringstream;

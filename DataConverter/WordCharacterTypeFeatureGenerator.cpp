@@ -12,9 +12,6 @@
 
 namespace DataConverter {
 
-using std::make_shared;
-using std::shared_ptr;
-using std::showpos;
 using std::string;
 using std::stringstream;
 using std::unordered_set;

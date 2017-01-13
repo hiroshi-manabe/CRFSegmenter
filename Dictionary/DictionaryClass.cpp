@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <sstream>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -23,7 +22,6 @@ using std::move;
 using std::pair;
 using std::string;
 using std::unordered_map;
-using std::unordered_set;
 using std::vector;
 
 static vector<string> splitStringByTabs(const string &s) {

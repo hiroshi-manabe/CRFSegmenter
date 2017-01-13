@@ -25,28 +25,17 @@ public:
                double regularizationCoefficientL1,
                double regularizationCoefficientL2,
                double epsilonForConvergence);
-    
-    std::vector<std::string> tag(const std::vector<std::vector<std::string>> &seq) const;
-
-    std::vector<std::string> tagFeatureTemplates(std::vector<std::vector<std::shared_ptr<FeatureTemplate>>> seq, std::vector<std::unordered_set<std::string>> possibleLabelSetList) const;
-
-    std::vector<std::string> calcLabelLikelihoods(const std::vector<std::vector<std::string>> &seq);
-    
     void test(const std::string &filename,
               size_t concurrency) const;
-
     void writeModel(const std::string &filename);
-
     void readModel(const std::string &filename);
+    // dataSequence will be destroyed
+    std::vector<std::string> tag(DataSequence *dataSequence) const;
+    // dataSequence will be destroyed
+    std::vector<std::unordered_map<std::string, double>> calcLabelLikelihoods(DataSequence *dataSequence) const;
 
 private:
-    std::vector<label_t> tagDataSequenceWithLabelType(const DataSequence &dataSequence) const;
-    std::vector<std::string> tagDataSequence(const DataSequence &dataSequence) const;
-
-    void prepareExpWeights();
-
     std::shared_ptr<HighOrderCRFData> modelData;
-    std::shared_ptr<std::vector<double>> expWeights;  // only for likelihood calculation
 };
 
 } // namespace HighOrderCRF

@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -12,9 +11,6 @@
 
 namespace DataConverter {
 
-using std::make_shared;
-using std::shared_ptr;
-using std::showpos;
 using std::string;
 using std::stringstream;
 using std::unordered_set;
@@ -30,7 +26,7 @@ static string utf8Substr(const string &str, size_t len, bool fromTail) {
     vector<UnicodeCharacter> unicodeList;
     for (auto it = str.begin(); it != str.end(); ) {
         size_t charCount;
-        unicodeList.push_back(UnicodeCharacter::fromString(it, str.end() - it, &charCount));
+        unicodeList.emplace_back(UnicodeCharacter::fromString(it, str.end() - it, &charCount));
         it += charCount;
     }
     if (len > unicodeList.size()) {

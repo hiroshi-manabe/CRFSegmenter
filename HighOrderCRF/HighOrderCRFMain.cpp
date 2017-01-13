@@ -1,13 +1,17 @@
 #include <cstdlib>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <queue>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
+#include "DataSequence.h"
 #include "HighOrderCRFProcessor.h"
+#include "Utility.h"
 #include "types.h"
 
 namespace HighOrderCRF {
@@ -17,12 +21,13 @@ using std::cin;
 using std::cout;
 using std::cerr;
 using std::future;
-using std::getline;
+using std::make_shared;
+using std::move;
 using std::queue;
+using std::shared_ptr;
 using std::string;
+using std::stringstream;
 using std::vector;
-
-extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
 enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, C1, C2, EPSILON, MAXITER };
 
@@ -55,13 +60,41 @@ const option::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0 }
 };
 
+// seq will be destroyed
+vector<string> tag(const HighOrderCRFProcessor &processor, shared_ptr<DataSequence> seq) {
+    vector<string> ret;
+    vector<string> originalStringList = seq->getOriginalStringList();
+    auto labelList = processor.tag(move(seq.get()));
+    for (size_t i = 0; i < labelList.size(); ++i) {
+        ret.emplace_back(originalStringList[i] + "\t" + labelList[i]);
+    }
+    return ret;
+}
+
+// seq will be destroyed
+vector<string> calcLabelLikelihoods(const HighOrderCRFProcessor &processor, shared_ptr<DataSequence> seq) {
+    vector<string> ret;
+    vector<string> originalStringList = seq->getOriginalStringList();
+    auto l = processor.calcLabelLikelihoods(seq.get());
+    for (size_t i = 0; i < l.size(); ++i) {
+        stringstream ss;
+        ss << originalStringList[i];
+        for (const auto &entry : l[i]) {
+            ss << "\t" << entry.first << ":" << entry.second;
+        }
+        ret.emplace_back(ss.str());
+        
+    }
+    return ret;
+}
+
 int mainProc(int argc, char **argv) {
     argv += (argc > 0);
     argc -= (argc > 0);
 
     option::Stats stats(usage, argc, argv);
-    std::vector<option::Option> options(stats.options_max);
-    std::vector<option::Option> buffer(stats.buffer_max);
+    vector<option::Option> options(stats.options_max);
+    vector<option::Option> buffer(stats.buffer_max);
     option::Parser parse(usage, argc, argv, options.data(), buffer.data());
 
     if (parse.error()) {
@@ -91,7 +124,7 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    int numThreads = 1;
+    size_t numThreads = 1;
     if (options[THREADS]) {
         int num = atoi(options[THREADS].arg);
         if (num < 1) {
@@ -146,28 +179,22 @@ int mainProc(int argc, char **argv) {
         hwm::task_queue tq(numThreads);
         queue<future<vector<string>>> futureQueue;
 
-        vector<vector<string>> seq;
-        string line;
-        while (getline(cin, line)) {
-            if (line.empty()) {
-                future<vector<string>> f = (options[CALC_LIKELIHOOD] ? tq.enqueue(&HighOrderCRFProcessor::calcLabelLikelihoods, proc, seq) :
-                    tq.enqueue(&HighOrderCRFProcessor::tag, proc, seq));
-                futureQueue.push(move(f));
-                if (numThreads == 1) {
-                    futureQueue.front().wait();
-                }
-                while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-                    auto ret = futureQueue.front().get();
-                    for (const auto &str : ret) {
-                        cout << str << "\n";
-                    }
-                    cout << endl;
-                    futureQueue.pop();
-                }
-                seq.clear();
+        while (true) {
+            auto seq = make_shared<DataSequence>(cin);
+            future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
+                                        tq.enqueue(&calcLabelLikelihoods, proc, seq) :
+                                        tq.enqueue(&tag, proc, seq));
+            futureQueue.push(move(f));
+            if (numThreads == 1) {
+                futureQueue.front().wait();
             }
-            else {
-                seq.emplace_back(splitString(line));
+            while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                auto ret = futureQueue.front().get();
+                for (const auto &str : ret) {
+                    cout << str << "\n";
+                }
+                cout << endl;
+                futureQueue.pop();
             }
         }
     }

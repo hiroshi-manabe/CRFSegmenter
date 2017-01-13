@@ -1,33 +1,37 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <istream>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "../optionparser/optionparser.h"
+#include "../task/task_queue.hpp"
+#include "../HighOrderCRF/DataSequence.h"
 #include "SegmenterDataConverter.h"
 #include "TaggerDataConverter.h"
-
-namespace DataConverter {
 
 using std::endl;
 using std::cin;
 using std::cout;
 using std::cerr;
+using std::future;
 using std::getline;
-using std::ifstream;
+using std::istream;
+using std::queue;
 using std::shared_ptr;
 using std::string;
 using std::stringstream;
 using std::unordered_map;
-using std::unordered_set;
 using std::vector;
+
+namespace DataConverter {
 
 vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     vector<string> elems;
@@ -41,7 +45,7 @@ vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
     return elems;
 }
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L, CHAR, CHAR_TYPE };
+enum optionIndex { UNKNOWN, HELP, THREADS, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L, CHAR, CHAR_TYPE };
 
 struct Arg : public option::Arg
 {
@@ -59,6 +63,7 @@ const option::Descriptor usage[] =
     { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { DICT, 0, "", "dict", Arg::Required, "  --dict  <file>\t(Segmenter, Tagger)Designates the dictionary file to be loaded." },
     { CHAR_N, 0, "", "charn", Arg::Required, "  --charn  <number>\t(Segmentation) N-gram length of characters. Defaults to 3." },
     { CHAR_W, 0, "", "charw", Arg::Required, "  --charw  <number>\t(Segmentation) Window width for characters. Defaults to 3." },
@@ -79,9 +84,21 @@ const option::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0 }
 };
 
-bool fileExists(const string &filename) {
-    ifstream infile(filename.c_str());
-    return infile.good();
+vector<string> readSequence(istream &is) {
+    vector<string> ret;
+    string line;
+    bool isOK = false;
+    while (getline(is, line)) {
+        if (line.empty()) {
+            isOK = true;
+            break;
+        }
+        ret.emplace_back(move(line));
+    }
+    if (!isOK) {
+        ret.clear();
+    }
+    return ret;
 }
 
 int mainProc(int argc, char **argv) {
@@ -111,10 +128,20 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
+    size_t numThreads = 1;
+    if (options[THREADS]) {
+        int num = atoi(options[THREADS].arg);
+        if (num < 1) {
+            cerr << "Illegal number of threads" << endl;
+            exit(1);
+        }
+        numThreads = num;
+    }
+    
     unordered_map<string, string> op;
     shared_ptr<DataConverterInterface> converter;
     if (options[SEGMENT]) {
-        converter.reset(new SegmenterDataConverter());
+        auto c = new SegmenterDataConverter();
         if (options[DICT]) {
             op["dictionaryFilename"] = options[DICT].arg;
         }
@@ -142,9 +169,11 @@ int mainProc(int argc, char **argv) {
         if (options[CONTAINS_SPACES]) {
             op["containsSpaces"] = "true";
         }
+        c->setOptions(op);
+//        converter.reset(c);
     }
     else if (options[TAG]) {
-        converter.reset(new TaggerDataConverter());
+        auto c = new TaggerDataConverter();
         if (options[DICT]) {
             op["dictionaryFilename"] = options[DICT].arg;
         }
@@ -163,28 +192,34 @@ int mainProc(int argc, char **argv) {
         if (options[CHAR_TYPE]) {
             op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
+        c->setOptions(op);
+//        converter.reset(c);
     }
     else {
         cerr << "You must specify --segment or --tag option." << endl;
         option::printUsage(cout, usage);
         return 1;
     }
-    converter->setOptions(op);
+
+    hwm::task_queue tq(numThreads);
+    queue<future<shared_ptr<HighOrderCRF::DataSequence>>> futureQueue;
 
     while (true) {
-        auto ret = converter->generateFeaturesFromStream(cin);
-        if (cin.eof()) {
-            break;
+        auto seq = readSequence(cin);
+        future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
+        futureQueue.push(move(f));
+        if (numThreads == 1) {
+            futureQueue.front().wait();
         }
-        for (const auto &str : ret) {
-            cout << str << "\n";
+        while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            auto ret = futureQueue.front().get();
+            ret->write(cout);
+            futureQueue.pop();
         }
-        cout << endl;
     }
 
     return 0;
 }
-
 
 }  // namespace DataConverter
 

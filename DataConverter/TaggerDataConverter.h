@@ -2,6 +2,7 @@
 #define HOCRF_DATA_CONVERTER_TAGGER_DATA_CONVERTER_H_
 
 #include <istream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -15,15 +16,13 @@ namespace DataConverter {
 
 class TaggerDataConverter : public DataConverterInterface {
 public:
-    virtual void setOptions(const std::unordered_map<std::string, std::string> &options);
-    virtual std::vector<std::string> generateFeaturesFromStream(std::istream& is) const;
-
-    std::unordered_map<std::string, std::string> options;
+    virtual std::shared_ptr<HighOrderCRF::DataSequence> toDataSequence(const std::vector<std::string> &sequence) const;
+    void setOptions(const std::unordered_map<std::string, std::string> &options);
 
 private:
-    std::vector<std::string> generateFeaturesFromSequence(const std::vector<std::string> &sequence) const;
     std::shared_ptr<FeatureTemplateGenerator<std::string>> generator;
     std::shared_ptr<Dictionary::DictionaryClass> dictionary;
+    std::unordered_map<std::string, std::string> options;
     bool optionSet;
 };
     
