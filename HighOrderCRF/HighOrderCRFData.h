@@ -22,7 +22,7 @@ public:
     const std::vector<uint32_t> &getFeatureLabelSequenceIndexList() const;
     const std::vector<LabelSequence> &getLabelSequenceList() const;
     const std::unordered_map<std::string, label_t> &getLabelMap() const;
-    std::vector<std::string> HighOrderCRFData::getLabelStringList() const;
+    std::vector<std::string> getLabelStringList() const;
     void trim();
     void read(const std::string &filename);
     void write(const std::string &filename) const;
