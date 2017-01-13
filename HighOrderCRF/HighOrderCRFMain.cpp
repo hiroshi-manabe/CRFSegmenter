@@ -181,6 +181,9 @@ int mainProc(int argc, char **argv) {
 
         while (true) {
             auto seq = make_shared<DataSequence>(cin);
+            if (seq->empty()) {
+                break;
+            }
             future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
                                         tq.enqueue(&calcLabelLikelihoods, proc, seq) :
                                         tq.enqueue(&tag, proc, seq));
