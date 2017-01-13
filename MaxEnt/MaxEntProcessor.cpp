@@ -38,7 +38,7 @@ double maxEntUpdateProc(void *updateData, const double *x, double *g, size_t con
             data,
             x,
             g);
-        futureList.push_back(move(f));
+        futureList.emplace_back(move(f));
     }
     tq.wait();
 
@@ -65,7 +65,7 @@ void MaxEntProcessor::train(const vector<Observation> &observationList,
     compiledDataList->reserve(observationList.size());
         
     for (auto &obs : observationList) {
-        compiledDataList->push_back(obs.compile(&labelToIndexMap, &attrToIndexMap, &indexPairToFeatureIndexMap, true));
+        compiledDataList->emplace_back(obs.compile(&labelToIndexMap, &attrToIndexMap, &indexPairToFeatureIndexMap, true));
     }
     vector<double> featureCountList(indexPairToFeatureIndexMap.size());
     for (auto &data : (*compiledDataList)) {

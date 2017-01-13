@@ -32,11 +32,11 @@ static vector<string> splitStringByTabs(const string &s) {
         pos = s.find_first_of('\t', lastPos);
         if (pos == string::npos) {
             pos = s.length();
-            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+            elems.emplace_back(string(s.begin() + lastPos, s.begin() + pos));
             break;
         }
         else {
-            elems.push_back(string(s.begin() + lastPos, s.begin() + pos));
+            elems.emplace_back(string(s.begin() + lastPos, s.begin() + pos));
         }
         lastPos = pos + 1;
     }
@@ -98,9 +98,9 @@ DictionaryClass::DictionaryClass(const string &filename) {
             } else {
                 featureId = it->second;
             }
-            t.push_back(featureId);
+            t.emplace_back(featureId);
         }
-        featureIdListList.push_back(move(t));
+        featureIdListList.emplace_back(move(t));
     }
     // builds trie
     trie.build(keyset);
@@ -115,7 +115,7 @@ DictionaryClass::DictionaryClass(const string &filename) {
         trie.reverse_lookup(agent);
         string key(agent.key().ptr(), agent.key().length());
         auto &featureIdListList = wordToFeatureIdListListMap.at(key);
-        marisaIdToFeatureIdListListList.push_back(move(featureIdListList));
+        marisaIdToFeatureIdListListList.emplace_back(move(featureIdListList));
     }
 
     // builds featureIdToStringList
@@ -132,9 +132,9 @@ vector<vector<const string *>> convertIdListListToStringListList(const vector<ve
         vector<const string *> t;
         t.reserve(idList.size());
         for (const auto &id : idList) {
-            t.push_back(&idToStringList[id]);
+            t.emplace_back(&idToStringList[id]);
         }
-        ret.push_back(move(t));
+        ret.emplace_back(move(t));
     }
     return ret;
 }
@@ -148,7 +148,7 @@ vector<pair<size_t, vector<vector<const string *>>>> DictionaryClass::commonPref
         size_t keyLen = agent.key().length();
         const auto &featureIdListList = marisaIdToFeatureIdListListList[marisaId];
         auto featureListList = convertIdListListToStringListList(featureIdListList, featureIdToStringList);
-        ret.push_back(make_pair(keyLen, move(featureListList)));
+        ret.emplace_back(make_pair(keyLen, move(featureListList)));
     }
     return ret;
 }

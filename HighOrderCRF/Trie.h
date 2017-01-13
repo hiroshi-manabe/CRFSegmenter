@@ -66,7 +66,7 @@ void visitValidNodesRec(std::vector<L> &labels, TrieNode<L> *node, TrieNode<L> *
         newParent = validParent;
     }
     for (TrieNode<L> &child : node->children) {
-        labels.push_back(child.label);
+        labels.emplace_back(child.label);
         visitValidNodesRec(labels, &child, newParent, proc, data);
         labels.pop_back();
     }

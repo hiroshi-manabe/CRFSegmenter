@@ -38,7 +38,7 @@ vector<vector<double>> getAccumulatedWeightListList(const vector<vector<Pattern>
             }
             curWeight *= curWeightList[curPattern.getLongestSuffixIndex()];
         }
-        ret.push_back(move(curWeightList));
+        ret.emplace_back(move(curWeightList));
     }
     return ret;
 }
@@ -63,7 +63,7 @@ vector<vector<double>> getAccumulatedWeightListListForDecoding(const vector<vect
             }
             curWeight += curWeightList[curPattern.getLongestSuffixIndex()];
         }
-        ret.push_back(move(curWeightList));
+        ret.emplace_back(move(curWeightList));
     }
     return ret;
 }
@@ -94,7 +94,7 @@ vector<unordered_map<label_t, double>> PatternSetSequence::calcLabelLikelihoods(
             label_t l = patternListList[i][j].getLastLabel();
             curMap.insert(make_pair(l, scoreListList[i][j]));
         }
-        ret.push_back(move(curMap));
+        ret.emplace_back(move(curMap));
     }
     return ret;
 }
@@ -111,7 +111,7 @@ double PatternSetSequence::calcScores(const double *expWeights, vector<vector<do
         if (size > maxPatternSetSize) {
             maxPatternSetSize = size;
         }
-        scoreListList.push_back(vector<double>(size));
+        scoreListList.emplace_back(vector<double>(size));
     }
 
     vector<double> tempScoreList1(maxPatternSetSize);
@@ -261,7 +261,7 @@ vector<label_t> PatternSetSequence::decode(const weight_t *weights) const {
         if (size > maxPatternSetSize) {
             maxPatternSetSize = size;
         }
-        bestIndexListList.push_back(vector<pattern_index_t>(size));
+        bestIndexListList.emplace_back(vector<pattern_index_t>(size));
     }
 
     vector<pattern_index_t> bestPrefixIndexList(maxPatternSetSize);

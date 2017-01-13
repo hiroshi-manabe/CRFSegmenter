@@ -37,10 +37,10 @@ vector<vector<FeatureTemplate>> SegmenterDictionaryFeatureGenerator::generateFea
     vector<size_t> startPosList;
         
     for (const auto uchar : observationList) {
-        startPosList.push_back(sentence.length());
+        startPosList.emplace_back(sentence.length());
         sentence += uchar.toString();
     }
-    startPosList.push_back(sentence.length());
+    startPosList.emplace_back(sentence.length());
 
     vector<size_t> utf8PosToCharPosList(sentence.length() + 1);
     for (size_t i = 0; i < startPosList.size(); ++i) {

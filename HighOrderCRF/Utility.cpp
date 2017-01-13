@@ -16,7 +16,7 @@ vector<string> splitString(const string &s, char delim, int count) {
     string item;
     int i = 1;
     while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
-        elems.push_back(item);
+        elems.emplace_back(item);
         ++i;
     }
     return elems;

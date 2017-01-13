@@ -56,7 +56,7 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t conc
             sequence,
             x,
             g);
-        futureList.push_back(move(f));
+        futureList.emplace_back(move(f));
     }
     tq.wait();
 
@@ -183,7 +183,7 @@ void HighOrderCRFProcessor::test(const string &filename,
         // copies the correct labels
         correctLabelListList.emplace_back(seqList[i].getLabels());
         future<vector<string>> f = tq.enqueue(&HighOrderCRFProcessor::tag, this, &seqList[i]);
-        futureList.push_back(move(f));
+        futureList.emplace_back(move(f));
     }
 
     for (size_t i = 0; i < sequenceCount; ++i) {

@@ -27,7 +27,7 @@ static string utf8SubstrToCharacterTypeString(const string &str, size_t len, boo
     vector<UnicodeCharacter> unicodeList;
     for (auto it = str.begin(); it != str.end(); ) {
         size_t charCount;
-        unicodeList.push_back(UnicodeCharacter::fromString(it, str.end() - it, &charCount));
+        unicodeList.emplace_back(UnicodeCharacter::fromString(it, str.end() - it, &charCount));
         it += charCount;
     }
     if (len > unicodeList.size()) {

@@ -44,7 +44,7 @@ LabelSequence InternalDataSequence::getLabelSequence(size_t pos, size_t length) 
     }
     vector<label_t> labels;
     for (size_t i = 0; i < length; ++i) {
-        labels.push_back(this->labels.at(pos - i));
+        labels.emplace_back(this->labels.at(pos - i));
     }
     return LabelSequence(move(labels));
 }
@@ -66,12 +66,12 @@ void InternalDataSequence::accumulateFeatureData(unordered_map<FeatureTemplate, 
             if (it == featureToFeatureIndexMap->end()) {
                 auto index = (uint32_t)featureToFeatureIndexMap->size();
                 it = featureToFeatureIndexMap->insert(make_pair(f, index)).first;
-                featureCountList->push_back(0);
+                featureCountList->emplace_back(0);
                 auto it2 = featureTemplateToFeatureIndexListMap->find(ft);
                 if (it2 == featureTemplateToFeatureIndexListMap->end()) {
                     it2 = featureTemplateToFeatureIndexListMap->insert(make_pair(ft, vector<uint32_t>())).first;
                 }
-                it2->second.push_back(it->second);
+                it2->second.emplace_back(it->second);
             }
             ++(*featureCountList)[it->second];
         }
@@ -144,7 +144,7 @@ shared_ptr<PatternSetSequence> InternalDataSequence::generatePatternSetSequence(
                     patternDataList.emplace_back();
                 }
 
-                patternDataList[dataIndex].featureIndexList.push_back(featureIndex);
+                patternDataList[dataIndex].featureIndexList.emplace_back(featureIndex);
 
                 if (pos > 0) {
                     size_t labelLength = seq.getLength();
@@ -190,13 +190,13 @@ shared_ptr<PatternSetSequence> InternalDataSequence::generatePatternSetSequence(
         d.currentIndex = 0;
         
         curTrie.visitValidNodes(generatePatternSetProc, (void *)&d);
-        patternListList.push_back(move(patternList));
+        patternListList.emplace_back(move(patternList));
 
         pattern_index_t longestMatchIndex = 0;
         if (hasValidLabels) {
             longestMatchIndex = patternDataList[curTrie.findLongestMatch(reversedLabels.data() + this->length() - pos - 1, pos + 1)].patternIndex;
         }
-        longestMatchIndexList.push_back(longestMatchIndex);
+        longestMatchIndexList.emplace_back(longestMatchIndex);
     }
     return make_shared<PatternSetSequence>(move(patternListList), move(longestMatchIndexList));
 }

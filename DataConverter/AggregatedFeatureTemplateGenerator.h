@@ -28,7 +28,7 @@ public:
     }
 
     void addFeatureTemplateGenerator(std::shared_ptr<FeatureTemplateGenerator<T>> generator) {
-        generatorList.push_back(generator);
+        generatorList.emplace_back(generator);
     }
 private:
     std::vector<std::shared_ptr<FeatureTemplateGenerator<T>>> generatorList;

@@ -47,7 +47,7 @@ static vector<string> splitString(const string &s, char delim) {
     stringstream ss(s);
     string item;
     while (getline(ss, item, delim)) {
-        elems.push_back(item);
+        elems.emplace_back(item);
     }
     return elems;
 }
@@ -59,9 +59,9 @@ static vector<string> splitStringByTabs(const string &s) {
 vector<string> rsplit2BySlash(const string &s) {
     vector<string> elems;
     size_t pos = s.rfind('/');
-    elems.push_back(s.substr(0, pos));
+    elems.emplace_back(s.substr(0, pos));
     if (pos != string::npos) {
-        elems.push_back(s.substr(pos + 1));
+        elems.emplace_back(s.substr(pos + 1));
     }
     return elems;
 }
@@ -76,11 +76,11 @@ vector<vector<vector<string>>> lookupSentence(const vector<string> &sentence, co
             vector<string> l;
             l.reserve(entry.size());
             for (const auto &element : entry) {
-                l.push_back(*element);
+                l.emplace_back(*element);
             }
-            ll.push_back(move(l));
+            ll.emplace_back(move(l));
         }
-        ret.push_back(move(ll));
+        ret.emplace_back(move(ll));
     }
     return ret;
 }
@@ -91,7 +91,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
     
     for (const auto &wordAndLabelStr : sentence) {
         auto wordAndLabel = rsplit2BySlash(wordAndLabelStr);
-        wordAndLabelList.push_back(move(wordAndLabel));
+        wordAndLabelList.emplace_back(move(wordAndLabel));
     }
     
     vector<unordered_set<string>> ret(sentence.size());
@@ -241,7 +241,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
         if (elems.size() < (size_t)(hasCorrectResults ? 2 : 1)) {
             cerr << "Not properly tagged: " << line << endl;
         }
-        sentence->push_back(elems[0]);
+        sentence->emplace_back(elems[0]);
         correctResultList->emplace_back(elems.begin() + 1, elems.end());
     }
 }
@@ -301,7 +301,7 @@ vector<vector<string>> MorphemeDisambiguatorClass::tag(vector<string> sentence) 
             auto &inferredResult = (dictResultListList[i])[j];
             result.insert(result.end(), inferredResult.begin(), inferredResult.end());
         }
-        ret.push_back(move(result));
+        ret.emplace_back(move(result));
     }
     return ret;
 }

@@ -78,7 +78,7 @@ shared_ptr<CompiledData> Observation::compile(unordered_map<string, uint32_t> *l
             }
             itLabel = labelToIndexMap->insert(make_pair(labelAndLabelSetStr, labelToIndexMap->size())).first;
         }
-        labelStringList.push_back(label);
+        labelStringList.emplace_back(label);
         for (const auto &attr : attributeSet) {
             auto itAttr = attrToIndexMap->find(attr);
             if (itAttr == attrToIndexMap->end()) {
@@ -95,14 +95,14 @@ shared_ptr<CompiledData> Observation::compile(unordered_map<string, uint32_t> *l
                 }
                 itIndexPair = indexPairToFeatureIndexMap->insert(make_pair(indexPair, indexPairToFeatureIndexMap->size())).first;
             }
-            v.push_back(itIndexPair->second);
+            v.emplace_back(itIndexPair->second);
         }
-        featureIndexListList.push_back(move(v));
+        featureIndexListList.emplace_back(move(v));
         ++index;
     }
     if (labelStringList.empty()) {
-        labelStringList.push_back(*(possibleLabelSet.begin()));
-        featureIndexListList.push_back(vector<uint32_t>());
+        labelStringList.emplace_back(*(possibleLabelSet.begin()));
+        featureIndexListList.emplace_back(vector<uint32_t>());
     }
     return make_shared<CompiledData>(move(featureIndexListList), move(labelStringList), correctLabelIndex);
 }

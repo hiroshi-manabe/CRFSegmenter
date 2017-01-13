@@ -134,7 +134,7 @@ void MaxEntData::read(const string &filename) {
         bestWeightList.reserve(featureNum);
         for (uint32_t i = 0; i < featureNum; ++i) {
             uint64_t t = readNumber<uint64_t>(&in);  // assuming that the size of double is 64 bits
-            bestWeightList.push_back(*(double *)&t);
+            bestWeightList.emplace_back(*(double *)&t);
         }
     }
 
@@ -158,11 +158,11 @@ void MaxEntData::trim() {
     size_t validAttributeCount = 0;
     for (size_t i = 0; i < attrToIndexMap.size(); ++i) {
         if (attributeIsValidFlagList[i]) {
-            validAttributeIndexList.push_back(validAttributeCount);
+            validAttributeIndexList.emplace_back(validAttributeCount);
             ++validAttributeCount;
         }
         else {
-            validAttributeIndexList.push_back(UINT32_MAX);
+            validAttributeIndexList.emplace_back(UINT32_MAX);
         }
     }
 
@@ -185,12 +185,12 @@ void MaxEntData::trim() {
     validFeatureIndexList.reserve(bestWeightList.size());
     for (size_t i = 0; i < bestWeightList.size(); ++i) {
         if (bestWeightList[i] != 0.0) {
-            validFeatureIndexList.push_back(validFeatureCount);
+            validFeatureIndexList.emplace_back(validFeatureCount);
             bestWeightList[validFeatureCount] = bestWeightList[i];
             ++validFeatureCount;
         }
         else {
-            validFeatureIndexList.push_back(UINT32_MAX);
+            validFeatureIndexList.emplace_back(UINT32_MAX);
         }
     }
     bestWeightList.resize(validFeatureCount);

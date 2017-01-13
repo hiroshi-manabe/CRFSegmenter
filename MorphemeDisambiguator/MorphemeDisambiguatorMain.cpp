@@ -32,7 +32,7 @@ static vector<string> splitString(const string &s, char delim) {
     stringstream ss(s);
     string item;
     while (getline(ss, item, delim)) {
-        elems.push_back(item);
+        elems.emplace_back(item);
     }
     return elems;
 }
@@ -206,7 +206,7 @@ int mainProc(int argc, char **argv) {
             sentence.clear();
         } else {
             auto split = splitStringByTabs(line);
-            sentence.push_back(split[0]);
+            sentence.emplace_back(split[0]);
         }
     }
     while (!futureQueue.empty()) {
