@@ -12,8 +12,8 @@
 #include <istream>
 #include <ostream>
 #include <memory>
+#include <set>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace HighOrderCRF {
@@ -23,7 +23,7 @@ class DataSequence
 public:
     DataSequence(std::vector<std::string> originalStringList,
                  std::vector<std::string> labels,
-                 std::vector<std::unordered_set<std::string>> possibleLabelTypeSetList,
+                 std::vector<std::set<std::string>> possibleLabelTypeSetList,
                  std::vector<std::vector<FeatureTemplate>> featureTemplateListList);
     DataSequence(std::istream &is);
     void write(std::ostream &os) const;
@@ -37,7 +37,7 @@ public:
 private:
     std::vector<std::string> originalStringList;
     std::vector<std::string> labels;
-    std::vector<std::unordered_set<std::string>> possibleLabelSetList;
+    std::vector<std::set<std::string>> possibleLabelSetList;
     std::vector<std::vector<FeatureTemplate>> featureTemplateListList;
 };
 

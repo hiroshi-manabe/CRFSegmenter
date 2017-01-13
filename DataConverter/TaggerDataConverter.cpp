@@ -1,10 +1,10 @@
 #include <cassert>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "TaggerDataConverter.h"
@@ -21,11 +21,11 @@
 
 using std::make_shared;
 using std::move;
+using std::set;
 using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
-using std::unordered_set;
 using std::vector;
 
 namespace DataConverter {
@@ -71,7 +71,7 @@ shared_ptr<HighOrderCRF::DataSequence> TaggerDataConverter::toDataSequence(const
     vector<string> originalStringList;
     vector<string> observationList;
     vector<string> labelList;
-    vector<unordered_set<string>> possibleLabelSetList;
+    vector<set<string>> possibleLabelSetList;
 
     originalStringList.reserve(sequence.size());
     observationList.reserve(sequence.size());
@@ -86,7 +86,7 @@ shared_ptr<HighOrderCRF::DataSequence> TaggerDataConverter::toDataSequence(const
         string &word = wordAndLabel[0];
         string &label = wordAndLabel[1];
         
-        unordered_set<string> possibleLabelSet;
+        set<string> possibleLabelSet;
         if (dictionary) {
             vector<vector<const string *>> labelListList = dictionary->lookup(word);
             if (!labelListList.empty()) {

@@ -1,11 +1,11 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "SegmenterDataConverter.h"
@@ -27,11 +27,11 @@ using std::cerr;
 using std::endl;
 using std::make_shared;
 using std::move;
+using std::set;
 using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
-using std::unordered_set;
 using std::vector;
 
 namespace DataConverter {
@@ -84,7 +84,7 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
     vector<string> originalStringList;
     vector<CharWithSpace> observationList;
     vector<string> labelList;
-    vector<unordered_set<string>> possibleLabelSetList;
+    vector<set<string>> possibleLabelSetList;
 
     originalStringList.reserve(sequence.size());
     observationList.reserve(sequence.size());
@@ -110,7 +110,7 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
             exit(1);
         }
         auto possibleLabels = splitString(possibleLabelStr, ',');
-        unordered_set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
+        set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
         labelList.emplace_back(move(label));
         observationList.emplace_back(ch, hasSpace);

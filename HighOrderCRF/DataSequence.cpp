@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -18,6 +19,7 @@ using std::endl;
 using std::istream;
 using std::move;
 using std::ostream;
+using std::set;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
@@ -25,7 +27,7 @@ using std::vector;
 
 DataSequence::DataSequence(vector<string> originalStringList,
                            vector<string> labels,
-                           vector<unordered_set<string>> possibleLabelSetList,
+                           vector<set<string>> possibleLabelSetList,
                            vector<vector<FeatureTemplate>> featureTemplateListList) {
     this->originalStringList = move(originalStringList);
     this->labels = move(labels);
@@ -55,8 +57,8 @@ DataSequence::DataSequence(istream &is) {
         originalStringList.emplace_back(move(fields[0]));
         if (fields[1] != "*") {
             auto possibleLabelList = splitString(fields[1], ',');
-            unordered_set<string> possibleLabelSet(possibleLabelList.begin(),
-                                                   possibleLabelList.end());
+            set<string> possibleLabelSet(possibleLabelList.begin(),
+                                         possibleLabelList.end());
             possibleLabelSetList.emplace_back(move(possibleLabelSet));
         }
         labels.emplace_back(move(fields[2]));
