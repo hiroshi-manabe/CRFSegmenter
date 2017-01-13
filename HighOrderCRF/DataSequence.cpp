@@ -106,7 +106,13 @@ InternalDataSequence DataSequence::toInternalDataSequence(const unordered_map<st
     vector<label_t> l;
     l.reserve(labels.size());
     for (const auto &str : labels) {
-        l.emplace_back(labelMap.at(str));
+        auto it = labelMap.find(str);
+        if (it == labelMap.end()) {
+            l.emplace_back(INVALID_LABEL);
+        }
+        else {
+            l.emplace_back(it->second);
+        }
     }
     
     vector<unordered_set<label_t>> p;
@@ -114,7 +120,13 @@ InternalDataSequence DataSequence::toInternalDataSequence(const unordered_map<st
     for (const auto &labelSet : possibleLabelSetList) {
         unordered_set<label_t> s;
         for (const auto &str : labelSet) {
-            s.insert(labelMap.at(str));
+            auto it = labelMap.find(str);
+            if (it == labelMap.end()) {
+                l.emplace_back(INVALID_LABEL);
+            }
+            else {
+                l.emplace_back(it->second);
+            }
         }
         p.emplace_back(move(s));
     }
