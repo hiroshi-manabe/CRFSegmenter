@@ -102,7 +102,6 @@ void HighOrderCRFProcessor::train(const string &filename,
     }
 
     ifstream ifs(filename);
-    unordered_set<string> labelSet;
     vector<InternalDataSequence> internalDataSequenceList;
     internalDataSequenceList.reserve(count);
     while (true) {
