@@ -122,10 +122,10 @@ InternalDataSequence DataSequence::toInternalDataSequence(const unordered_map<st
         for (const auto &str : labelSet) {
             auto it = labelMap.find(str);
             if (it == labelMap.end()) {
-                l.emplace_back(INVALID_LABEL);
+                s.insert(INVALID_LABEL);
             }
             else {
-                l.emplace_back(it->second);
+                s.insert(it->second);
             }
         }
         p.emplace_back(move(s));
