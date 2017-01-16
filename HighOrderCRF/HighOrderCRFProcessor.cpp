@@ -75,27 +75,24 @@ void HighOrderCRFProcessor::train(const string &filename,
                                   double regularizationCoefficientL1,
                                   double regularizationCoefficientL2,
                                   double epsilonForConvergence) {
-    ifstream ifs(filename);
-    if (!ifs.is_open()) {
+    ifstream ifs_label(filename);
+    if (!ifs_label.is_open()) {
         cerr << "Cannot read from file: " << filename << endl;
         exit(1);
     }
 
-    vector<DataSequence> seqList;
+    size_t count = 0;
+    unordered_set<string> labelSet;
     while (true) {
-        DataSequence seq(ifs);
+        DataSequence seq(ifs_label);
         if (seq.empty()) {
             break;
         }
-        seqList.emplace_back(seq);
-    }
-    ifs.close();
-
-    unordered_set<string> labelSet;
-    for (const auto &seq : seqList) {
         auto s = seq.getUsedLabelSet();
         labelSet.insert(s.begin(), s.end());
+        ++count;
     }
+    ifs_label.close();
 
     unordered_map<string, label_t> labelMap;
     label_t labelNum = 0;
@@ -104,13 +101,19 @@ void HighOrderCRFProcessor::train(const string &filename,
         ++labelNum;
     }
 
+    ifstream ifs(filename);
+    unordered_set<string> labelSet;
     vector<InternalDataSequence> internalDataSequenceList;
-    internalDataSequenceList.reserve(seqList.size());
-    
-    for (auto &seq : seqList) {
+    internalDataSequenceList.reserve(count);
+    while (true) {
+        DataSequence seq(ifs);
+        if (seq.empty()) {
+            break;
+        }
         internalDataSequenceList.emplace_back(seq.toInternalDataSequence(labelMap));
     }
-        
+    ifs.close();
+    
     unordered_map<FeatureTemplate, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
     unordered_map<Feature, uint32_t> featureToFeatureIndexMap;
     vector<double> featureCountList;
@@ -138,6 +141,8 @@ void HighOrderCRFProcessor::train(const string &filename,
     for (auto &internalDataSequence : internalDataSequenceList) {
         patternSetSequenceList.emplace_back(internalDataSequence.generatePatternSetSequence(featureTemplateToFeatureIndexListMap, featureLabelSequenceIndexList, labelSequenceList, true));
     }
+    // free memory
+    vector<InternalDataSequence>().swap(internalDataSequenceList);
         
     auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
     auto initialWeightList = make_shared<vector<double>>(featureCountList.size());
