@@ -267,12 +267,10 @@ int mainProc(int argc, char **argv) {
     hwm::task_queue tq(numThreads);
     queue<future<vector<string>>> futureQueue;
 
-    DataConverter::SegmenterDataConverter segmenterConverter;
-    segmenterConverter.setOptions(segmenterOptions);
+    DataConverter::SegmenterDataConverter segmenterConverter(segmenterOptions);
     HighOrderCRF::HighOrderCRFProcessor segmenterProcessor;
     segmenterProcessor.readModel(options[SEGMENTER_MODEL].arg);
-    DataConverter::TaggerDataConverter taggerConverter;
-    taggerConverter.setOptions(taggerOptions);
+    DataConverter::TaggerDataConverter taggerConverter(taggerOptions);
     HighOrderCRF::HighOrderCRFProcessor taggerProcessor;
     taggerProcessor.readModel(options[TAGGER_MODEL].arg);
     MorphemeDisambiguator::MorphemeDisambiguatorClass morph(morphOptions);
