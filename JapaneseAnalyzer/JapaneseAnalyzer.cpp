@@ -17,6 +17,7 @@
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
+#include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
 
 using std::endl;
@@ -152,7 +153,7 @@ vector<string> toSegmenterInput(const string &input) {
         auto ch = origChars[i];
         auto sp = UnicodeCharacter(0);
         if (i < origChars.size() - 1 &&
-            (ch.getCodePoint() == 0x20 || ch.getCodePoint == 0xa0)){
+            (ch.getCodePoint() == 0x20 || ch.getCodePoint() == 0xa0)){
             sp = ch;
             ++i;
             ch = origChars[i];
@@ -192,12 +193,13 @@ vector<string> analyze(const DataConverter::DataConverterInterface &segmenterCon
     auto segmenterInput = toSegmenterInput(line);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
+    return segmenterOutput;
 }
 
 int mainProc(int argc, char **argv) {
     argv += (argc > 0);
     argc -= (argc > 0);
-    
+
     option::Stats stats(usage, argc, argv);
     vector<option::Option> options(stats.options_max);
     vector<option::Option> buffer(stats.buffer_max);
@@ -230,10 +232,10 @@ int mainProc(int argc, char **argv) {
         }
         numThreads = num;
     }
-    
+
     unordered_map<string, string> segmenterOptions;
     unordered_map<string, string> taggerOptions;
-    unordered_map<string, string> morphOptions;
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions;
 
     if (!options[SEGMENTER_DICT]) {
         cerr << "Segmenter dictionary file not designated." << endl;
@@ -262,7 +264,7 @@ int mainProc(int argc, char **argv) {
 
     segmenterOptions["dictionaryFileName"] = options[SEGMENTER_DICT].arg;
     taggerOptions["dictionaryFileName"] = options[TAGGER_DICT].arg;
-    morphOptions["dictionaryFileName"] = options[MORPH_DICT].arg;
+    morphOptions.dictionaryFilename = options[MORPH_DICT].arg;
 
     hwm::task_queue tq(numThreads);
     queue<future<vector<string>>> futureQueue;
@@ -277,11 +279,13 @@ int mainProc(int argc, char **argv) {
     morph.readModel(options[MORPH_MODEL].arg);
 
     string line;
-    regex reNewLine(R"(\r?\n$)")); 
+    regex reNewLine(R"(\r?\n$)");
     while (getline(cin, line)) {
         string trimmed = regex_replace(line, reNewLine, "");
         future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
     }
+}
+
 }  // namespace JapaneseAnalyzer
 
 int main(int argc, char **argv) {
