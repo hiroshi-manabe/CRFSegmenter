@@ -141,7 +141,6 @@ int mainProc(int argc, char **argv) {
     unordered_map<string, string> op;
     shared_ptr<DataConverterInterface> converter;
     if (options[SEGMENT]) {
-        auto c = new SegmenterDataConverter();
         if (options[DICT]) {
             op["dictionaryFilename"] = options[DICT].arg;
         }
@@ -169,11 +168,9 @@ int mainProc(int argc, char **argv) {
         if (options[CONTAINS_SPACES]) {
             op["containsSpaces"] = "true";
         }
-        c->setOptions(op);
-        converter.reset(c);
+        converter.reset(new SegmenterDataConverter(op));
     }
     else if (options[TAG]) {
-        auto c = new TaggerDataConverter();
         if (options[DICT]) {
             op["dictionaryFilename"] = options[DICT].arg;
         }
@@ -192,8 +189,7 @@ int mainProc(int argc, char **argv) {
         if (options[CHAR_TYPE]) {
             op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
-        c->setOptions(op);
-        converter.reset(c);
+        converter.reset(new TaggerDataConverter(op));
     }
     else {
         cerr << "You must specify --segment or --tag option." << endl;

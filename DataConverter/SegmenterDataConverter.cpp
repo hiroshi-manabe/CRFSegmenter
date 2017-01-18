@@ -38,7 +38,7 @@ namespace DataConverter {
 
 extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
-void SegmenterDataConverter::setOptions(const unordered_map<string, string> &argOptions) {
+SegmenterDataConverter::SegmenterDataConverter(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {
         {"charMaxNgram", "3"},
         {"charMaxWindow", "3"},
@@ -74,13 +74,10 @@ void SegmenterDataConverter::setOptions(const unordered_map<string, string> &arg
     if (it != options.end()) {
         gen->addFeatureTemplateGenerator(make_shared<SegmenterDictionaryFeatureGenerator>(it->second, stoi(options["dictMaxLabelLength"])));
     }
-    optionSet = true;
     generator = gen;
 }
 
 shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(const vector<string> &sequence) const {
-    assert(optionSet);
-
     vector<string> originalStringList;
     vector<CharWithSpace> observationList;
     vector<string> labelList;

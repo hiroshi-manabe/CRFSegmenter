@@ -32,7 +32,7 @@ namespace DataConverter {
 
 extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
-void TaggerDataConverter::setOptions(const unordered_map<string, string> &argOptions) {
+TaggerDataConverter::TaggerDataConverter(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {
         {"characterLength", "2"},
         {"characterTypeLength", "2"},

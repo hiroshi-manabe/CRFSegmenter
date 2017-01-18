@@ -16,13 +16,12 @@ namespace DataConverter {
 
 class SegmenterDataConverter : public DataConverterInterface {
 public:
+    SegmenterDataConverter(const std::unordered_map<std::string, std::string> &options);
     virtual std::shared_ptr<HighOrderCRF::DataSequence> toDataSequence(const std::vector<std::string> &sequence) const;
-    void setOptions(const std::unordered_map<std::string, std::string> &options);
 
 private:
     std::shared_ptr<FeatureTemplateGenerator<CharWithSpace>> generator;
     std::unordered_map<std::string, std::string> options;
-    bool optionSet;
 };
     
 }  // namespace DataConverter
