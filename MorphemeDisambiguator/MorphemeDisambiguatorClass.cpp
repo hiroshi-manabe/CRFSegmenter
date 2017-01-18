@@ -1,5 +1,10 @@
 #include "MorphemeDisambiguatorClass.h"
 
+#include "../Dictionary/DictionaryClass.h"
+#include "../MaxEnt/MaxEntProcessor.h"
+#include "../Utility/SplitString.h"
+#include "MorphemeDisambiguatorOptions.h"
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -15,10 +20,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "../Dictionary/DictionaryClass.h"
-#include "../MaxEnt/MaxEntProcessor.h"
-#include "MorphemeDisambiguatorOptions.h"
 
 namespace MorphemeDisambiguator {
 
@@ -41,20 +42,6 @@ using std::string;
 using std::stringstream;
 using std::unordered_set;
 using std::vector;
-
-static vector<string> splitString(const string &s, char delim) {
-    vector<string> elems;
-    stringstream ss(s);
-    string item;
-    while (getline(ss, item, delim)) {
-        elems.emplace_back(item);
-    }
-    return elems;
-}
-
-static vector<string> splitStringByTabs(const string &s) {
-    return splitString(s, '\t');
-}
 
 vector<string> rsplit2BySlash(const string &s) {
     vector<string> elems;
@@ -237,7 +224,7 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
         if (line.empty()) {
             break;
         }
-        vector<string> elems = splitStringByTabs(line);
+        vector<string> elems = Utility::splitString(line);
         if (elems.size() < (size_t)(hasCorrectResults ? 2 : 1)) {
             cerr << "Not properly tagged: " << line << endl;
         }

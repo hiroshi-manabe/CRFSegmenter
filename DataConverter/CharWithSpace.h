@@ -1,20 +1,21 @@
 #ifndef HOCRF_DATA_CONVERTER_CHAR_WITH_SPACE_H
 #define HOCRF_DATA_CONVERTER_CHAR_WITH_SPACE_H
 
-#include "UnicodeCharacter.h"
+#include "../Utility/UnicodeCharacter.h"
+
 #include <string>
 
 namespace DataConverter {
 
 class CharWithSpace {
 public:
-    CharWithSpace(UnicodeCharacter c, bool hasSpace);
-    const UnicodeCharacter &getUnicodeCharacter() const;
+    CharWithSpace(Utility::UnicodeCharacter c, bool hasSpace);
+    const Utility::UnicodeCharacter &getUnicodeCharacter() const;
     bool hasSpace() const;
     std::string toString() const;
 
 private:
-    UnicodeCharacter ch;
+    Utility::UnicodeCharacter ch;
     bool sp;
 };
 

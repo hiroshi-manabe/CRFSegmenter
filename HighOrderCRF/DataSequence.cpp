@@ -1,7 +1,7 @@
 #include "DataSequence.h"
 
 #include "FeatureTemplate.h"
-#include "Utility.h"
+#include "../Utility/SplitString.h"
 
 #include <iostream>
 #include <istream>
@@ -49,14 +49,14 @@ DataSequence::DataSequence(istream &is) {
             isOK = true;
             break;
         }
-        auto fields = splitString(line);
+        auto fields = Utility::splitString(line);
         if (fields.size() < 3) {
             cerr << "Not enough fields: " << line << endl;
             exit(1);
         }
         originalStringList.emplace_back(move(fields[0]));
         if (fields[1] != "*") {
-            auto possibleLabelList = splitString(fields[1], ',');
+            auto possibleLabelList = Utility::splitString(fields[1], ',');
             set<string> possibleLabelSet(possibleLabelList.begin(),
                                          possibleLabelList.end());
             possibleLabelSetList.emplace_back(move(possibleLabelSet));

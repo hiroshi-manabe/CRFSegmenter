@@ -24,7 +24,6 @@
 #include "HighOrderCRFData.h"
 #include "InternalDataSequence.h"
 #include "LabelSequence.h"
-#include "Utility.h"
 
 namespace HighOrderCRF {
 

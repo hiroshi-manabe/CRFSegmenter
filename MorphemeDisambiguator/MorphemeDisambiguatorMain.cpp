@@ -1,3 +1,10 @@
+#include "MorphemeDisambiguatorClass.h"
+
+#include "../optionparser/optionparser.h"
+#include "../task/task_queue.hpp"
+#include "../Utility/SplitString.h"
+#include "MorphemeDisambiguatorOptions.h"
+
 #include <chrono>
 #include <cstdio>
 #include <future>
@@ -6,12 +13,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "MorphemeDisambiguatorClass.h"
-
-#include "../optionparser/optionparser.h"
-#include "../task/task_queue.hpp"
-#include "MorphemeDisambiguatorOptions.h"
 
 namespace MorphemeDisambiguator {
 
@@ -26,20 +27,6 @@ using std::queue;
 using std::string;
 using std::stringstream;
 using std::vector;
-
-static vector<string> splitString(const string &s, char delim) {
-    vector<string> elems;
-    stringstream ss(s);
-    string item;
-    while (getline(ss, item, delim)) {
-        elems.emplace_back(item);
-    }
-    return elems;
-}
-
-static vector<string> splitStringByTabs(const string &s) {
-    return splitString(s, '\t');
-}
 
 enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, TEST, MODEL, DICT, THREADS, WORD_W, LABEL_W, COLUMN_W, FCOLUMN, C1, C2, EPSILON, MAXITER };
 
@@ -205,7 +192,7 @@ int mainProc(int argc, char **argv) {
             }
             sentence.clear();
         } else {
-            auto split = splitStringByTabs(line);
+            auto split = Utility::splitString(line);
             sentence.emplace_back(split[0]);
         }
     }

@@ -14,6 +14,7 @@
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
 #include "../HighOrderCRF/DataSequence.h"
+#include "../Utility/SplitString.h"
 #include "SegmenterDataConverter.h"
 #include "TaggerDataConverter.h"
 
@@ -32,18 +33,6 @@ using std::unordered_map;
 using std::vector;
 
 namespace DataConverter {
-
-vector<string> splitString(const string &s, char delim = '\t', int count = 0) {
-    vector<string> elems;
-    stringstream ss(s);
-    string item;
-    int i = 1;
-    while (getline(ss, item, (count && i >= count) ? '\0' : delim)) {
-        elems.emplace_back(item);
-        ++i;
-    }
-    return elems;
-}
 
 enum optionIndex { UNKNOWN, HELP, THREADS, TRAIN, SEGMENT, CONTAINS_SPACES, IS_TRAINING, TEST, MODEL, DICT, CHAR_N, CHAR_W, CHAR_L, TYPE_N, TYPE_W, TYPE_L, DICT_L, TAG, WORD_N, WORD_W, WORD_L, CHAR, CHAR_TYPE };
 

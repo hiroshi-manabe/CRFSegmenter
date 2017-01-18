@@ -1,6 +1,7 @@
 #include "DictionaryClass.h"
 
 #include "../libmarisa/marisa.h"
+#include "../Utility/SplitString.h"
 
 #include <fstream>
 #include <iostream>
@@ -24,25 +25,6 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-static vector<string> splitStringByTabs(const string &s) {
-    vector<string> elems;
-    size_t pos;
-    size_t lastPos = 0;
-    while (true) {
-        pos = s.find_first_of('\t', lastPos);
-        if (pos == string::npos) {
-            pos = s.length();
-            elems.emplace_back(string(s.begin() + lastPos, s.begin() + pos));
-            break;
-        }
-        else {
-            elems.emplace_back(string(s.begin() + lastPos, s.begin() + pos));
-        }
-        lastPos = pos + 1;
-    }
-    return elems;
-}
-
 DictionaryClass::DictionaryClass(const string &filename) {
     ifstream ifs(filename);
 
@@ -62,7 +44,7 @@ DictionaryClass::DictionaryClass(const string &filename) {
     
     while (getline(ifs, line)) {
         ++lineNum;
-        vector<string> elems = splitStringByTabs(line);
+        vector<string> elems = Utility::splitString(line);
         if (elementCount == 0) {
             if (elems.size() < 2) {
                 cerr << "A dictionary entry must have one or more features." << endl;

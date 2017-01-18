@@ -11,7 +11,6 @@
 #include "../task/task_queue.hpp"
 #include "DataSequence.h"
 #include "HighOrderCRFProcessor.h"
-#include "Utility.h"
 #include "types.h"
 
 namespace HighOrderCRF {

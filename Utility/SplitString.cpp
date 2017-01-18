@@ -1,4 +1,4 @@
-#include "Utility.h"
+#include "SplitString.h"
 
 #include <string>
 #include <sstream>
@@ -8,7 +8,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-namespace HighOrderCRF {
+namespace Utility {
 
 vector<string> splitString(const string &s, char delim, int count) {
     vector<string> elems;
@@ -22,4 +22,4 @@ vector<string> splitString(const string &s, char delim, int count) {
     return elems;
 }
 
-}  // namespace HighOrderCRF
+}  // namespace Utility

@@ -1,12 +1,13 @@
-#include <string>
-
 #include "CharWithSpace.h"
 
-#include "UnicodeCharacter.h"
+#include "../Utility/UnicodeCharacter.h"
+
+#include <string>
 
 namespace DataConverter {
 
 using std::string;
+using Utility::UnicodeCharacter;
 
 CharWithSpace::CharWithSpace(UnicodeCharacter c, bool hasSpace)
 {

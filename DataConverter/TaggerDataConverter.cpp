@@ -10,6 +10,7 @@
 #include "TaggerDataConverter.h"
 
 #include "../Dictionary/DictionaryClass.h"
+#include "../Utility/SplitString.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "DictionaryFeatureGenerator.h"
 #include "FeatureTemplateGenerator.h"
@@ -29,8 +30,6 @@ using std::unordered_map;
 using std::vector;
 
 namespace DataConverter {
-
-extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
 
 TaggerDataConverter::TaggerDataConverter(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {
@@ -79,7 +78,7 @@ shared_ptr<HighOrderCRF::DataSequence> TaggerDataConverter::toDataSequence(const
     possibleLabelSetList.reserve(sequence.size());
 
     for (const auto &str : sequence) {
-        auto wordAndLabel = splitString(str, '\t');
+        auto wordAndLabel = Utility::splitString(str);
         if (wordAndLabel.size() < 2) {
             wordAndLabel.emplace_back("*");
         }

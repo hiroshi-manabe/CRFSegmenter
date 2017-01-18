@@ -8,7 +8,7 @@
 
 #include "WordCharacterTypeFeatureGenerator.h"
 
-#include "UnicodeCharacter.h"
+#include "../Utility/UnicodeCharacter.h"
 
 namespace DataConverter {
 
@@ -18,6 +18,7 @@ using std::unordered_set;
 using std::vector;
 
 using HighOrderCRF::FeatureTemplate;
+using Utility::UnicodeCharacter;
 
 WordCharacterTypeFeatureGenerator::WordCharacterTypeFeatureGenerator(size_t maxLength) {
     this->maxLength = maxLength;

@@ -1,17 +1,8 @@
-#include <cassert>
-#include <iostream>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <unordered_map>
-#include <vector>
-
 #include "SegmenterDataConverter.h"
 
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
+#include "../Utility/SplitString.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
@@ -22,6 +13,16 @@
 #include "ObservationSequence.h"
 #include "SegmenterDictionaryFeatureGenerator.h"
 #include "UnconditionalFeatureTemplateGenerator.h"
+
+#include <cassert>
+#include <iostream>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <unordered_map>
+#include <vector>
 
 using std::cerr;
 using std::endl;
@@ -34,9 +35,9 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-namespace DataConverter {
+using Utility::UnicodeCharacter;
 
-extern vector<string> splitString(const string &s, char delim = '\t', int count = 0);
+namespace DataConverter {
 
 SegmenterDataConverter::SegmenterDataConverter(const unordered_map<string, string> &argOptions) {
     unordered_map<string, string> defaultOptions {
@@ -89,7 +90,7 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
     possibleLabelSetList.reserve(sequence.size());
 
     for (const auto &str : sequence) {
-        auto fields = splitString(str, '\t');
+        auto fields = Utility::splitString(str, '\t');
         if (fields.size() != 3) {
             cerr << "A line must contain 3 fields: Character[TAB]Possible labels[TAB]label." << endl << str << endl;
             exit(1);
@@ -106,7 +107,7 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
             cerr << "Only one character is allowed. " << endl << str << endl;
             exit(1);
         }
-        auto possibleLabels = splitString(possibleLabelStr, ',');
+        auto possibleLabels = Utility::splitString(possibleLabelStr, ',');
         set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
         labelList.emplace_back(move(label));

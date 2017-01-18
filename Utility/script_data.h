@@ -1,13 +1,12 @@
-#ifndef HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_
-#define HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_
+#ifndef HOCRF_UTILITY_SCRIPT_DATA_H_
+#define HOCRF_UTILITY_SCRIPT_DATA_H_
 
 #include <cstdint>
 #include <string>
 
-namespace DataConverter {
+namespace Utility {
 
 namespace ScriptData {
-
 
 typedef unsigned char script_type_t;
 
@@ -12360,5 +12359,5 @@ std::string codePointToScriptString(uint32_t codePoint) {
 
 }  // namespace ScriptData
 
-}  // namespace DataConverter
-#endif  // HOCRF_DATA_CONVERTER_SCRIPT_DATA_H_
+}  // namespace Utility
+#endif  // HOCRF_UTILITY_SCRIPT_DATA_H_

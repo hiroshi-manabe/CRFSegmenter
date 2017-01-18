@@ -13,11 +13,10 @@ add_library(
     InternalDataSequence.cpp
     LabelSequence.cpp
     PatternSetSequence.cpp
-    Utility.cpp
 )
 
 set_property(TARGET HighOrderCRF PROPERTY CXX_STANDARD 11)
 set_property(TARGET HighOrderCRFMain PROPERTY CXX_STANDARD 11)
 
-target_link_libraries(HighOrderCRF Optimizer)
+target_link_libraries(HighOrderCRF Optimizer Utility)
 target_link_libraries(HighOrderCRFMain HighOrderCRF)

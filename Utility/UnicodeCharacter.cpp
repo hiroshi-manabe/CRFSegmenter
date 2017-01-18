@@ -5,7 +5,7 @@
 #include "UnicodeCharacter.h"
 #include "script_data.h"
 
-namespace DataConverter {
+namespace Utility {
 
 using std::string;
 
@@ -94,4 +94,4 @@ ERROR:
     return UnicodeCharacter(codePoint);
 }
 
-}  // namespace DataConverter
+}  // namespace Utility

@@ -1,10 +1,10 @@
-#ifndef HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H
-#define HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H
+#ifndef HOCRF_UTILITY_UNICODE_CHARACTER_H
+#define HOCRF_UTILITY_UNICODE_CHARACTER_H
 
 #include <cstdint>
 #include <string>
 
-namespace DataConverter {
+namespace Utility {
 
 class UnicodeCharacter {
 public:
@@ -20,6 +20,6 @@ private:
     uint32_t codePoint;
 };
 
-}  // namespace DataConverter
+}  // namespace Utility
 
-#endif  // HOCRF_DATA_CONVERTER_UNICODE_CHARACTER_H
+#endif  // HOCRF_UTILITY_UNICODE_CHARACTER_H

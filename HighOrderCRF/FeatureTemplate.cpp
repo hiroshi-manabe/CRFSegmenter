@@ -1,10 +1,11 @@
 #include "FeatureTemplate.h"
 
+#include "../Utility/SplitString.h"
+
 #include <cassert>
 #include <iostream>
 #include <memory>
 #include <string>
-#include "Utility.h"
 
 using std::cerr;
 using std::endl;
@@ -20,7 +21,7 @@ FeatureTemplate::FeatureTemplate(const string tag, size_t labelLength) {
 }
 
 FeatureTemplate::FeatureTemplate(const string str) {
-    auto labelLengthAndTag = splitString(str, ':', 2);
+    auto labelLengthAndTag = Utility::splitString(str, ':', 2);
     if (labelLengthAndTag.size() == 2) {
         this->labelLength = stoi(labelLengthAndTag[0]);
         this->tag = labelLengthAndTag[1];
