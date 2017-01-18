@@ -13,12 +13,12 @@
 #include "../task/task_queue.hpp"
 #include "../DataConverter/SegmenterDataConverter.h"
 #include "../DataConverter/TaggerDataConverter.h"
-#include "../DataConverter/UnicodeCharacter.h"
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
+#include "../Utility/UnicodeCharacter.h"
 
 using std::endl;
 using std::cin;
@@ -36,7 +36,7 @@ using std::transform;
 using std::unordered_map;
 using std::vector;
 
-using DataConverter::UnicodeCharacter;
+using Utility::UnicodeCharacter;
 
 namespace JapaneseAnalyzer {
 
