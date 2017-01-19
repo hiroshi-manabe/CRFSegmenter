@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstdio>
 #include <future>
+#include <istream>
 #include <iostream>
 #include <queue>
 #include <sstream>
@@ -22,6 +23,7 @@ using std::cerr;
 using std::endl;
 using std::future;
 using std::getline;
+using std::istream;
 using std::move;
 using std::queue;
 using std::string;
@@ -62,6 +64,23 @@ const option::Descriptor usage[] =
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { 0, 0, 0, 0, 0, 0 }
 };
+
+vector<string> readSequence(istream &is) {
+    vector<string> ret;
+    string line;
+    bool isOK = false;
+    while (getline(is, line)) {
+        if (line.empty()) {
+            isOK = true;
+            break;
+        }
+        ret.emplace_back(move(line));
+    }
+    if (!isOK) {
+        ret.clear();
+    }
+    return ret;
+}
 
 int mainProc(int argc, char **argv) {
     MorphemeDisambiguator::MorphemeDisambiguatorOptions op = { 2, 1, 1 };
@@ -168,48 +187,26 @@ int mainProc(int argc, char **argv) {
     hwm::task_queue tq(numThreads);
     queue<future<vector<vector<string>>>> futureQueue;
 
-    vector<string> sentence;
     while (getline(cin, line)) {
-        if (line.empty()) {
-            auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, sentence);
+        auto seq = readSequence(cin);
+        if (!seq.empty()) {
+            auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, seq);
             futureQueue.push(move(f));
-            if (numThreads == 1) {
-                futureQueue.front().wait();
-            }
-            while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-                const auto result = futureQueue.front().get();
-                for (size_t i = 0; i < result.size(); ++i) {
-                    for (size_t j = 0; j < result[i].size(); ++j) {
-                        if (j > 0) {
-                            cout << "\t";
-                        }
-                        cout << result[i][j];
-                    }
-                    cout << endl;
-                }
-                cout << endl;
-                futureQueue.pop();
-            }
-            sentence.clear();
-        } else {
-            auto split = Utility::splitString(line);
-            sentence.emplace_back(split[0]);
         }
-    }
-    while (!futureQueue.empty()) {
-        futureQueue.front().wait();
-        const auto result = futureQueue.front().get();
-        for (size_t i = 0; i < result.size(); ++i) {
-            for (size_t j = 0; j < result[i].size(); ++j) {
-                if (j > 0) {
-                    cout << "\t";
-                }
-                cout << result[i][j];
+        if (numThreads == 1) {
+            futureQueue.front().wait();
+        }
+        while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            const auto result = futureQueue.front().get();
+            for (size_t i = 0; i < result.size(); ++i) {
+                cout << Utility::join(result[i]) << endl;
             }
             cout << endl;
+            futureQueue.pop();
         }
-        cout << endl;
-        futureQueue.pop();
+        if (seq.empty() && futureQueue.empty()) {
+            break;
+        }
     }
 
     return 0;

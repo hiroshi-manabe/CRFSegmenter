@@ -180,13 +180,12 @@ int mainProc(int argc, char **argv) {
 
         while (true) {
             auto seq = make_shared<DataSequence>(cin);
-            if (seq->empty()) {
-                break;
-            }
-            future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
+            if (!seq->empty()) {
+                future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
                                         tq.enqueue(&calcLabelLikelihoods, proc, seq) :
                                         tq.enqueue(&tag, proc, seq));
-            futureQueue.push(move(f));
+                futureQueue.push(move(f));
+            }
             if (numThreads == 1) {
                 futureQueue.front().wait();
             }
@@ -197,6 +196,9 @@ int mainProc(int argc, char **argv) {
                 }
                 cout << endl;
                 futureQueue.pop();
+            }
+            if (seq->empty() && futureQueue.empty()) {
+                break;
             }
         }
     }

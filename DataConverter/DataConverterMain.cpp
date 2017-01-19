@@ -191,11 +191,10 @@ int mainProc(int argc, char **argv) {
 
     while (true) {
         auto seq = readSequence(cin);
-        if (seq.empty()) {
-            break;
+        if (!seq.empty()) {
+            future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
+            futureQueue.push(move(f));
         }
-        future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
-        futureQueue.push(move(f));
         if (numThreads == 1) {
             futureQueue.front().wait();
         }
@@ -203,6 +202,9 @@ int mainProc(int argc, char **argv) {
             auto ret = futureQueue.front().get();
             ret->write(cout);
             futureQueue.pop();
+        }
+        if (seq.empty() && futureQueue.empty()) {
+            break;
         }
     }
 

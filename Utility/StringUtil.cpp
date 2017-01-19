@@ -22,4 +22,17 @@ vector<string> splitString(const string &s, char delim, int count) {
     return elems;
 }
 
+string join(const vector<string> &v, char delim) {
+    bool isFirst = true;
+    string ret;
+    for (const auto &s : v) {
+        if (!isFirst) {
+            ret += delim;
+        }
+        ret.append(s);
+        isFirst = false;
+    }
+    return ret;
+}
+
 }  // namespace Utility
