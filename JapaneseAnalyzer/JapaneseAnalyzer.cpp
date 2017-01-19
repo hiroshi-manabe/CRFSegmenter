@@ -144,7 +144,7 @@ vector<string> toSegmenterInput(const string &input) {
     assert(origChars.size() == processedChars.size());
 
     vector<string> ret;
-    uint32_t prevProcessedCharCode;
+    uint32_t prevProcessedCharCode = 0;
     
     for (size_t i = 0; i < origChars.size(); ++i) {
         bool hasSpace;
@@ -184,16 +184,50 @@ vector<string> toSegmenterInput(const string &input) {
     return ret;
 }
 
+vector<string> segment(const DataConverter::DataConverterInterface &segmenterConverter,
+                       const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
+                       const string &line) {
+    auto segmenterInput = toSegmenterInput(line);
+    segmenterInput.emplace_back(" \xe3\x80\x82\t1\t*");  // " ÅB\t1\t*"
+    auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
+    auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
+    size_t prevPos = 0;
+    vector<string> ret;
+    for (size_t i = 0; i < segmenterOutput.size() - 1; ++i) {
+        if (i >= 0 && segmenterOutput[i] == "1") {
+            ret.emplace_back(line, prevPos, i - prevPos);
+            prevPos = i;
+        }
+    }
+    return ret;
+}
+
+vector<string> tag(const DataConverter::DataConverterInterface &taggerConverter,
+                   const HighOrderCRF::HighOrderCRFProcessor &taggerProcessor,
+                   const vector<string> &input) {
+    auto dataSequence = taggerConverter.toDataSequence(input);
+    auto taggerOutput = taggerProcessor.tag(dataSequence.get());
+    vector<string> ret;
+    for (size_t i = 0; i < input.size(); ++i) {
+        ret.emplace_back(input[i] + "/" + ret[i]);
+    }
+    return ret;
+}
+
+vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguatorClass &morphemeDisambiguator,
+                                const vector<string> &input) {
+    return morphemeDisambiguator.tag(input);
+}
+
 vector<string> analyze(const DataConverter::DataConverterInterface &segmenterConverter,
                        const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
                        const DataConverter::DataConverterInterface &taggerConverter,
                        const HighOrderCRF::HighOrderCRFProcessor &taggerProcessor,
                        const MorphemeDisambiguator::MorphemeDisambiguatorClass &morphemeDisambiguator,
                        const string line) {
-    auto segmenterInput = toSegmenterInput(line);
-    auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
-    auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
-    return segmenterOutput;
+    auto segmented = segment(segmenterConverter, segmenterProcessor, line);
+    auto tagged = tag(taggerConverter, taggerProcessor, segmented);
+    auto morphTagged = morphTag(morphemeDisambiguator, tagged);
 }
 
 int mainProc(int argc, char **argv) {
@@ -262,8 +296,8 @@ int mainProc(int argc, char **argv) {
         exit(1);
     }
 
-    segmenterOptions["dictionaryFileName"] = options[SEGMENTER_DICT].arg;
-    taggerOptions["dictionaryFileName"] = options[TAGGER_DICT].arg;
+    segmenterOptions["dictionaryFilename"] = options[SEGMENTER_DICT].arg;
+    taggerOptions["dictionaryFilename"] = options[TAGGER_DICT].arg;
     morphOptions.dictionaryFilename = options[MORPH_DICT].arg;
 
     hwm::task_queue tq(numThreads);
@@ -279,11 +313,12 @@ int mainProc(int argc, char **argv) {
     morph.readModel(options[MORPH_MODEL].arg);
 
     string line;
-    regex reNewLine(R"(\r?\n$)");
+    regex reNewLine(R"([\r\n]+$)");
     while (getline(cin, line)) {
         string trimmed = regex_replace(line, reNewLine, "");
         future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
     }
+    return 0;
 }
 
 }  // namespace JapaneseAnalyzer
