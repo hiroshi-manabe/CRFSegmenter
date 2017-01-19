@@ -1,4 +1,4 @@
-#include "SplitString.h"
+#include "StringUtil.h"
 
 #include <string>
 #include <sstream>

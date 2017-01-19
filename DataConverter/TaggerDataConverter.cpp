@@ -10,7 +10,7 @@
 #include "TaggerDataConverter.h"
 
 #include "../Dictionary/DictionaryClass.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "DictionaryFeatureGenerator.h"
 #include "FeatureTemplateGenerator.h"

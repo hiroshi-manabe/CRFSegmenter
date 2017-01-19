@@ -1,7 +1,7 @@
 #include "DataSequence.h"
 
 #include "FeatureTemplate.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 
 #include <iostream>
 #include <istream>

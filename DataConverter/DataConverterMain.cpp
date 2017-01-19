@@ -14,7 +14,7 @@
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
 #include "../HighOrderCRF/DataSequence.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 #include "SegmenterDataConverter.h"
 #include "TaggerDataConverter.h"
 

@@ -1,6 +1,6 @@
 #include "FeatureTemplate.h"
 
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 
 #include <cassert>
 #include <iostream>

@@ -2,7 +2,7 @@
 
 #include "../Dictionary/DictionaryClass.h"
 #include "../MaxEnt/MaxEntProcessor.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 #include "MorphemeDisambiguatorOptions.h"
 
 #include <algorithm>

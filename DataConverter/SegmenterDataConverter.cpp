@@ -2,7 +2,7 @@
 
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"

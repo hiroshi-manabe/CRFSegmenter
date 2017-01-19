@@ -1,7 +1,7 @@
 #include "DictionaryClass.h"
 
 #include "../libmarisa/marisa.h"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 
 #include <fstream>
 #include <iostream>

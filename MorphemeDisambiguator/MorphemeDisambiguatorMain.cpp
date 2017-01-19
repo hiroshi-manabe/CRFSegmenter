@@ -2,7 +2,7 @@
 
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
-#include "../Utility/SplitString.h"
+#include "../Utility/StringUtil.h"
 #include "MorphemeDisambiguatorOptions.h"
 
 #include <chrono>

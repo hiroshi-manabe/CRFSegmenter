@@ -1,6 +1,6 @@
 add_library(
     Utility
-    SplitString.cpp
+    StringUtil.cpp
     UnicodeCharacter.cpp
 )
 
