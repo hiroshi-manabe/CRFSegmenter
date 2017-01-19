@@ -18,6 +18,7 @@
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
+#include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
 
 using std::endl;
@@ -228,6 +229,11 @@ vector<string> analyze(const DataConverter::DataConverterInterface &segmenterCon
     auto segmented = segment(segmenterConverter, segmenterProcessor, line);
     auto tagged = tag(taggerConverter, taggerProcessor, segmented);
     auto morphTagged = morphTag(morphemeDisambiguator, tagged);
+    vector<string> ret;
+    for (const auto &v : morphTagged) {
+        ret.emplace_back(Utility::join(v));
+    }
+    return ret;
 }
 
 int mainProc(int argc, char **argv) {
@@ -300,9 +306,6 @@ int mainProc(int argc, char **argv) {
     taggerOptions["dictionaryFilename"] = options[TAGGER_DICT].arg;
     morphOptions.dictionaryFilename = options[MORPH_DICT].arg;
 
-    hwm::task_queue tq(numThreads);
-    queue<future<vector<string>>> futureQueue;
-
     DataConverter::SegmenterDataConverter segmenterConverter(segmenterOptions);
     HighOrderCRF::HighOrderCRFProcessor segmenterProcessor;
     segmenterProcessor.readModel(options[SEGMENTER_MODEL].arg);
@@ -312,8 +315,12 @@ int mainProc(int argc, char **argv) {
     MorphemeDisambiguator::MorphemeDisambiguatorClass morph(morphOptions);
     morph.readModel(options[MORPH_MODEL].arg);
 
+    hwm::task_queue tq(numThreads);
+    queue<future<vector<string>>> futureQueue;
+
     string line;
-    regex reNewLine(R"([\r\n]+$)");
+    const regex reNewLine(R"([\r\n]+$)");
+    
     while (getline(cin, line)) {
         string trimmed = regex_replace(line, reNewLine, "");
         future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
