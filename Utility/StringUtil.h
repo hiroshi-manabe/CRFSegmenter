@@ -1,5 +1,5 @@
-#ifndef HOCRF_UTILITY_SPLIT_STRING_H_
-#define HOCRF_UTILITY_SPLIT_STRING_H_
+#ifndef HOCRF_UTILITY_STRING_UTIL_H_
+#define HOCRF_UTILITY_STRING_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -11,4 +11,4 @@ std::string join(const std::vector<std::string> &v, char delim = '\t');
 
 }  // namespace Utility
 
-#endif  // HOCRF_UTILITY_SPLIT_STRING_H_
+#endif  // HOCRF_UTILITY_STRING_UTIL_H_
