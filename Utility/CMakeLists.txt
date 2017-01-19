@@ -1,5 +1,6 @@
 add_library(
     Utility
+    FileUtil.cpp
     StringUtil.cpp
     UnicodeCharacter.cpp
 )

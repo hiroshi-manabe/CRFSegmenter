@@ -2,6 +2,7 @@
 
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
+#include "../Utility/FileUtil.h"
 #include "../Utility/StringUtil.h"
 #include "MorphemeDisambiguatorOptions.h"
 
@@ -64,23 +65,6 @@ const option::Descriptor usage[] =
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
     { 0, 0, 0, 0, 0, 0 }
 };
-
-vector<string> readSequence(istream &is) {
-    vector<string> ret;
-    string line;
-    bool isOK = false;
-    while (getline(is, line)) {
-        if (line.empty()) {
-            isOK = true;
-            break;
-        }
-        ret.emplace_back(move(line));
-    }
-    if (!isOK) {
-        ret.clear();
-    }
-    return ret;
-}
 
 int mainProc(int argc, char **argv) {
     MorphemeDisambiguator::MorphemeDisambiguatorOptions op = { 2, 1, 1 };
@@ -188,7 +172,7 @@ int mainProc(int argc, char **argv) {
     queue<future<vector<vector<string>>>> futureQueue;
 
     while (getline(cin, line)) {
-        auto seq = readSequence(cin);
+        auto seq = Utility::readSequence(cin);
         if (!seq.empty()) {
             auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, seq);
             futureQueue.push(move(f));

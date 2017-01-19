@@ -1,6 +1,7 @@
 #include "DataSequence.h"
 
 #include "FeatureTemplate.h"
+#include "../Utility/FileUtil.h"
 #include "../Utility/StringUtil.h"
 
 #include <iostream>
@@ -44,11 +45,10 @@ DataSequence::DataSequence(vector<string> originalStringList,
 DataSequence::DataSequence(istream &is) {
     string line;
     bool isOK = false;
-    while (getline(is, line)) {
-        if (line.empty()) {
-            isOK = true;
-            break;
-        }
+
+    auto seq = Utility::readSequence(is);
+    
+    for (const auto &line : seq) {
         auto fields = Utility::splitString(line);
         if (fields.size() < 3) {
             cerr << "Not enough fields: " << line << endl;
@@ -67,12 +67,6 @@ DataSequence::DataSequence(istream &is) {
             featureTemplateList.emplace_back(fields[i]);
         }
         featureTemplateListList.emplace_back(featureTemplateList);
-    }
-    if (!isOK) {
-        originalStringList.clear();
-        labels.clear();
-        possibleLabelSetList.clear();
-        featureTemplateListList.clear();
     }
 }
 

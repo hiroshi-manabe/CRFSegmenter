@@ -14,6 +14,7 @@
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
 #include "../HighOrderCRF/DataSequence.h"
+#include "../Utility/FileUtil.h"
 #include "../Utility/StringUtil.h"
 #include "SegmenterDataConverter.h"
 #include "TaggerDataConverter.h"
@@ -72,23 +73,6 @@ const option::Descriptor usage[] =
     { CHAR_TYPE, 0, "", "char-type", Arg::Required, "  --char-type  <number>\t(Tagging) Maximum length of character types of prefixes and suffixes to generate features." },
     { 0, 0, 0, 0, 0, 0 }
 };
-
-vector<string> readSequence(istream &is) {
-    vector<string> ret;
-    string line;
-    bool isOK = false;
-    while (getline(is, line)) {
-        if (line.empty()) {
-            isOK = true;
-            break;
-        }
-        ret.emplace_back(move(line));
-    }
-    if (!isOK) {
-        ret.clear();
-    }
-    return ret;
-}
 
 int mainProc(int argc, char **argv) {
     argv += (argc > 0);
@@ -190,7 +174,7 @@ int mainProc(int argc, char **argv) {
     queue<future<shared_ptr<HighOrderCRF::DataSequence>>> futureQueue;
 
     while (true) {
-        auto seq = readSequence(cin);
+        auto seq = Utility::readSequence(cin);
         if (!seq.empty()) {
             future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
             futureQueue.push(move(f));
