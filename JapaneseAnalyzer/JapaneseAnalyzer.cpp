@@ -135,11 +135,13 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     static const regex regexUrl(R"([a-z]+://[\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+)");
     static const regex regexEmail(R"((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:.[a-zA-Z0-9\-]+)*)");
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
+    static const regex regexLatin(R"([A-Za-z]+)");
 
     string processed = toString(toHankaku(input));
     processed = replaceWithNonChar(processed, regexUrl);
     processed = replaceWithNonChar(processed, regexEmail);
     processed = replaceWithNonChar(processed, regexNumber);
+    processed = replaceWithNonChar(processed, regexLatin);
     auto processedChars = toUnicodeCharacterList(processed);
     assert(input.size() == processedChars.size());
 
@@ -188,7 +190,7 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
                        const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
                        const string &line) {
     auto origChars = toUnicodeCharacterList(line);
-    origChars.emplace_back(0x3002);  // 'ÅB'
+    origChars.emplace_back(0x3002);  // '„ÄÇ'
     auto segmenterInput = toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
