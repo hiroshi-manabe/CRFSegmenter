@@ -131,33 +131,32 @@ bool isNonCharCode(uint32_t code) {
     return code >= 0xfdd0 && code <= 0xfdef;
 }
 
-vector<string> toSegmenterInput(const string &input) {
+vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     static const regex regexUrl(R"([a-z]+://[\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+)");
     static const regex regexEmail(R"((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:.[a-zA-Z0-9\-]+)*)");
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
 
-    auto origChars = toUnicodeCharacterList(input);
-    string processed = toString(toHankaku(origChars));
+    string processed = toString(toHankaku(input));
     processed = replaceWithNonChar(processed, regexUrl);
     processed = replaceWithNonChar(processed, regexEmail);
     processed = replaceWithNonChar(processed, regexNumber);
     auto processedChars = toUnicodeCharacterList(processed);
-    assert(origChars.size() == processedChars.size());
+    assert(input.size() == processedChars.size());
 
     vector<string> ret;
     uint32_t prevProcessedCharCode = 0;
     
-    for (size_t i = 0; i < origChars.size(); ++i) {
+    for (size_t i = 0; i < input.size(); ++i) {
         bool hasSpace;
         string possibleLabelStr("0,1");
         
-        auto ch = origChars[i];
+        auto ch = input[i];
         auto sp = UnicodeCharacter(0);
-        if (i < origChars.size() - 1 &&
+        if (i < input.size() - 1 &&
             (ch.getCodePoint() == 0x20 || ch.getCodePoint() == 0xa0)){
             sp = ch;
             ++i;
-            ch = origChars[i];
+            ch = input[i];
         }
         
         auto processedCharCode = processedChars[i].getCodePoint();
@@ -188,17 +187,20 @@ vector<string> toSegmenterInput(const string &input) {
 vector<string> segment(const DataConverter::DataConverterInterface &segmenterConverter,
                        const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
                        const string &line) {
-    auto segmenterInput = toSegmenterInput(line);
-    segmenterInput.emplace_back(" \xe3\x80\x82\t1\t*");  // " ÅB\t1\t*"
+    auto origChars = toUnicodeCharacterList(line);
+    origChars.emplace_back(0x3002);  // 'ÅB'
+    auto segmenterInput = toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
-    size_t prevPos = 0;
+//    segmenterOutput.assign({ "1", "0", "1", "1", "0", "1", "0", "1", "0", "1", "1", "1" });
     vector<string> ret;
-    for (size_t i = 0; i < segmenterOutput.size() - 1; ++i) {
-        if (i >= 0 && segmenterOutput[i] == "1") {
-            ret.emplace_back(line, prevPos, i - prevPos);
-            prevPos = i;
+    string str;
+    for (size_t i = 0; i < segmenterOutput.size(); ++i) {
+        if ((i > 0 && segmenterOutput[i] == "1") || i == segmenterOutput.size() - 1) {
+            ret.emplace_back(str);
+            str.clear();
         }
+        str.append(origChars[i].toString());
     }
     return ret;
 }
@@ -210,7 +212,7 @@ vector<string> tag(const DataConverter::DataConverterInterface &taggerConverter,
     auto taggerOutput = taggerProcessor.tag(dataSequence.get());
     vector<string> ret;
     for (size_t i = 0; i < input.size(); ++i) {
-        ret.emplace_back(input[i] + "/" + ret[i]);
+        ret.emplace_back(input[i] + "/" + taggerOutput[i]);
     }
     return ret;
 }
@@ -320,10 +322,28 @@ int mainProc(int argc, char **argv) {
 
     string line;
     const regex reNewLine(R"([\r\n]+$)");
-    
-    while (getline(cin, line)) {
-        string trimmed = regex_replace(line, reNewLine, "");
-        future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
+
+    while (true) {
+        getline(cin, line);
+        if (cin) {
+            string trimmed = regex_replace(line, reNewLine, "");
+            future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
+            futureQueue.push(move(f));
+        }
+        if (numThreads == 1 && !futureQueue.empty()) {
+            futureQueue.front().wait();
+        }
+        while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            auto result = futureQueue.front().get();
+            for (const auto &s : result) {
+                cout << s << "\n";
+            }
+            cout << endl;
+            futureQueue.pop();
+        }
+        if (!cin && futureQueue.empty()) {
+            break;
+        }
     }
     return 0;
 }
