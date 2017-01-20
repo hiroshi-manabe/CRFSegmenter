@@ -192,7 +192,6 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
     auto segmenterInput = toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
-//    segmenterOutput.assign({ "1", "0", "1", "1", "0", "1", "0", "1", "0", "1", "1", "1" });
     vector<string> ret;
     string str;
     for (size_t i = 0; i < segmenterOutput.size(); ++i) {
