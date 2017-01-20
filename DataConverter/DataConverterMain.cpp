@@ -179,7 +179,7 @@ int mainProc(int argc, char **argv) {
             future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
             futureQueue.push(move(f));
         }
-        if (numThreads == 1) {
+        if (numThreads == 1 && !futureQueue.empty()) {
             futureQueue.front().wait();
         }
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
