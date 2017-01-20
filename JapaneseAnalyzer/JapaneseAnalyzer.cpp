@@ -167,7 +167,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
         if (hasSpace) {
             possibleLabelStr = "1";
         }
-        else if (isNonCharCode(prevProcessedCharCode) &&
+        else if (isNonCharCode(prevProcessedCharCode) ||
                  isNonCharCode(processedCharCode)) {
             if (prevProcessedCharCode == processedCharCode) {
                 possibleLabelStr = "0";
@@ -176,6 +176,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
                 possibleLabelStr = "1";
             }
         }
+        prevProcessedCharCode = processedCharCode;
         ret.emplace_back(string(hasSpace ? " " : "") +
                          ch.toString() +
                          "\t" +
