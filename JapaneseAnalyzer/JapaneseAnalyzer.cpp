@@ -276,7 +276,7 @@ int mainProc(int argc, char **argv) {
 
     unordered_map<string, string> segmenterOptions;
     unordered_map<string, string> taggerOptions;
-    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions;
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 } };
 
     if (!options[SEGMENTER_DICT]) {
         cerr << "Segmenter dictionary file not designated." << endl;
