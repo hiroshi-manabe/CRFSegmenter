@@ -132,7 +132,7 @@ bool isNonCharCode(uint32_t code) {
 }
 
 vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
-    static const regex regexUrl(R"([a-z]+://[\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+)");
+    static const regex regexUrl(R"([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_]+)");
     static const regex regexEmail(R"((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:.[a-zA-Z0-9\-]+)*)");
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
     static const regex regexLatin(R"([A-Za-z]+)");
