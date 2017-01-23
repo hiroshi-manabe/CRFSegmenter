@@ -175,11 +175,12 @@ int mainProc(int argc, char **argv) {
 
     while (true) {
         auto seq = Utility::readSequence(cin);
-        if (!seq.empty()) {
+        bool emptyFlag = seq.empty();
+        if (!emptyFlag) {
             future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
             futureQueue.push(move(f));
         }
-        if (numThreads == 1 && !futureQueue.empty()) {
+        if ((numThreads == 1 || !cin) && !futureQueue.empty()) {
             futureQueue.front().wait();
         }
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -187,7 +188,7 @@ int mainProc(int argc, char **argv) {
             ret->write(cout);
             futureQueue.pop();
         }
-        if (seq.empty() && futureQueue.empty()) {
+        if (emptyFlag && futureQueue.empty()) {
             break;
         }
     }
