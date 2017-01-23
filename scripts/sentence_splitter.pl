@@ -11,7 +11,6 @@ use IO::Handle;
 my $opt_concat = 0;
 my $opt_ignore_latin = 0;
 my $opt_ignore_url = 0;
-my $opt_ignore_parentheses = 0;
 my $opt_ignore_numbers = 0;
 my $preprocess = 0;
 
@@ -25,13 +24,17 @@ sub rotate_nonchar {
     $nonchar = chr($nonchar_base + $nonchar_code);
 }
 
+sub to_hankaku {
+    my $orig = shift;
+    return join('', map { my $c = ord($_); ($c >= 0xff01 && $c <= 0xff5e) ? chr($c - 0xfee0) : $_; } split(//, $orig));
+}
+
 GetOptions('concatenate' => \$opt_concat,
            'ignore-latin' => \$opt_ignore_latin,
            'ignore-url' => \$opt_ignore_url,
-           'ignore-parentheses' => \$opt_ignore_parentheses,
            'ignore-numbers' => \$opt_ignore_numbers);
 
-$preprocess = ($opt_ignore_url || $opt_ignore_parentheses || $opt_ignore_numbers);
+$preprocess = ($opt_ignore_url || $opt_ignore_numbers || $opt_ignore_latin);
 
 while (<STDIN>) {
     chomp;
@@ -39,12 +42,12 @@ while (<STDIN>) {
     my $is_first = 1;
     my $prev = "";
 
-    my $preprocessed = $_;
+    my $preprocessed = to_hankaku($_);
     if ($preprocess) {
-        $preprocessed =~ s{([a-zａ-ｚ]+[:：][/／][/／][\-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#－＿．！〜～＊’（）ａ-ｚＡ-Ｚ０-９；／？：＠＆＝＋＄，％＃]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
-        $preprocessed =~ s{((?:(?:mailto:|ｍａｉｌｔｏ：))?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-ａ-ｚＡ-Ｚ０-９．！＃＄％＆’＊＋／＝？＾＿｀｛｜｝〜～－]+[@＠][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+(?:[\.．][a-zA-Z0-9\-ａ-ｚＡ-Ｚ０-９－]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
-        $preprocessed =~ s{([\(\[\{（［〔【《](\p{LC}|\d+)[\)\]\}）］〕】》])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_parentheses;
-        $preprocessed =~ s{([\d\.．,，]*[\d\.．])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_numbers;
+        $preprocessed =~ s{([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
+        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:.[a-zA-Z0-9\-]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
+        $preprocessed =~ s{([\d\.,]*[\d\.])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_numbers;
+        $preprocessed =~ s{([A-Za-z]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_latin;
     }
 
     my $prev_preprocessed_char = '';
@@ -77,13 +80,6 @@ while (<STDIN>) {
             else {
                 $possible_labels = "1";
             }
-        }
-        elsif (not $opt_concat and
-               $opt_ignore_latin and
-               $correct_label == "0" and
-               (($prev =~ m{^\d$} and $ch =~ m{^\d$}) or
-               ($prev =~ m{^\p{Latin}$} and $ch =~ m{^\p{Latin}$}))) {
-            $possible_labels = "0";
         }
         
         my %possible_label_dict = ();
