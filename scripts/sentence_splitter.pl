@@ -77,8 +77,12 @@ while (<STDIN>) {
             if ($prev_preprocessed_char eq $preprocessed_char) {
                 $possible_labels = "0";
             }
-            else {
+            elsif ($prev_preprocessed_char =~ m{$nonchar_regex} and
+                   $preprocessed_char =~ m{$nonchar_regex}) {
                 $possible_labels = "1";
+            }
+            else {
+                $possible_labels = "0,1";
             }
         }
         
