@@ -44,8 +44,8 @@ while (<STDIN>) {
 
     my $preprocessed = to_hankaku($_);
     if ($preprocess) {
-        $preprocessed =~ s{([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
-        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:.[a-zA-Z0-9\-]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
+        $preprocessed =~ s{([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_-]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
+        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
         $preprocessed =~ s{([\d\.,]*[\d\.])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_numbers;
         $preprocessed =~ s{([A-Za-z]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_latin;
     }
