@@ -172,8 +172,12 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
             if (prevProcessedCharCode == processedCharCode) {
                 possibleLabelStr = "0";
             }
-            else {
+            else if (isNonCharCode(prevProcessedCharCode) &&
+                     isNonCharCode(processedCharCode)) {
                 possibleLabelStr = "1";
+            }
+            else {
+                possibleLabelStr = "0,1";
             }
         }
         prevProcessedCharCode = processedCharCode;
