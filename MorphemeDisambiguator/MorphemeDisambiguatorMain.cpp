@@ -171,7 +171,7 @@ int mainProc(int argc, char **argv) {
     hwm::task_queue tq(numThreads);
     queue<future<vector<vector<string>>>> futureQueue;
 
-    while (getline(cin, line)) {
+    while (true) {
         auto seq = Utility::readSequence(cin);
         bool emptyFlag = seq.empty();
         if (!emptyFlag) {
@@ -189,7 +189,7 @@ int mainProc(int argc, char **argv) {
             cout << endl;
             futureQueue.pop();
         }
-        if (emptyFlag && futureQueue.empty()) {
+        if (!cin && emptyFlag && futureQueue.empty()) {
             break;
         }
     }

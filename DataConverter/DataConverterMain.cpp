@@ -188,7 +188,7 @@ int mainProc(int argc, char **argv) {
             ret->write(cout);
             futureQueue.pop();
         }
-        if (emptyFlag && futureQueue.empty()) {
+        if (!cin && emptyFlag && futureQueue.empty()) {
             break;
         }
     }

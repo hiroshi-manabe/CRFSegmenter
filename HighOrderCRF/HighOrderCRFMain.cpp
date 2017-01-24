@@ -198,7 +198,7 @@ int mainProc(int argc, char **argv) {
                 cout << endl;
                 futureQueue.pop();
             }
-            if (emptyFlag && futureQueue.empty()) {
+            if (!cin && emptyFlag && futureQueue.empty()) {
                 break;
             }
         }
