@@ -194,7 +194,9 @@ int mainProc(int argc, char **argv) {
                 for (const auto &str : ret) {
                     cout << str << "\n";
                 }
-                cout << endl;
+                if (!(!cin && emptyFlag && futureQueue.empty())) {
+                    cout << endl;
+                }
                 futureQueue.pop();
             }
             if (!cin && emptyFlag && futureQueue.empty()) {

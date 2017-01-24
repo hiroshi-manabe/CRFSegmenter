@@ -184,7 +184,9 @@ int mainProc(int argc, char **argv) {
         }
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             auto ret = futureQueue.front().get();
-            ret->write(cout);
+            if (!(!cin && emptyFlag && futureQueue.empty())) {
+                ret->write(cout);
+            }
             futureQueue.pop();
         }
         if (!cin && emptyFlag && futureQueue.empty()) {
