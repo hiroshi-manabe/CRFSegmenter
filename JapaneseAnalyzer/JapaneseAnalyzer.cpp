@@ -234,10 +234,13 @@ vector<string> analyze(const DataConverter::DataConverterInterface &segmenterCon
                        const HighOrderCRF::HighOrderCRFProcessor &taggerProcessor,
                        const MorphemeDisambiguator::MorphemeDisambiguatorClass &morphemeDisambiguator,
                        const string line) {
+    vector<string> ret;
+    if (line.empty()) {
+        return ret;
+    }
     auto segmented = segment(segmenterConverter, segmenterProcessor, line);
     auto tagged = tag(taggerConverter, taggerProcessor, segmented);
     auto morphTagged = morphTag(morphemeDisambiguator, tagged);
-    vector<string> ret;
     for (const auto &v : morphTagged) {
         ret.emplace_back(Utility::join(v));
     }
