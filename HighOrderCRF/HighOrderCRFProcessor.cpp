@@ -265,12 +265,15 @@ vector<string> HighOrderCRFProcessor::tag(DataSequence *dataSequence) const {
 }
 
 vector<unordered_map<string, double>> HighOrderCRFProcessor::calcLabelLikelihoods(DataSequence *dataSequence) const {
+    vector<unordered_map<string, double>> ret;
+    if (dataSequence->empty()) {
+        return ret;
+    }
     auto labelStringList = modelData->getLabelStringList();
     auto v = dataSequence
         ->toInternalDataSequence(modelData->getLabelMap())
         .generatePatternSetSequence(modelData->getFeatureTemplateToFeatureIndexMapList(), modelData->getFeatureLabelSequenceIndexList(), modelData->getLabelSequenceList(), false)
         ->calcLabelLikelihoods(modelData->getExpWeightList().data());
-    vector<unordered_map<string, double>> ret;
     ret.reserve(v.size());
     for (const auto &m : v) {
         unordered_map<string, double> newMap;
