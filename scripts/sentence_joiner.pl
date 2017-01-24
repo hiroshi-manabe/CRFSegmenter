@@ -20,7 +20,7 @@ my $is_first = 1;
 while (<STDIN>) {
     chomp;
     if ($_ eq '') {
-        $sentence .= $delim if $opt_newline;
+        $sentence .= $delim if $sentence ne '' and $opt_newline;
         print $sentence."\n";
         $sentence = '';
         $is_first = 1;
