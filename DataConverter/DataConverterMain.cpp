@@ -176,10 +176,9 @@ int mainProc(int argc, char **argv) {
     while (true) {
         auto seq = Utility::readSequence(cin);
         bool emptyFlag = seq.empty();
-        if (!emptyFlag) {
-            future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
-            futureQueue.push(move(f));
-        }
+        future<shared_ptr<HighOrderCRF::DataSequence>> f = tq.enqueue(&DataConverterInterface::toDataSequence, converter.get(), seq);
+        futureQueue.push(move(f));
+        
         if ((numThreads == 1 || !cin) && !futureQueue.empty()) {
             futureQueue.front().wait();
         }

@@ -174,10 +174,9 @@ int mainProc(int argc, char **argv) {
     while (true) {
         auto seq = Utility::readSequence(cin);
         bool emptyFlag = seq.empty();
-        if (!emptyFlag) {
-            auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, seq);
-            futureQueue.push(move(f));
-        }
+        auto f = tq.enqueue(&MorphemeDisambiguator::MorphemeDisambiguatorClass::tag, &s, seq);
+        futureQueue.push(move(f));
+
         if ((numThreads == 1 || !cin) && !futureQueue.empty()) {
             futureQueue.front().wait();
         }

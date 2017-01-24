@@ -181,12 +181,11 @@ int mainProc(int argc, char **argv) {
         while (true) {
             auto seq = make_shared<DataSequence>(cin);
             bool emptyFlag = seq->empty();
-            if (!emptyFlag) {
-                future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
+            future<vector<string>> f = (options[CALC_LIKELIHOOD] ?
                                         tq.enqueue(&calcLabelLikelihoods, proc, seq) :
                                         tq.enqueue(&tag, proc, seq));
-                futureQueue.push(move(f));
-            }
+            futureQueue.push(move(f));
+
             if ((numThreads == 1 || !cin) && !futureQueue.empty()) {
                 futureQueue.front().wait();
             }
