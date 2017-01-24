@@ -185,10 +185,10 @@ int mainProc(int argc, char **argv) {
             for (size_t i = 0; i < result.size(); ++i) {
                 cout << Utility::join(result[i]) << endl;
             }
+            futureQueue.pop();
             if (!(!cin && emptyFlag && futureQueue.empty())) {
                 cout << endl;
             }
-            futureQueue.pop();
         }
         if (!cin && emptyFlag && futureQueue.empty()) {
             break;
