@@ -3,12 +3,14 @@
 #include "../Utility/StringUtil.h"
 
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
 
 using std::cerr;
 using std::endl;
+using std::exit;
 using std::stoi;
 using std::string;
 using std::to_string;

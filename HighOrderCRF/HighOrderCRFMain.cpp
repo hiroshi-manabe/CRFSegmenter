@@ -1,3 +1,9 @@
+#include "../optionparser/optionparser.h"
+#include "../task/task_queue.hpp"
+#include "DataSequence.h"
+#include "HighOrderCRFProcessor.h"
+#include "types.h"
+
 #include <cstdlib>
 #include <future>
 #include <iostream>
@@ -6,12 +12,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "../optionparser/optionparser.h"
-#include "../task/task_queue.hpp"
-#include "DataSequence.h"
-#include "HighOrderCRFProcessor.h"
-#include "types.h"
 
 namespace HighOrderCRF {
 

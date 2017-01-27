@@ -219,18 +219,16 @@ namespace option
 {
 
 #ifdef _MSC_VER
-#include <intrin.h>
-#pragma intrinsic(_BitScanReverse)
-struct MSC_Builtin_CLZ
+static int builtin_clz(unsigned x)
 {
-  static int builtin_clz(unsigned x)
-  {
-    unsigned long index;
-    _BitScanReverse(&index, x);
-    return 32-index; // int is always 32bit on Windows, even for target x64
-  }
-};
-#define __builtin_clz(x) MSC_Builtin_CLZ::builtin_clz(x)
+    for (int i = 1; i < 32; ++i) {
+        if (x & (1 << (32 - i))) {
+            return i - 1;
+        }
+    }
+    return 32;
+}
+#define __builtin_clz(x) builtin_clz(x)
 #endif
 
 class Option;
@@ -1937,7 +1935,7 @@ struct PrintUsageImplementation
         {
           // int __builtin_clz (unsigned int x)
           // Returns the number of leading 0-bits in x, starting at the most significant bit
-          unsigned mask = (unsigned) -1 >> __builtin_clz(ch ^ 0xff);
+          unsigned mask = (unsigned)-1 >> __builtin_clz(ch ^ 0xff);
           ch = ch & mask; // mask out length bits, we don't verify their correctness
           while (((unsigned char) ptr[len + 1] ^ 0x80) <= 0x3F) // while next byte is continuation byte
           {
@@ -2332,7 +2330,7 @@ struct PrintUsageImplementation
             {
               // int __builtin_clz (unsigned int x)
               // Returns the number of leading 0-bits in x, starting at the most significant bit
-              unsigned mask = (unsigned) -1 >> __builtin_clz(ch ^ 0xff);
+              unsigned mask = (unsigned)-1 >> __builtin_clz(ch ^ 0xff);
               ch = ch & mask; // mask out length bits, we don't verify their correctness
               while ((maxi + charbytes < len) && //
                   (((unsigned char) data[maxi + charbytes] ^ 0x80) <= 0x3F)) // while next byte is continuation byte

@@ -1,11 +1,7 @@
-#include <cstdio>
-#include <cstdlib>
 #include <fstream>
-#include <istream>
 #include <iostream>
 #include <memory>
 #include <queue>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -24,12 +20,9 @@ using std::cin;
 using std::cout;
 using std::cerr;
 using std::future;
-using std::getline;
-using std::istream;
 using std::queue;
 using std::shared_ptr;
 using std::string;
-using std::stringstream;
 using std::unordered_map;
 using std::vector;
 

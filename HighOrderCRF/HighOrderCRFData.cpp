@@ -1,3 +1,9 @@
+#include "HighOrderCRFData.h"
+
+#include "FeatureTemplate.h"
+#include "LabelSequence.h"
+
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -7,15 +13,11 @@
 #include <utility>
 #include <vector>
 
-#include "HighOrderCRFData.h"
-
-#include "FeatureTemplate.h"
-#include "LabelSequence.h"
-
 namespace HighOrderCRF {
 
 using std::cerr;
 using std::endl;
+using std::exit;
 using std::ios;
 using std::ifstream;
 using std::make_pair;

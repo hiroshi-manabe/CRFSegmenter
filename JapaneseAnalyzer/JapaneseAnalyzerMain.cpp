@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <cassert>
 #include <future>
 #include <iostream>
 #include <memory>
@@ -25,15 +23,12 @@ using std::endl;
 using std::cin;
 using std::cout;
 using std::cerr;
-using std::for_each;
 using std::future;
 using std::getline;
+using std::move;
 using std::queue;
 using std::regex;
-using std::shared_ptr;
-using std::sregex_token_iterator;
 using std::string;
-using std::transform;
 using std::unordered_map;
 using std::vector;
 

@@ -1,10 +1,13 @@
 #include "FileUtil.h"
 
 #include <istream>
+#include <memory>
 #include <string>
 #include <vector>
 
+using std::getline;
 using std::istream;
+using std::move;
 using std::string;
 using std::vector;
 

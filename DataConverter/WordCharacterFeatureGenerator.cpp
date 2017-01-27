@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -11,6 +12,7 @@
 
 namespace DataConverter {
 
+using std::move;
 using std::string;
 using std::stringstream;
 using std::unordered_set;
