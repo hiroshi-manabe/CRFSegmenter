@@ -1,16 +1,5 @@
-#include <algorithm>
-#include <cassert>
-#include <future>
-#include <iostream>
-#include <memory>
-#include <queue>
-#include <regex>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include "JapaneseAnalyzer.h"
 
-#include "../optionparser/optionparser.h"
-#include "../task/task_queue.hpp"
 #include "../DataConverter/SegmenterDataConverter.h"
 #include "../DataConverter/TaggerDataConverter.h"
 #include "../HighOrderCRF/DataSequence.h"
@@ -21,6 +10,16 @@
 #include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
 
+#include <algorithm>
+#include <cassert>
+#include <future>
+#include <iostream>
+#include <memory>
+#include <regex>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 using std::endl;
 using std::cin;
 using std::cout;
@@ -28,7 +27,7 @@ using std::cerr;
 using std::for_each;
 using std::future;
 using std::getline;
-using std::queue;
+using std::make_shared;
 using std::regex;
 using std::shared_ptr;
 using std::sregex_token_iterator;
@@ -40,34 +39,6 @@ using std::vector;
 using Utility::UnicodeCharacter;
 
 namespace JapaneseAnalyzer {
-
-enum optionIndex { UNKNOWN, HELP, THREADS, SEGMENTER_DICT, TAGGER_DICT, MORPH_DICT, SEGMENTER_MODEL, TAGGER_MODEL, MORPH_MODEL };
-
-struct Arg : public option::Arg
-{
-    static option::ArgStatus Required(const option::Option& option, bool msg)
-    {
-        if (option.arg != 0) {
-            return option::ARG_OK;
-        }
-        return option::ARG_ILLEGAL;
-    }
-};
-
-const option::Descriptor usage[] =
-{
-    { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
-    "Options:" },
-    { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { SEGMENTER_DICT, 0, "", "segmenter-dict", Arg::Required, "  --segmenter-dict  <file>\tDesignates the segmenter dictionary file." },
-    { TAGGER_DICT, 0, "", "tagger-dict", Arg::Required, "  --tagger-dict  <file>\tDesignates the tagger dictionary file." },
-    { MORPH_DICT, 0, "", "morph-dict", Arg::Required, "  --morph-dict  <file>\tDesignates the morpheme disambiguator dictionary file." },
-    { SEGMENTER_MODEL, 0, "", "segmenter-model", Arg::Required, "  --segmenter-model  <file>\tDesignates the segmenter model file." },
-    { TAGGER_MODEL, 0, "", "tagger-model", Arg::Required, "  --tagger-model  <file>\tDesignates the tagger model file." },
-    { MORPH_MODEL, 0, "", "morph-model", Arg::Required, "  --morph-model  <file>\tDesignates the morpheme disambiguator model file." },
-    { 0, 0, 0, 0, 0, 0 }
-};
 
 vector<UnicodeCharacter> toUnicodeCharacterList(const string &orig) {
     vector<UnicodeCharacter> ret;
@@ -228,138 +199,34 @@ vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguat
     return morphemeDisambiguator.tag(input);
 }
 
-vector<string> analyze(const DataConverter::DataConverterInterface &segmenterConverter,
-                       const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
-                       const DataConverter::DataConverterInterface &taggerConverter,
-                       const HighOrderCRF::HighOrderCRFProcessor &taggerProcessor,
-                       const MorphemeDisambiguator::MorphemeDisambiguatorClass &morphemeDisambiguator,
-                       const string line) {
-    vector<string> ret;
+JapaneseAnalyzer::JapaneseAnalyzer(const string &segmenterDict,
+                                   const string &segmenterModel,
+                                   const string &taggerDict,
+                                   const string &taggerModel,
+                                   const string &morphDict,
+                                   const string &morphModel) {
+    unordered_map<string, string> segmenterOptions{ {"dictionaryFilename", segmenterDict} };
+    unordered_map<string, string> taggerOptions{ {"dictionaryFilename", taggerDict} };
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 }, morphDict };
+    segmenterConverter = make_shared<DataConverter::SegmenterDataConverter>(segmenterOptions);
+    segmenterProcessor = make_shared<HighOrderCRF::HighOrderCRFProcessor>();
+    segmenterProcessor->readModel(segmenterModel);
+    taggerConverter = make_shared<DataConverter::TaggerDataConverter>(taggerOptions);
+    taggerProcessor = make_shared<HighOrderCRF::HighOrderCRFProcessor>();
+    taggerProcessor->readModel(taggerModel);
+    morphemeDisambiguator = make_shared<MorphemeDisambiguator::MorphemeDisambiguatorClass>(morphOptions);
+    morphemeDisambiguator->readModel(morphModel);
+}
+
+vector<vector<string>> JapaneseAnalyzer::analyze(const string line) {
+    vector<vector<string>> ret;
     if (line.empty()) {
         return ret;
     }
-    auto segmented = segment(segmenterConverter, segmenterProcessor, line);
-    auto tagged = tag(taggerConverter, taggerProcessor, segmented);
-    auto morphTagged = morphTag(morphemeDisambiguator, tagged);
-    for (const auto &v : morphTagged) {
-        ret.emplace_back(Utility::join(v));
-    }
-    return ret;
-}
-
-int mainProc(int argc, char **argv) {
-    argv += (argc > 0);
-    argc -= (argc > 0);
-
-    option::Stats stats(usage, argc, argv);
-    vector<option::Option> options(stats.options_max);
-    vector<option::Option> buffer(stats.buffer_max);
-    option::Parser parse(usage, argc, argv, options.data(), buffer.data());
-
-    if (parse.error()) {
-        option::printUsage(cerr, usage);
-        return 1;
-    }
-
-    for (auto &option : options) {
-        if (option.desc && option.desc->index == UNKNOWN) {
-            cerr << "Unknown option: " << option.name << endl;
-            option::printUsage(cout, usage);
-            return 1;
-        }
-    }
-
-    if (options[HELP]) {
-        option::printUsage(cout, usage);
-        return 0;
-    }
-
-    size_t numThreads = 1;
-    if (options[THREADS]) {
-        int num = atoi(options[THREADS].arg);
-        if (num < 1) {
-            cerr << "Illegal number of threads" << endl;
-            exit(1);
-        }
-        numThreads = num;
-    }
-
-    unordered_map<string, string> segmenterOptions;
-    unordered_map<string, string> taggerOptions;
-    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 } };
-
-    if (!options[SEGMENTER_DICT]) {
-        cerr << "Segmenter dictionary file not designated." << endl;
-        exit(1);
-    }
-    if (!options[TAGGER_DICT]) {
-        cerr << "Tagger dictionary file not designated." << endl;
-        exit(1);
-    }
-    if (!options[MORPH_DICT]) {
-        cerr << "Morpheme disambiguator dictionary file not designated." << endl;
-        exit(1);
-    }
-    if (!options[SEGMENTER_MODEL]) {
-        cerr << "Segmenter model file not designated." << endl;
-        exit(1);
-    }
-    if (!options[TAGGER_MODEL]) {
-        cerr << "Tagger model file not designated." << endl;
-        exit(1);
-    }
-    if (!options[MORPH_MODEL]) {
-        cerr << "Morpheme disambiguator model file not designated." << endl;
-        exit(1);
-    }
-
-    segmenterOptions["dictionaryFilename"] = options[SEGMENTER_DICT].arg;
-    taggerOptions["dictionaryFilename"] = options[TAGGER_DICT].arg;
-    morphOptions.dictionaryFilename = options[MORPH_DICT].arg;
-
-    DataConverter::SegmenterDataConverter segmenterConverter(segmenterOptions);
-    HighOrderCRF::HighOrderCRFProcessor segmenterProcessor;
-    segmenterProcessor.readModel(options[SEGMENTER_MODEL].arg);
-    DataConverter::TaggerDataConverter taggerConverter(taggerOptions);
-    HighOrderCRF::HighOrderCRFProcessor taggerProcessor;
-    taggerProcessor.readModel(options[TAGGER_MODEL].arg);
-    MorphemeDisambiguator::MorphemeDisambiguatorClass morph(morphOptions);
-    morph.readModel(options[MORPH_MODEL].arg);
-
-    hwm::task_queue tq(numThreads);
-    queue<future<vector<string>>> futureQueue;
-
-    string line;
-    const regex reNewLine(R"([\r\n]+$)");
-
-    while (true) {
-        getline(cin, line);
-        if (cin) {
-            string trimmed = regex_replace(line, reNewLine, "");
-            future<vector<string>> f = tq.enqueue(analyze, segmenterConverter, segmenterProcessor, taggerConverter, taggerProcessor, morph, line);
-            futureQueue.push(move(f));
-        }
-        if (numThreads == 1 && !futureQueue.empty()) {
-            futureQueue.front().wait();
-        }
-        while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            auto result = futureQueue.front().get();
-            for (const auto &s : result) {
-                cout << s << "\n";
-            }
-            cout << endl;
-            futureQueue.pop();
-        }
-        if (!cin && futureQueue.empty()) {
-            break;
-        }
-    }
-    return 0;
+    auto segmented = segment(*segmenterConverter.get(), *segmenterProcessor.get(), line);
+    auto tagged = tag(*taggerConverter.get(), *taggerProcessor.get(), segmented);
+    auto morphTagged = morphTag(*morphemeDisambiguator.get(), tagged);
+    return morphTagged;
 }
 
 }  // namespace JapaneseAnalyzer
-
-int main(int argc, char **argv) {
-    std::ios_base::sync_with_stdio(false);
-    return JapaneseAnalyzer::mainProc(argc, argv);
-}

@@ -1,11 +1,11 @@
-add_executable(
-    MorphemeDisambiguatorMain
-    MorphemeDisambiguatorMain.cpp
-)
-
 add_library(
     MorphemeDisambiguator
     MorphemeDisambiguatorClass.cpp
+)
+
+add_executable(
+    MorphemeDisambiguatorMain
+    MorphemeDisambiguatorMain.cpp
 )
 
 set_property(TARGET MorphemeDisambiguator PROPERTY CXX_STANDARD 11)

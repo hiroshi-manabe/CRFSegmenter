@@ -1,8 +1,3 @@
-add_executable(
-    DataConverterMain
-    DataConverterMain.cpp
-)
-
 add_library(
     DataConverter
     CharacterFeatureGenerator.cpp
@@ -17,6 +12,11 @@ add_library(
     WordCharacterFeatureGenerator.cpp
     WordCharacterTypeFeatureGenerator.cpp
     WordFeatureGenerator.cpp
+)
+
+add_executable(
+    DataConverterMain
+    DataConverterMain.cpp
 )
 
 set_property(TARGET DataConverter PROPERTY CXX_STANDARD 11)
