@@ -2,6 +2,7 @@
 #include <cfloat>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "PatternSetSequence.h"
@@ -14,6 +15,7 @@ namespace HighOrderCRF {
 using std::copy;
 using std::fill;
 using std::make_pair;
+using std::move;
 using std::mutex;
 using std::swap;
 using std::unordered_map;
