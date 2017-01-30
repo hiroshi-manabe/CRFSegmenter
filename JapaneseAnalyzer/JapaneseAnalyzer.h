@@ -1,21 +1,18 @@
-#include <algorithm>
-#include <cassert>
-#include <future>
-#include <iostream>
 #include <memory>
-#include <regex>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "../DataConverter/SegmenterDataConverter.h"
-#include "../DataConverter/TaggerDataConverter.h"
-#include "../HighOrderCRF/FeatureTemplate.h"
-#include "../HighOrderCRF/HighOrderCRFProcessor.h"
-#include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
-#include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
-#include "../Utility/StringUtil.h"
-#include "../Utility/UnicodeCharacter.h"
+namespace DataConverter {
+class DataConverterInterface;
+}
+
+namespace HighOrderCRF {
+class HighOrderCRFProcessor;
+}
+
+namespace MorphemeDisambiguator {
+class MorphemeDisambiguatorClass;
+}
 
 namespace JapaneseAnalyzer {
 
