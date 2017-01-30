@@ -1,5 +1,6 @@
 add_library(
     JapaneseAnalyzer
+    SHARED
     JapaneseAnalyzer.cpp
 )
 

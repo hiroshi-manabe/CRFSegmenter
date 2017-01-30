@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (HOCRF)
-list(APPEND CMAKE_CXX_FLAGS "-pthread -std=c++11 ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_CXX_FLAGS "-pthread -std=c++11 -fPIC ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
 add_subdirectory(liblbfgs)
 add_subdirectory(libmarisa)
 add_subdirectory(DataConverter)
