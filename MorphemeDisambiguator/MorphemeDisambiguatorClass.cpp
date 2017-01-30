@@ -43,16 +43,6 @@ using std::stringstream;
 using std::unordered_set;
 using std::vector;
 
-vector<string> rsplit2BySlash(const string &s) {
-    vector<string> elems;
-    size_t pos = s.rfind('/');
-    elems.emplace_back(s.substr(0, pos));
-    if (pos != string::npos) {
-        elems.emplace_back(s.substr(pos + 1));
-    }
-    return elems;
-}
-
 vector<vector<vector<string>>> lookupSentence(const vector<string> &sentence, const DictionaryClass &dictionary) {
     vector<vector<vector<string>>> ret;
     for (const auto &str : sentence) {
@@ -77,7 +67,7 @@ vector<unordered_set<string>> convertSentenceToCommonAttributeSetList(const vect
     vector<vector<string>> wordAndLabelList;
     
     for (const auto &wordAndLabelStr : sentence) {
-        auto wordAndLabel = rsplit2BySlash(wordAndLabelStr);
+        auto wordAndLabel = Utility::rsplit2(wordAndLabelStr, '/');
         wordAndLabelList.emplace_back(move(wordAndLabel));
     }
     

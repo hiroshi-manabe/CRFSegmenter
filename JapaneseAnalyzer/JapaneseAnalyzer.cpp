@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <vector>
 
+using std::copy;
 using std::for_each;
 using std::make_shared;
 using std::regex;
@@ -218,7 +219,14 @@ vector<vector<string>> JapaneseAnalyzer::analyze(const string line) {
     auto segmented = segment(*segmenterConverter.get(), *segmenterProcessor.get(), line);
     auto tagged = tag(*taggerConverter.get(), *taggerProcessor.get(), segmented);
     auto morphTagged = morphTag(*morphemeDisambiguator.get(), tagged);
-    return morphTagged;
+    for (const auto &v : morphTagged) {
+        vector<string> v2(v.size() + 1);
+        auto r = Utility::rsplit2(v[0], '/');
+        copy(r.begin(), r.end(), v2.begin());
+        copy(v.begin() + 1, v.end(), v2.begin() + 2);
+        ret.emplace_back(v2);
+    }
+    return ret;
 }
 
 }  // namespace JapaneseAnalyzer

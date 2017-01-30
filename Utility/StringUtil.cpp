@@ -23,6 +23,16 @@ vector<string> splitString(const string &s, char delim, int count) {
     return elems;
 }
 
+vector<string> rsplit2(const string &s, char delim) {
+    vector<string> elems;
+    size_t pos = s.rfind(delim);
+    elems.emplace_back(s.substr(0, pos));
+    if (pos != string::npos) {
+        elems.emplace_back(s.substr(pos + 1));
+    }
+    return elems;
+}
+
 string join(const vector<string> &v, char delim) {
     bool isFirst = true;
     string ret;
