@@ -16,7 +16,7 @@ namespace DataConverter {
 
 class SegmenterDictionaryFeatureGenerator : public FeatureTemplateGenerator<CharWithSpace> {
 public:
-    SegmenterDictionaryFeatureGenerator(const std::unordered_set<std::string> &dictionaryFiles, size_t maxLabelLength);
+    SegmenterDictionaryFeatureGenerator(const std::unordered_set<std::string> &dictionaries, size_t maxLabelLength);
     virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<CharWithSpace> &observationList) const;
 
 private:

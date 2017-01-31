@@ -13,7 +13,7 @@ namespace DataConverter {
 
 class DictionaryFeatureGenerator : public FeatureTemplateGenerator<std::string> {
 public:
-    DictionaryFeatureGenerator(std::shared_ptr<Dictionary::DictionaryClass> dictionaryFile);
+    DictionaryFeatureGenerator(std::shared_ptr<Dictionary::DictionaryClass> dictionary);
     virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<std::string> &observationList) const;
 
 private:

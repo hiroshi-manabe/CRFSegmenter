@@ -22,8 +22,8 @@ using std::vector;
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 
-SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const unordered_set<string> &dictionaryFile, size_t maxLabelLength) {
-    dictionary = make_shared<DictionaryClass>(dictionaryFile);
+SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const unordered_set<string> &dictionaries, size_t maxLabelLength) {
+    dictionary = make_shared<DictionaryClass>(dictionaries);
     this->maxLabelLength = maxLabelLength;
 }
 
