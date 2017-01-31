@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using std::cerr;
@@ -33,13 +34,14 @@ using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 using Utility::UnicodeCharacter;
 
 namespace DataConverter {
 
-SegmenterDataConverter::SegmenterDataConverter(const unordered_map<string, string> &argOptions) {
+SegmenterDataConverter::SegmenterDataConverter(const unordered_map<string, string> &argOptions, const unordered_set<string> &dictionaries) {
     unordered_map<string, string> defaultOptions {
         {"charMaxNgram", "3"},
         {"charMaxWindow", "3"},
@@ -70,10 +72,9 @@ SegmenterDataConverter::SegmenterDataConverter(const unordered_map<string, strin
                                                                                         stoi(options["charTypeMaxWindow"]),
                                                                                         stoi(options["charTypeMaxLabelLength"])));
     }
-    
-    auto it = options.find("dictionaryFilename");
-    if (it != options.end()) {
-        gen->addFeatureTemplateGenerator(make_shared<SegmenterDictionaryFeatureGenerator>(it->second, stoi(options["dictMaxLabelLength"])));
+
+    if (!dictionaries.empty()) {
+        gen->addFeatureTemplateGenerator(make_shared<SegmenterDictionaryFeatureGenerator>(dictionaries, stoi(options["dictMaxLabelLength"])));
     }
     generator = gen;
 }

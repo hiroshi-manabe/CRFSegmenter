@@ -4,6 +4,7 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -24,6 +25,7 @@ using std::queue;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace DataConverter {
@@ -105,11 +107,14 @@ int mainProc(int argc, char **argv) {
     }
     
     unordered_map<string, string> op;
+    unordered_set<string> dictionaries;
     shared_ptr<DataConverterInterface> converter;
+
+    for (option::Option* opt = options[DICT]; opt; opt = opt->next()) {
+        dictionaries.insert(opt->arg);
+    }
+    
     if (options[SEGMENT]) {
-        if (options[DICT]) {
-            op["dictionaryFilename"] = options[DICT].arg;
-        }
         if (options[CHAR_N]) {
             op["charMaxNgram"] = atoi(options[CHAR_N].arg);
         }
@@ -134,12 +139,9 @@ int mainProc(int argc, char **argv) {
         if (options[CONTAINS_SPACES]) {
             op["containsSpaces"] = "true";
         }
-        converter.reset(new SegmenterDataConverter(op));
+        converter.reset(new SegmenterDataConverter(op, dictionaries));
     }
     else if (options[TAG]) {
-        if (options[DICT]) {
-            op["dictionaryFilename"] = options[DICT].arg;
-        }
         if (options[WORD_N]) {
             op["wordMaxNgram"] = atoi(options[WORD_N].arg);
         }
@@ -155,7 +157,7 @@ int mainProc(int argc, char **argv) {
         if (options[CHAR_TYPE]) {
             op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
         }
-        converter.reset(new TaggerDataConverter(op));
+        converter.reset(new TaggerDataConverter(op, dictionaries));
     }
     else {
         cerr << "You must specify --segment or --tag option." << endl;

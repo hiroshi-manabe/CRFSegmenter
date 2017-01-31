@@ -90,10 +90,8 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    string dictFilename;
-    if (options[DICT]) {
-        dictFilename = options[DICT].arg;
-        op.dictionaryFilename = dictFilename;
+    for (option::Option* opt = options[DICT]; opt; opt = opt->next()) {
+        op.dictionaries.insert(opt->arg);
     }
 
     size_t numThreads = 1;
@@ -106,7 +104,6 @@ int mainProc(int argc, char **argv) {
         }
         numThreads = num;
     }
-        
 
     if (options[WORD_W]) {
         op.wordMaxWindow = atoi(options[WORD_W].arg);

@@ -1,12 +1,3 @@
-#include <cassert>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <unordered_map>
-#include <vector>
-
 #include "TaggerDataConverter.h"
 
 #include "../Dictionary/DictionaryClass.h"
@@ -20,6 +11,16 @@
 #include "WordCharacterTypeFeatureGenerator.h"
 #include "WordFeatureGenerator.h"
 
+#include <cassert>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 using std::make_shared;
 using std::move;
 using std::set;
@@ -27,11 +28,12 @@ using std::shared_ptr;
 using std::stoi;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace DataConverter {
 
-TaggerDataConverter::TaggerDataConverter(const unordered_map<string, string> &argOptions) {
+TaggerDataConverter::TaggerDataConverter(const unordered_map<string, string> &argOptions, const unordered_set<string> &dictionaries) {
     unordered_map<string, string> defaultOptions {
         {"characterLength", "2"},
         {"characterTypeLength", "2"},
@@ -56,9 +58,8 @@ TaggerDataConverter::TaggerDataConverter(const unordered_map<string, string> &ar
         gen->addFeatureTemplateGenerator(make_shared<WordCharacterTypeFeatureGenerator>(characterTypeLength));
     }
     
-    auto it = options.find("dictionaryFilename");
-    if (it != options.end()) {
-        dictionary = make_shared<Dictionary::DictionaryClass>(it->second);
+    if (!dictionaries.empty()) {
+        dictionary = make_shared<Dictionary::DictionaryClass>(dictionaries);
         gen->addFeatureTemplateGenerator(make_shared<DictionaryFeatureGenerator>(dictionary));
     }
     optionSet = true;

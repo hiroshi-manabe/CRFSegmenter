@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -12,7 +13,7 @@ namespace Dictionary {
 
 class DictionaryClass {
 public:
-    DictionaryClass(const std::string &filename);
+    DictionaryClass(const std::unordered_set<std::string> &files);
     std::vector<std::pair<size_t, std::vector<std::vector<const std::string *>>>> commonPrefixSearch(const std::string &str) const;
     std::vector<std::vector<const std::string *>> lookup(const std::string &str) const;
 

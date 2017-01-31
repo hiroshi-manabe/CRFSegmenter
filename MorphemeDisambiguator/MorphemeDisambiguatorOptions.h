@@ -11,7 +11,7 @@ struct MorphemeDisambiguatorOptions {
     size_t labelMaxWindow;
     size_t columnMaxWindow;
     std::unordered_set<size_t> featureColumnSet;
-    std::string dictionaryFilename;
+    std::unordered_set<std::string> dictionaries;
 };
 
 }

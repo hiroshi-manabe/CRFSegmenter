@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -23,66 +24,85 @@ using std::move;
 using std::pair;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
-DictionaryClass::DictionaryClass(const string &filename) {
-    ifstream ifs(filename);
-
-    if (!ifs.is_open()) {
-        cerr << "Cannot open the dictionary file: " << filename << endl;
-        exit(1);
+class FileReader {
+public:
+    FileReader(const string &filename) {
+        ifs.open(filename);
     }
+    bool isOpen() {
+        return ifs.is_open();
+    }
+    bool readLine(string &str) {
+        return getline(ifs, str) ? true : false;
+    }
+    ~FileReader() {
+        ifs.close();
+    }
+    ifstream ifs;
+};
 
+DictionaryClass::DictionaryClass(const unordered_set<string> &files) {
     string line;
     size_t elementCount = 0;
     size_t lineNum = 0;
-    
+    marisa::Keyset keyset;
     unordered_map<string, size_t> stringToFeatureIdMap;
     unordered_map<string, vector<vector<size_t>>> wordToFeatureIdListListMap;
-    
-    marisa::Keyset keyset;
-    
-    while (getline(ifs, line)) {
-        ++lineNum;
-        vector<string> elems = Utility::splitString(line);
-        if (elementCount == 0) {
-            if (elems.size() < 2) {
-                cerr << "A dictionary entry must have one or more features." << endl;
-                exit(1);
-            }
-            elementCount = elems.size() - 1;
-        }
-        if (elementCount != elems.size() - 1) {
-            cerr << "Element numbers not consistent in " << filename << ", line number " << lineNum << "." << endl;
+
+    for (const auto &filename : files) {
+        FileReader reader(filename);
+
+        if (!reader.isOpen()) {
+            cerr << "Cannot open the dictionary file: " << filename << endl;
             exit(1);
         }
-        const string &word = elems[0];
-        if (word.empty()) {
-            cerr << "Empty entry: line number " << lineNum << endl;
-        }
-        keyset.push_back(word.c_str());
-        
-        auto it = wordToFeatureIdListListMap.find(word);
-        if (it == wordToFeatureIdListListMap.end()) {
-            it = wordToFeatureIdListListMap.insert(make_pair(word, vector<vector<size_t>>())).first;
-        }
-        
-        auto &featureIdListList = it->second;
-        vector<size_t> t;
-        t.reserve(elementCount);
-        for (size_t i = 0; i < elementCount; ++i) {
-            const string &elem = elems[i + 1];
-            const auto it = stringToFeatureIdMap.find(elem);
-            size_t featureId;
-            if (it == stringToFeatureIdMap.end()) {
-                featureId = stringToFeatureIdMap.size();
-                stringToFeatureIdMap.insert(make_pair(elem, featureId));
-            } else {
-                featureId = it->second;
+
+        while (reader.readLine(line)) {
+            ++lineNum;
+            vector<string> elems = Utility::splitString(line);
+            if (elementCount == 0) {
+                if (elems.size() < 2) {
+                    cerr << "A dictionary entry must have one or more features." << endl;
+                    exit(1);
+                }
+                elementCount = elems.size() - 1;
             }
-            t.emplace_back(featureId);
+            if (elementCount != elems.size() - 1) {
+                cerr << "Element numbers not consistent in " << filename << ", line number " << lineNum << "." << endl;
+                exit(1);
+            }
+            const string &word = elems[0];
+            if (word.empty()) {
+                cerr << "Empty entry: line number " << lineNum << endl;
+            }
+            keyset.push_back(word.c_str());
+
+            auto it = wordToFeatureIdListListMap.find(word);
+            if (it == wordToFeatureIdListListMap.end()) {
+                it = wordToFeatureIdListListMap.insert(make_pair(word, vector<vector<size_t>>())).first;
+            }
+
+            auto &featureIdListList = it->second;
+            vector<size_t> t;
+            t.reserve(elementCount);
+            for (size_t i = 0; i < elementCount; ++i) {
+                const string &elem = elems[i + 1];
+                const auto it = stringToFeatureIdMap.find(elem);
+                size_t featureId;
+                if (it == stringToFeatureIdMap.end()) {
+                    featureId = stringToFeatureIdMap.size();
+                    stringToFeatureIdMap.insert(make_pair(elem, featureId));
+                }
+                else {
+                    featureId = it->second;
+                }
+                t.emplace_back(featureId);
+            }
+            featureIdListList.emplace_back(move(t));
         }
-        featureIdListList.emplace_back(move(t));
     }
     // builds trie
     trie.build(keyset);

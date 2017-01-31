@@ -1,3 +1,8 @@
+#include "SegmenterDictionaryFeatureGenerator.h"
+
+#include "../Dictionary/DictionaryClass.h"
+#include "CharWithSpace.h"
+
 #include <algorithm>
 #include <cassert>
 #include <unordered_set>
@@ -6,11 +11,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "SegmenterDictionaryFeatureGenerator.h"
-
-#include "../Dictionary/DictionaryClass.h"
-#include "CharWithSpace.h"
 
 namespace DataConverter {
 
@@ -22,7 +22,7 @@ using std::vector;
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
 
-SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const string &dictionaryFile, size_t maxLabelLength) {
+SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const unordered_set<string> &dictionaryFile, size_t maxLabelLength) {
     dictionary = make_shared<DictionaryClass>(dictionaryFile);
     this->maxLabelLength = maxLabelLength;
 }

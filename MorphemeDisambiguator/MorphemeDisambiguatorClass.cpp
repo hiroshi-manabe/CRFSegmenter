@@ -225,8 +225,8 @@ void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> 
 
 MorphemeDisambiguatorClass::MorphemeDisambiguatorClass(const MorphemeDisambiguatorOptions &options) {
     this->options = options;
-    assert(!options.dictionaryFilename.empty());
-    dictionary = make_shared<DictionaryClass>(options.dictionaryFilename);
+    assert(!options.dictionaries.empty());
+    dictionary = make_shared<DictionaryClass>(options.dictionaries);
 };
 
 void MorphemeDisambiguatorClass::train(const string &trainingFilename,

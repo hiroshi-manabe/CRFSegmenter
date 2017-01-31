@@ -17,6 +17,7 @@
 #include <regex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using std::copy;
@@ -27,6 +28,7 @@ using std::sregex_token_iterator;
 using std::string;
 using std::transform;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 using Utility::UnicodeCharacter;
@@ -192,19 +194,19 @@ vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguat
     return morphemeDisambiguator.tag(input);
 }
 
-JapaneseAnalyzer::JapaneseAnalyzer(const string &segmenterDict,
+JapaneseAnalyzer::JapaneseAnalyzer(const unordered_set<string> &segmenterDicts,
                                    const string &segmenterModel,
-                                   const string &taggerDict,
+                                   const unordered_set<string> &taggerDicts,
                                    const string &taggerModel,
-                                   const string &morphDict,
+                                   const unordered_set<string> &morphDicts,
                                    const string &morphModel) {
-    unordered_map<string, string> segmenterOptions{ {"dictionaryFilename", segmenterDict} };
-    unordered_map<string, string> taggerOptions{ {"dictionaryFilename", taggerDict} };
-    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 }, morphDict };
-    segmenterConverter = make_shared<DataConverter::SegmenterDataConverter>(segmenterOptions);
+    unordered_map<string, string> segmenterOptions{};
+    unordered_map<string, string> taggerOptions{};
+    MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 }, morphDicts };
+    segmenterConverter = make_shared<DataConverter::SegmenterDataConverter>(segmenterOptions, segmenterDicts);
     segmenterProcessor = make_shared<HighOrderCRF::HighOrderCRFProcessor>();
     segmenterProcessor->readModel(segmenterModel);
-    taggerConverter = make_shared<DataConverter::TaggerDataConverter>(taggerOptions);
+    taggerConverter = make_shared<DataConverter::TaggerDataConverter>(taggerOptions, taggerDicts);
     taggerProcessor = make_shared<HighOrderCRF::HighOrderCRFProcessor>();
     taggerProcessor->readModel(taggerModel);
     morphemeDisambiguator = make_shared<MorphemeDisambiguator::MorphemeDisambiguatorClass>(morphOptions);

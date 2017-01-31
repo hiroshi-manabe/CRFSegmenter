@@ -1,5 +1,6 @@
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace DataConverter {
@@ -18,11 +19,11 @@ namespace JapaneseAnalyzer {
 
 class JapaneseAnalyzer {
 public:
-    JapaneseAnalyzer(const std::string &segmenterDict,
+    JapaneseAnalyzer(const std::unordered_set<std::string> &segmenterDicts,
                      const std::string &segmenterModel,
-                     const std::string &taggerDict,
+                     const std::unordered_set<std::string> &taggerDicts,
                      const std::string &taggerModel,
-                     const std::string &morphDict,
+                     const std::unordered_set<std::string> &morphDicts,
                      const std::string &morphModel);
     std::vector<std::vector<std::string>> analyze(const std::string line);
 private:

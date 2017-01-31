@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../Dictionary/DictionaryClass.h"
@@ -16,7 +17,7 @@ namespace DataConverter {
 
 class TaggerDataConverter : public DataConverterInterface {
 public:
-    TaggerDataConverter(const std::unordered_map<std::string, std::string> &options);
+    TaggerDataConverter(const std::unordered_map<std::string, std::string> &options, const std::unordered_set<std::string> &dictionaries);
     virtual std::shared_ptr<HighOrderCRF::DataSequence> toDataSequence(const std::vector<std::string> &sequence) const;
 
 private:

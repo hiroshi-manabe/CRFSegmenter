@@ -5,6 +5,7 @@
 #include <regex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -31,6 +32,7 @@ using std::queue;
 using std::regex;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace JapaneseAnalyzer {
@@ -101,15 +103,15 @@ int mainProc(int argc, char **argv) {
     }
 
     if (!options[SEGMENTER_DICT]) {
-        cerr << "Segmenter dictionary file not designated." << endl;
+        cerr << "Segmenter dictionary files not designated." << endl;
         exit(1);
     }
     if (!options[TAGGER_DICT]) {
-        cerr << "Tagger dictionary file not designated." << endl;
+        cerr << "Tagger dictionary files not designated." << endl;
         exit(1);
     }
     if (!options[MORPH_DICT]) {
-        cerr << "Morpheme disambiguator dictionary file not designated." << endl;
+        cerr << "Morpheme disambiguator dictionary files not designated." << endl;
         exit(1);
     }
     if (!options[SEGMENTER_MODEL]) {
@@ -125,11 +127,24 @@ int mainProc(int argc, char **argv) {
         exit(1);
     }
 
-    JapaneseAnalyzer analyzer(options[SEGMENTER_DICT].arg,
+    unordered_set<string> segmenterDicts;
+    unordered_set<string> taggerDicts;
+    unordered_set<string> morphDicts;
+    for (option::Option* opt = options[SEGMENTER_DICT]; opt; opt = opt->next()) {
+        segmenterDicts.insert(opt->arg);
+    }
+    for (option::Option* opt = options[TAGGER_DICT]; opt; opt = opt->next()) {
+        taggerDicts.insert(opt->arg);
+    }
+    for (option::Option* opt = options[MORPH_DICT]; opt; opt = opt->next()) {
+        morphDicts.insert(opt->arg);
+    }
+
+    JapaneseAnalyzer analyzer(segmenterDicts,
                               options[SEGMENTER_MODEL].arg,
-                              options[TAGGER_DICT].arg,
+                              taggerDicts,
                               options[TAGGER_MODEL].arg,
-                              options[MORPH_DICT].arg,
+                              morphDicts,
                               options[MORPH_MODEL].arg);
 
     hwm::task_queue tq(numThreads);
