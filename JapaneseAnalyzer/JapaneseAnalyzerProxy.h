@@ -14,7 +14,7 @@ public:
                           const std::string &taggerModel,
                           const std::set<std::string> &morphDicts,
                           const std::string &morphModel);
-    std::vector<std::vector<std::string>> analyze(const std::string &line);
+    std::vector<std::vector<std::string> > analyze(const std::string &line);
     ~JapaneseAnalyzerProxy();
 private:
     JapaneseAnalyzer *analyzer;
