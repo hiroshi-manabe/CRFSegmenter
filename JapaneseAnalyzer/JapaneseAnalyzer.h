@@ -25,7 +25,7 @@ public:
                      const std::string &taggerModel,
                      const std::unordered_set<std::string> &morphDicts,
                      const std::string &morphModel);
-    std::vector<std::vector<std::string>> analyze(const std::string line);
+    std::vector<std::vector<std::string>> analyze(const std::string &line);
 private:
     std::shared_ptr<DataConverter::DataConverterInterface> segmenterConverter;
     std::shared_ptr<HighOrderCRF::HighOrderCRFProcessor> segmenterProcessor;

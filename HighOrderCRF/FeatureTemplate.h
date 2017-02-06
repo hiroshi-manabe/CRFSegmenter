@@ -8,8 +8,8 @@ namespace HighOrderCRF {
 
 class FeatureTemplate {
 public:
-    FeatureTemplate(const std::string tag, size_t labelLength);
-    FeatureTemplate(const std::string str);
+    FeatureTemplate(const std::string &tag, size_t labelLength);
+    FeatureTemplate(const std::string &str);
     size_t getLabelLength() const;
     const std::string &getTag() const;
     std::string toString() const;

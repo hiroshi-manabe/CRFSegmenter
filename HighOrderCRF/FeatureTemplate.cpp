@@ -17,12 +17,12 @@ using std::to_string;
 
 namespace HighOrderCRF {
 
-FeatureTemplate::FeatureTemplate(const string tag, size_t labelLength) {
+FeatureTemplate::FeatureTemplate(const string &tag, size_t labelLength) {
     this->tag = tag;
     this->labelLength = labelLength;
 }
 
-FeatureTemplate::FeatureTemplate(const string str) {
+FeatureTemplate::FeatureTemplate(const string &str) {
     auto labelLengthAndTag = Utility::splitString(str, ':', 2);
     if (labelLengthAndTag.size() == 2) {
         this->labelLength = stoi(labelLengthAndTag[0]);

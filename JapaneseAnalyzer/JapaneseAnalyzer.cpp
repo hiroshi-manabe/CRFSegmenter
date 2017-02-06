@@ -213,7 +213,7 @@ JapaneseAnalyzer::JapaneseAnalyzer(const unordered_set<string> &segmenterDicts,
     morphemeDisambiguator->readModel(morphModel);
 }
 
-vector<vector<string>> JapaneseAnalyzer::analyze(const string line) {
+vector<vector<string>> JapaneseAnalyzer::analyze(const string &line) {
     vector<vector<string>> ret;
     if (line.empty()) {
         return ret;
