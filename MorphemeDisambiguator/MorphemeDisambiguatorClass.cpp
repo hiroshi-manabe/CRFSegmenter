@@ -2,6 +2,7 @@
 
 #include "../Dictionary/DictionaryClass.h"
 #include "../MaxEnt/MaxEntProcessor.h"
+#include "../Utility/FileUtil.h"
 #include "../Utility/StringUtil.h"
 #include "MorphemeDisambiguatorOptions.h"
 
@@ -208,18 +209,14 @@ size_t inferCorrectResult(const vector<vector<string>> &dictResultList, const un
     return *(survivors.begin());
 }
 
-void readSentence(istream *is, vector<string> *sentence, vector<vector<string>> *correctResultList, bool hasCorrectResults) {
-    string line;
-    while (getline(*is, line)) {
-        if (line.empty()) {
-            break;
-        }
-        vector<string> elems = Utility::splitString(line);
-        if (elems.size() < (size_t)(hasCorrectResults ? 2 : 1)) {
-            cerr << "Not properly tagged: " << line << endl;
-        }
-        sentence->emplace_back(elems[0]);
-        correctResultList->emplace_back(elems.begin() + 1, elems.end());
+void splitSentenceAndResult(const vector<string> &input, vector<string> *sentence, vector<vector<string>> *correctResultList) {
+    for (const auto &str : input) {
+        auto split = Utility::splitString(str);
+        sentence->emplace_back(move(split[0]));
+        vector<string> temp;
+        temp.reserve(split.size() - 1);
+        move(split.begin() + 1, split.end(), back_inserter(temp));
+        correctResultList->emplace_back(move(temp));
     }
 }
 
@@ -240,9 +237,11 @@ void MorphemeDisambiguatorClass::train(const string &trainingFilename,
     vector<Observation> observationList;
 
     while (true) {
+        vector<string> sequence = Utility::readSequence(ifs);
         vector<string> sentence;
         vector<vector<string>> correctResultList;
-        readSentence(&ifs, &sentence, &correctResultList, true);
+        splitSentenceAndResult(sequence, &sentence, &correctResultList);
+        
         if (sentence.empty()) {
             break;
         }
@@ -289,9 +288,10 @@ void MorphemeDisambiguatorClass::test(const string &testFilename) const {
     size_t correctCount = 0;
     size_t allCount = 0;
     while (true) {
+        vector<string> sequence = Utility::readSequence(ifs);
         vector<string> sentence;
         vector<vector<string>> correctResultList;
-        readSentence(&ifs, &sentence, &correctResultList, true);
+        splitSentenceAndResult(sequence, &sentence, &correctResultList);
         if (sentence.empty()) {
             break;
         }
