@@ -5,6 +5,7 @@
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
+#include "../MorphemeConcatenator/MorphemeConcatenatorClass.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
 #include "../Utility/StringUtil.h"
@@ -194,6 +195,11 @@ vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguat
     return morphemeDisambiguator.tag(input);
 }
 
+vector<vector<string>> concatenate(const MorphemeConcatenator::MorphemeConcatenatorClass &morphemeConcatenator,
+                                const vector<vector<string>> &input) {
+    return morphemeConcatenator.concatenate(input);
+}
+
 JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmenterDicts,
                                    const string &segmenterModel,
                                    const unordered_set<string> &taggerDicts,
@@ -213,24 +219,18 @@ JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmen
     taggerProcessor->readModel(taggerModel);
     morphemeDisambiguator = make_shared<MorphemeDisambiguator::MorphemeDisambiguatorClass>(morphOptions);
     morphemeDisambiguator->readModel(morphModel);
+    morphemeConcatenator = make_shared<MorphemeConcatenator::MorphemeConcatenatorClass>(concatDicts);
 }
 
 vector<vector<string>> JapaneseAnalyzerClass::analyze(const string &line) {
-    vector<vector<string>> ret;
     if (line.empty()) {
-        return ret;
+        return vector<vector<string>>();
     }
     auto segmented = segment(*segmenterConverter.get(), *segmenterProcessor.get(), line);
     auto tagged = tag(*taggerConverter.get(), *taggerProcessor.get(), segmented);
     auto morphTagged = morphTag(*morphemeDisambiguator.get(), tagged);
-    for (const auto &v : morphTagged) {
-        vector<string> v2(v.size() + 1);
-        auto r = Utility::rsplit2(v[0], '/');
-        copy(r.begin(), r.end(), v2.begin());
-        copy(v.begin() + 1, v.end(), v2.begin() + 2);
-        ret.emplace_back(v2);
-    }
-    return ret;
+    auto concatenated = concatenate(*morphemeConcatenator.get(), morphTagged);
+    return concatenated;
 }
 
 }  // namespace JapaneseAnalyzer

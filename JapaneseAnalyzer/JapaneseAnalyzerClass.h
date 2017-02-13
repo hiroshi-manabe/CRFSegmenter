@@ -18,6 +18,10 @@ namespace MorphemeDisambiguator {
 class MorphemeDisambiguatorClass;
 }
 
+namespace MorphemeConcatenator {
+class MorphemeConcatenatorClass;
+}
+
 namespace JapaneseAnalyzer {
 
 class JapaneseAnalyzerClass {
@@ -36,6 +40,7 @@ private:
     std::shared_ptr<DataConverter::DataConverterInterface> taggerConverter;
     std::shared_ptr<HighOrderCRF::HighOrderCRFProcessor> taggerProcessor;
     std::shared_ptr<MorphemeDisambiguator::MorphemeDisambiguatorClass> morphemeDisambiguator;
+    std::shared_ptr<MorphemeConcatenator::MorphemeConcatenatorClass> morphemeConcatenator;
 };
 
 }  // namespace JapaneseAnalyzer

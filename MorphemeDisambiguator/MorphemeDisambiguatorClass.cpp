@@ -271,7 +271,8 @@ vector<vector<string>> MorphemeDisambiguatorClass::tag(vector<string> sentence) 
     assert(sentence.size() == dictResultListList.size() &&
            sentence.size() == commonAttributeSetList.size());
     for (size_t i = 0; i < sentence.size(); ++i) {
-        vector<string> result = { sentence[i] };
+        auto wordAndLabel = Utility::rsplit2(sentence[i], '/');
+        vector<string> result(wordAndLabel);
         if (dictResultListList[i].size() != 0) {
             size_t j = inferCorrectResult(dictResultListList[i], commonAttributeSetList[i], *maxEntProcessor);
             auto &inferredResult = (dictResultListList[i])[j];
