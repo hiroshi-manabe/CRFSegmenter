@@ -37,7 +37,7 @@ using std::vector;
 
 namespace JapaneseAnalyzer {
 
-enum optionIndex { UNKNOWN, HELP, THREADS, SEGMENTER_DICT, TAGGER_DICT, MORPH_DICT, SEGMENTER_MODEL, TAGGER_MODEL, MORPH_MODEL };
+enum optionIndex { UNKNOWN, HELP, THREADS, SEGMENTER_DICT, TAGGER_DICT, MORPH_DICT, CONCAT_DICT, SEGMENTER_MODEL, TAGGER_MODEL, MORPH_MODEL };
 
 struct Arg : public option::Arg
 {
@@ -59,6 +59,7 @@ const option::Descriptor usage[] =
     { SEGMENTER_DICT, 0, "", "segmenter-dict", Arg::Required, "  --segmenter-dict  <file>\tDesignates the segmenter dictionary file." },
     { TAGGER_DICT, 0, "", "tagger-dict", Arg::Required, "  --tagger-dict  <file>\tDesignates the tagger dictionary file." },
     { MORPH_DICT, 0, "", "morph-dict", Arg::Required, "  --morph-dict  <file>\tDesignates the morpheme disambiguator dictionary file." },
+    { CONCAT_DICT, 0, "", "concat-dict", Arg::Required, "  --concat-dict  <file>\tDesignates the morpheme concatinator dictionary file." },
     { SEGMENTER_MODEL, 0, "", "segmenter-model", Arg::Required, "  --segmenter-model  <file>\tDesignates the segmenter model file." },
     { TAGGER_MODEL, 0, "", "tagger-model", Arg::Required, "  --tagger-model  <file>\tDesignates the tagger model file." },
     { MORPH_MODEL, 0, "", "morph-model", Arg::Required, "  --morph-model  <file>\tDesignates the morpheme disambiguator model file." },
@@ -114,6 +115,10 @@ int mainProc(int argc, char **argv) {
         cerr << "Morpheme disambiguator dictionary files not designated." << endl;
         exit(1);
     }
+    if (!options[CONCAT_DICT]) {
+        cerr << "Morpheme concatenator dictionary files not designated." << endl;
+        exit(1);
+    }
     if (!options[SEGMENTER_MODEL]) {
         cerr << "Segmenter model file not designated." << endl;
         exit(1);
@@ -130,6 +135,7 @@ int mainProc(int argc, char **argv) {
     unordered_set<string> segmenterDicts;
     unordered_set<string> taggerDicts;
     unordered_set<string> morphDicts;
+    unordered_set<string> concatDicts;
     for (option::Option* opt = options[SEGMENTER_DICT]; opt; opt = opt->next()) {
         segmenterDicts.insert(opt->arg);
     }
@@ -139,13 +145,17 @@ int mainProc(int argc, char **argv) {
     for (option::Option* opt = options[MORPH_DICT]; opt; opt = opt->next()) {
         morphDicts.insert(opt->arg);
     }
+    for (option::Option* opt = options[CONCAT_DICT]; opt; opt = opt->next()) {
+        concatDicts.insert(opt->arg);
+    }
 
     JapaneseAnalyzer analyzer(segmenterDicts,
                               options[SEGMENTER_MODEL].arg,
                               taggerDicts,
                               options[TAGGER_MODEL].arg,
                               morphDicts,
-                              options[MORPH_MODEL].arg);
+                              options[MORPH_MODEL].arg,
+                              concatDicts);
 
     hwm::task_queue tq(numThreads);
     queue<future<vector<vector<string>>>> futureQueue;

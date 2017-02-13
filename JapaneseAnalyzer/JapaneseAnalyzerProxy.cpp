@@ -19,16 +19,19 @@ JapaneseAnalyzerProxy::JapaneseAnalyzerProxy(const set<string> &segmenterDicts,
                                              const set<string> &taggerDicts,
                                              const string &taggerModel,
                                              const set<string> &morphDicts,
-                                             const string &morphModel) {
+                                             const string &morphModel,
+                                             const set<string> &concatDicts) {
     unordered_set<string> sd(segmenterDicts.begin(), segmenterDicts.end());
     unordered_set<string> td(taggerDicts.begin(), taggerDicts.end());
     unordered_set<string> md(morphDicts.begin(), morphDicts.end());
+    unordered_set<string> cd(concatDicts.begin(), concatDicts.end());
     analyzer = new JapaneseAnalyzer(sd,
                                     segmenterModel,
                                     td,
                                     taggerModel,
                                     md,
-                                    morphModel);
+                                    morphModel,
+                                    cd);
 }
 
 JapaneseAnalyzerProxy::~JapaneseAnalyzerProxy() {

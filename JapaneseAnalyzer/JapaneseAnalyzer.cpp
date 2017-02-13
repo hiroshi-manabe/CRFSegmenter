@@ -199,7 +199,9 @@ JapaneseAnalyzer::JapaneseAnalyzer(const unordered_set<string> &segmenterDicts,
                                    const unordered_set<string> &taggerDicts,
                                    const string &taggerModel,
                                    const unordered_set<string> &morphDicts,
-                                   const string &morphModel) {
+                                   const string &morphModel,
+                                   const unordered_set<string> &concatDicts) {
+    
     unordered_map<string, string> segmenterOptions{};
     unordered_map<string, string> taggerOptions{};
     MorphemeDisambiguator::MorphemeDisambiguatorOptions morphOptions{ 2, 1, 1, { 0, 3 }, morphDicts };
