@@ -33,7 +33,7 @@ public:
                           const std::unordered_set<std::string> &morphDicts,
                           const std::string &morphModel,
                           const std::unordered_set<std::string> &concatDicts);
-    std::vector<std::vector<std::string>> analyze(const std::string &line);
+    std::vector<std::vector<std::string>> analyze(const std::string &line) const;
 private:
     std::shared_ptr<DataConverter::DataConverterInterface> segmenterConverter;
     std::shared_ptr<HighOrderCRF::HighOrderCRFProcessor> segmenterProcessor;

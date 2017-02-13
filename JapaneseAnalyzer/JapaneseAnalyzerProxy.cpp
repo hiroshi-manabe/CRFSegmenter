@@ -38,7 +38,7 @@ JapaneseAnalyzerProxy::~JapaneseAnalyzerProxy() {
     delete analyzer;
 }
 
-vector<vector<string>> JapaneseAnalyzerProxy::analyze(const string &line) {
+vector<vector<string>> JapaneseAnalyzerProxy::analyze(const string &line) const {
     return analyzer->analyze(line);
 }
 

@@ -222,7 +222,7 @@ JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmen
     morphemeConcatenator = make_shared<MorphemeConcatenator::MorphemeConcatenatorClass>(concatDicts);
 }
 
-vector<vector<string>> JapaneseAnalyzerClass::analyze(const string &line) {
+vector<vector<string>> JapaneseAnalyzerClass::analyze(const string &line) const {
     if (line.empty()) {
         return vector<vector<string>>();
     }

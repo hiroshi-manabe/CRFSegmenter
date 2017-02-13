@@ -18,7 +18,7 @@ public:
                           const std::set<std::string> &morphDicts,
                           const std::string &morphModel,
                           const std::set<std::string> &concatDicst);
-    std::vector<std::vector<std::string> > analyze(const std::string &line);
+    std::vector<std::vector<std::string> > analyze(const std::string &line) const;
     ~JapaneseAnalyzerProxy();
 private:
     JapaneseAnalyzerClass *analyzer;
