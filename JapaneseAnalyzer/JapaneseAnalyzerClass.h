@@ -1,3 +1,6 @@
+#ifndef HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_CLASS_H_
+#define HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_CLASS_H_
+
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -17,15 +20,15 @@ class MorphemeDisambiguatorClass;
 
 namespace JapaneseAnalyzer {
 
-class JapaneseAnalyzer {
+class JapaneseAnalyzerClass {
 public:
-    JapaneseAnalyzer(const std::unordered_set<std::string> &segmenterDicts,
-                     const std::string &segmenterModel,
-                     const std::unordered_set<std::string> &taggerDicts,
-                     const std::string &taggerModel,
-                     const std::unordered_set<std::string> &morphDicts,
-                     const std::string &morphModel,
-                     const std::unordered_set<std::string> &concatDicts);
+    JapaneseAnalyzerClass(const std::unordered_set<std::string> &segmenterDicts,
+                          const std::string &segmenterModel,
+                          const std::unordered_set<std::string> &taggerDicts,
+                          const std::string &taggerModel,
+                          const std::unordered_set<std::string> &morphDicts,
+                          const std::string &morphModel,
+                          const std::unordered_set<std::string> &concatDicts);
     std::vector<std::vector<std::string>> analyze(const std::string &line);
 private:
     std::shared_ptr<DataConverter::DataConverterInterface> segmenterConverter;
@@ -36,3 +39,5 @@ private:
 };
 
 }  // namespace JapaneseAnalyzer
+
+#endif  // HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_CLASS_H_

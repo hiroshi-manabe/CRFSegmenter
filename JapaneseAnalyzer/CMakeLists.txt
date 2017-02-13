@@ -1,13 +1,13 @@
 add_library(
     JapaneseAnalyzer
     SHARED
-    JapaneseAnalyzer.cpp
+    JapaneseAnalyzerClass.cpp
     JapaneseAnalyzerProxy.cpp
 )
 
 add_library(
     JapaneseAnalyzerLib
-    JapaneseAnalyzer.cpp
+    JapaneseAnalyzerClass.cpp
 )
 
 add_executable(

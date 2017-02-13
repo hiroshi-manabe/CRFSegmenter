@@ -1,10 +1,13 @@
+#ifndef HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_PROXY_H_
+#define HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_PROXY_H_
+
 #include <string>
 #include <set>
 #include <vector>
 
 namespace JapaneseAnalyzer {
 
-class JapaneseAnalyzer;
+class JapaneseAnalyzerClass;
 
 class JapaneseAnalyzerProxy {
 public:
@@ -18,7 +21,9 @@ public:
     std::vector<std::vector<std::string> > analyze(const std::string &line);
     ~JapaneseAnalyzerProxy();
 private:
-    JapaneseAnalyzer *analyzer;
+    JapaneseAnalyzerClass *analyzer;
 };
 
 }  // namespace JapaneseAnalyzer
+
+#endif  // HOCRF_JAPANESE_ANALYZER_JAPANESE_ANALYZER_PROXY_H_

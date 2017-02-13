@@ -1,4 +1,4 @@
-#include "JapaneseAnalyzer.h"
+#include "JapaneseAnalyzerClass.h"
 
 #include "../DataConverter/SegmenterDataConverter.h"
 #include "../DataConverter/TaggerDataConverter.h"
@@ -194,7 +194,7 @@ vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguat
     return morphemeDisambiguator.tag(input);
 }
 
-JapaneseAnalyzer::JapaneseAnalyzer(const unordered_set<string> &segmenterDicts,
+JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmenterDicts,
                                    const string &segmenterModel,
                                    const unordered_set<string> &taggerDicts,
                                    const string &taggerModel,
@@ -215,7 +215,7 @@ JapaneseAnalyzer::JapaneseAnalyzer(const unordered_set<string> &segmenterDicts,
     morphemeDisambiguator->readModel(morphModel);
 }
 
-vector<vector<string>> JapaneseAnalyzer::analyze(const string &line) {
+vector<vector<string>> JapaneseAnalyzerClass::analyze(const string &line) {
     vector<vector<string>> ret;
     if (line.empty()) {
         return ret;

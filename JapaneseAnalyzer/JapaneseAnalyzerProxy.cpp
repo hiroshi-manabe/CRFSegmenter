@@ -1,6 +1,6 @@
 #include "JapaneseAnalyzerProxy.h"
 
-#include "JapaneseAnalyzer.h"
+#include "JapaneseAnalyzerClass.h"
 
 #include <string>
 #include <set>
@@ -25,13 +25,13 @@ JapaneseAnalyzerProxy::JapaneseAnalyzerProxy(const set<string> &segmenterDicts,
     unordered_set<string> td(taggerDicts.begin(), taggerDicts.end());
     unordered_set<string> md(morphDicts.begin(), morphDicts.end());
     unordered_set<string> cd(concatDicts.begin(), concatDicts.end());
-    analyzer = new JapaneseAnalyzer(sd,
-                                    segmenterModel,
-                                    td,
-                                    taggerModel,
-                                    md,
-                                    morphModel,
-                                    cd);
+    analyzer = new JapaneseAnalyzerClass(sd,
+                                         segmenterModel,
+                                         td,
+                                         taggerModel,
+                                         md,
+                                         morphModel,
+                                         cd);
 }
 
 JapaneseAnalyzerProxy::~JapaneseAnalyzerProxy() {

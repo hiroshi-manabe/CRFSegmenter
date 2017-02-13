@@ -19,7 +19,7 @@
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
 #include "../Utility/StringUtil.h"
-#include "JapaneseAnalyzer.h"
+#include "JapaneseAnalyzerClass.h"
 
 using std::endl;
 using std::cin;
@@ -149,13 +149,13 @@ int mainProc(int argc, char **argv) {
         concatDicts.insert(opt->arg);
     }
 
-    JapaneseAnalyzer analyzer(segmenterDicts,
-                              options[SEGMENTER_MODEL].arg,
-                              taggerDicts,
-                              options[TAGGER_MODEL].arg,
-                              morphDicts,
-                              options[MORPH_MODEL].arg,
-                              concatDicts);
+    JapaneseAnalyzerClass analyzer(segmenterDicts,
+                                   options[SEGMENTER_MODEL].arg,
+                                   taggerDicts,
+                                   options[TAGGER_MODEL].arg,
+                                   morphDicts,
+                                   options[MORPH_MODEL].arg,
+                                   concatDicts);
 
     hwm::task_queue tq(numThreads);
     queue<future<vector<vector<string>>>> futureQueue;
@@ -167,7 +167,7 @@ int mainProc(int argc, char **argv) {
         getline(cin, line);
         if (cin) {
             string trimmed = regex_replace(line, reNewLine, "");
-            future<vector<vector<string>>> f = tq.enqueue(&JapaneseAnalyzer::analyze, &analyzer, line);
+            future<vector<vector<string>>> f = tq.enqueue(&JapaneseAnalyzerClass::analyze, &analyzer, line);
             futureQueue.push(move(f));
         }
         if (numThreads == 1 && !futureQueue.empty()) {
