@@ -219,18 +219,26 @@ JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmen
     taggerProcessor->readModel(taggerModel);
     morphemeDisambiguator = make_shared<MorphemeDisambiguator::MorphemeDisambiguatorClass>(morphOptions);
     morphemeDisambiguator->readModel(morphModel);
-    morphemeConcatenator = make_shared<MorphemeConcatenator::MorphemeConcatenatorClass>(concatDicts);
+    if (!concatDicts.empty()) {
+        morphemeConcatenator = make_shared<MorphemeConcatenator::MorphemeConcatenatorClass>(concatDicts);
+    }
 }
 
 vector<vector<string>> JapaneseAnalyzerClass::analyze(const string &line) const {
+    vector<vector<string>> ret;
     if (line.empty()) {
-        return vector<vector<string>>();
+        return ret;
     }
     auto segmented = segment(*segmenterConverter.get(), *segmenterProcessor.get(), line);
     auto tagged = tag(*taggerConverter.get(), *taggerProcessor.get(), segmented);
     auto morphTagged = morphTag(*morphemeDisambiguator.get(), tagged);
-    auto concatenated = concatenate(*morphemeConcatenator.get(), morphTagged);
-    return concatenated;
+    if (morphemeConcatenator.get()) {
+        ret = concatenate(*morphemeConcatenator.get(), morphTagged);
+    }
+    else {
+        ret = move(morphTagged);
+    }
+    return ret;
 }
 
 }  // namespace JapaneseAnalyzer

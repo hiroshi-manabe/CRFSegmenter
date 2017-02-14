@@ -56,10 +56,10 @@ const option::Descriptor usage[] =
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { THREADS, 0, "", "threads", Arg::Required, "  --threads  <number>\tDesignates the number of threads to run concurrently." },
-    { SEGMENTER_DICT, 0, "", "segmenter-dict", Arg::Required, "  --segmenter-dict  <file>\tDesignates the segmenter dictionary file." },
-    { TAGGER_DICT, 0, "", "tagger-dict", Arg::Required, "  --tagger-dict  <file>\tDesignates the tagger dictionary file." },
-    { MORPH_DICT, 0, "", "morph-dict", Arg::Required, "  --morph-dict  <file>\tDesignates the morpheme disambiguator dictionary file." },
-    { CONCAT_DICT, 0, "", "concat-dict", Arg::Required, "  --concat-dict  <file>\tDesignates the morpheme concatinator dictionary file." },
+    { SEGMENTER_DICT, 0, "", "segmenter-dict", Arg::Required, "  --segmenter-dict  <file>\tDesignates the segmenter dictionary file (optional)." },
+    { TAGGER_DICT, 0, "", "tagger-dict", Arg::Required, "  --tagger-dict  <file>\tDesignates the tagger dictionary file (optional)." },
+    { MORPH_DICT, 0, "", "morph-dict", Arg::Required, "  --morph-dict  <file>\tDesignates the morpheme disambiguator dictionary file (optional)." },
+    { CONCAT_DICT, 0, "", "concat-dict", Arg::Required, "  --concat-dict  <file>\tDesignates the morpheme concatinator dictionary file (optional)." },
     { SEGMENTER_MODEL, 0, "", "segmenter-model", Arg::Required, "  --segmenter-model  <file>\tDesignates the segmenter model file." },
     { TAGGER_MODEL, 0, "", "tagger-model", Arg::Required, "  --tagger-model  <file>\tDesignates the tagger model file." },
     { MORPH_MODEL, 0, "", "morph-model", Arg::Required, "  --morph-model  <file>\tDesignates the morpheme disambiguator model file." },
@@ -103,22 +103,6 @@ int mainProc(int argc, char **argv) {
         numThreads = num;
     }
 
-    if (!options[SEGMENTER_DICT]) {
-        cerr << "Segmenter dictionary files not designated." << endl;
-        exit(1);
-    }
-    if (!options[TAGGER_DICT]) {
-        cerr << "Tagger dictionary files not designated." << endl;
-        exit(1);
-    }
-    if (!options[MORPH_DICT]) {
-        cerr << "Morpheme disambiguator dictionary files not designated." << endl;
-        exit(1);
-    }
-    if (!options[CONCAT_DICT]) {
-        cerr << "Morpheme concatenator dictionary files not designated." << endl;
-        exit(1);
-    }
     if (!options[SEGMENTER_MODEL]) {
         cerr << "Segmenter model file not designated." << endl;
         exit(1);
