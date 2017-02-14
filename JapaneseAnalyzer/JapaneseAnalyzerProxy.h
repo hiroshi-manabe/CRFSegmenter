@@ -17,7 +17,7 @@ public:
                           const std::string &taggerModel,
                           const std::set<std::string> &morphDicts,
                           const std::string &morphModel,
-                          const std::set<std::string> &concatDicst);
+                          const std::set<std::string> &concatDicts);
     std::vector<std::vector<std::string> > analyze(const std::string &line) const;
     ~JapaneseAnalyzerProxy();
 private:
