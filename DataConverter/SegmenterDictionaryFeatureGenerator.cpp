@@ -15,6 +15,7 @@
 namespace DataConverter {
 
 using std::make_shared;
+using std::move;
 using std::string;
 using std::unordered_set;
 using std::vector;

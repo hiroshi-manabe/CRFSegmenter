@@ -21,9 +21,9 @@
 #include <unordered_set>
 #include <vector>
 
-using std::copy;
 using std::for_each;
 using std::make_shared;
+using std::move;
 using std::regex;
 using std::sregex_token_iterator;
 using std::string;

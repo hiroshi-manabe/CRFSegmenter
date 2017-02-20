@@ -33,7 +33,6 @@ using std::ostream;
 using std::ostringstream;
 using std::pair;
 using std::string;
-using std::stringstream;
 using std::unordered_map;
 using std::vector;
 
@@ -51,7 +50,7 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
         decode(p, filesize);
     }
     
-    istringstream iss(s);
+    istringstream iss(s, std::ios::binary);
     
     uint32_t dummy;
     iss.read((char *)&dummy, sizeof(dummy));
@@ -133,7 +132,7 @@ void SingleDictionary::build(istream &is, ostream &os, function<void(char *, siz
         }
     }
 
-    ostringstream oss;
+    ostringstream oss(std::ios::binary);
     uint32_t dummy = 0;
     oss.write((char *)&dummy, sizeof(dummy));
     oss.write((char *)&fieldCount, sizeof(fieldCount));

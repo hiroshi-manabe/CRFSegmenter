@@ -12,7 +12,6 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <istream>
 #include <iterator>
 #include <ostream>
 #include <set>
@@ -29,12 +28,8 @@ using MaxEnt::MaxEntProcessor;
 using MaxEnt::Observation;
 
 using std::back_inserter;
-using std::cerr;
-using std::endl;
 using std::equal;
-using std::getline;
 using std::ifstream;
-using std::istream;
 using std::make_shared;
 using std::move;
 using std::set;

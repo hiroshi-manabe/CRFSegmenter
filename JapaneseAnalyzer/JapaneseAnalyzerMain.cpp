@@ -4,7 +4,6 @@
 #include <queue>
 #include <regex>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -31,7 +30,6 @@ using std::move;
 using std::queue;
 using std::regex;
 using std::string;
-using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
