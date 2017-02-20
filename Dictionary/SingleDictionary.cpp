@@ -132,7 +132,7 @@ void SingleDictionary::build(istream &is, ostream &os, function<void(char *, siz
     }
 
     ostringstream oss;
-    uint32_t dummy;
+    uint32_t dummy = 0;
     oss.write((char *)&dummy, sizeof(dummy));
     oss.write((char *)&fieldCount, sizeof(fieldCount));
     oss << entryTrie;
