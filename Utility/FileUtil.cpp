@@ -1,5 +1,6 @@
 #include "FileUtil.h"
 
+#include <iostream>
 #include <istream>
 #include <memory>
 #include <string>
@@ -9,6 +10,7 @@
 using std::getline;
 using std::istream;
 using std::move;
+using std::streampos;
 using std::string;
 using std::vector;
 
@@ -28,6 +30,13 @@ vector<string> readSequence(istream &is) {
     if (!isOK) {
         ret.clear();
     }
+    return ret;
+}
+
+streampos getSize(istream &is) {
+    is.seekg(0, std::ios::end);
+    streampos ret = is.tellg();
+    is.seekg(0, std::ios::beg);
     return ret;
 }
 

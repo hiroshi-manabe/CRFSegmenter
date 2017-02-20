@@ -50,11 +50,11 @@ vector<vector<vector<string>>> lookupSentence(const vector<string> &sentence, co
         auto result = dictionary.lookup(str);
         vector<vector<string>> ll;
         ll.reserve(result.size());
-        for (const auto &entry : result) {
+        for (auto &entry : result) {
             vector<string> l;
             l.reserve(entry.size());
-            for (const auto &element : entry) {
-                l.emplace_back(*element);
+            for (auto &element : entry) {
+                l.emplace_back(move(element));
             }
             ll.emplace_back(move(l));
         }

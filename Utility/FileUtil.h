@@ -8,6 +8,7 @@
 namespace Utility {
 
 std::vector<std::string> readSequence(std::istream &is);
+std::streampos getSize(std::istream &is);
 
 }  // namespace Utility
 

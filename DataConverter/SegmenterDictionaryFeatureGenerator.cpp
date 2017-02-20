@@ -58,13 +58,13 @@ vector<vector<FeatureTemplate>> SegmenterDictionaryFeatureGenerator::generateFea
         // Looks up the words
         auto results = dictionary->commonPrefixSearch(
             string(sentence.c_str() + startUtf8Pos, sentence.length() - startUtf8Pos));
-        for (const auto &p : results) {
-            const auto &charLength = p.first;
-            const auto &featureListList = p.second;
-            unordered_set<const string *> featureSet;
-            for (const auto &featureList : featureListList) {
-                for (const auto &feature : featureList) {
-                    featureSet.insert(feature);
+        for (auto &p : results) {
+            auto charLength = p.first;
+            auto &featureListList = p.second;
+            unordered_set<string> featureSet;
+            for (auto &featureList : featureListList) {
+                for (auto &feature : featureList) {
+                    featureSet.emplace(move(feature));
                 }
             }
                 
@@ -93,9 +93,9 @@ vector<vector<FeatureTemplate>> SegmenterDictionaryFeatureGenerator::generateFea
             // Feature template for the left position
             auto &leftTemplateList = featureTemplateListList[i];
             for (const auto &featureStr : featureSet) {
-                leftTemplateList.emplace_back(string("Rw-") + *featureStr, 1);
+                leftTemplateList.emplace_back(string("Rw-") + featureStr, 1);
                 if (hasLeftSpace || hasRightSpace) {
-                    leftTemplateList.emplace_back(string("Rw") + spaceStr + *featureStr, 1);
+                    leftTemplateList.emplace_back(string("Rw") + spaceStr + featureStr, 1);
                 }
             }
 
@@ -105,11 +105,11 @@ vector<vector<FeatureTemplate>> SegmenterDictionaryFeatureGenerator::generateFea
             // Feature templates for the right position
             auto &rightTemplateList = featureTemplateListList[endCharPos];
             for (const auto &featureStr : featureSet) {
-                rightTemplateList.emplace_back(string("Lw-") + *featureStr, 1);
-                rightTemplateList.emplace_back(string("LW-") + *featureStr, labelLength);
+                rightTemplateList.emplace_back(string("Lw-") + featureStr, 1);
+                rightTemplateList.emplace_back(string("LW-") + featureStr, labelLength);
                 if (hasLeftSpace || hasRightSpace) {
-                    rightTemplateList.emplace_back(string("Lw") + spaceStr + *featureStr, 1);
-                    rightTemplateList.emplace_back(string("LW") + spaceStr + *featureStr, labelLength);
+                    rightTemplateList.emplace_back(string("Lw") + spaceStr + featureStr, 1);
+                    rightTemplateList.emplace_back(string("LW") + spaceStr + featureStr, labelLength);
                 }
             }
         }

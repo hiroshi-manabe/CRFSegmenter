@@ -88,14 +88,14 @@ shared_ptr<HighOrderCRF::DataSequence> TaggerDataConverter::toDataSequence(const
         
         set<string> possibleLabelSet;
         if (dictionary) {
-            vector<vector<const string *>> labelListList = dictionary->lookup(word);
+            auto labelListList = dictionary->lookup(word);
             if (!labelListList.empty()) {
-                for (const auto &labelList : labelListList) {
+                for (auto &labelList : labelListList) {
                     assert(labelList.size() == 1);
-                    possibleLabelSet.insert(*labelList[0]);
+                    possibleLabelSet.emplace(move(labelList[0]));
                 }
                 if (label != "*") {
-                    possibleLabelSet.insert(label);
+                    possibleLabelSet.emplace(label);
                 }
             }
         }

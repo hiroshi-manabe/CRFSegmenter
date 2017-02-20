@@ -33,7 +33,7 @@ vector<vector<FeatureTemplate>> DictionaryFeatureGenerator::generateFeatureTempl
         auto resultListList = dictionary->lookup(observationList[i]);
         for (const auto &resultList : resultListList) {
             assert(resultList.size() == 1);
-            featureTemplateListList[i].emplace_back(string("D-") + *resultList[0], 1);
+            featureTemplateListList[i].emplace_back(string("D-") + resultList[0], 1);
         }
     }
     return featureTemplateListList;

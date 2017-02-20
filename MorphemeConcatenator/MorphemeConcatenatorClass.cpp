@@ -56,8 +56,8 @@ vector<vector<string>> MorphemeConcatenatorClass::concatenate(const vector<vecto
                 vector<string> temp;
                 temp.reserve(firstResult.size() + 1);
                 temp.emplace_back(allSentence.substr(prevPos, result.first));
-                for (const string *p : firstResult) {
-                    temp.emplace_back(*p);  // copied
+                for (auto &p : firstResult) {
+                    temp.emplace_back(move(p));  // copied
                 }
                 nodeMap.insert(make_pair(prevPos, vector<vector<string>>())).first->second.emplace_back(move(temp));
             }
