@@ -71,7 +71,7 @@ void SingleDictionary::build(istream &is, ostream &os, function<void(char *, siz
     marisa::Trie fieldTrie;
     
     string line;
-    size_t fieldCount = 0;
+    uint32_t fieldCount = 0;
     size_t lineNum = 0;
     
     unordered_map<string, vector<vector<string>>> entryToLineListMap;
