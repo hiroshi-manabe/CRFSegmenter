@@ -74,7 +74,7 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    uint32_t code;
+    uint32_t code = 0;
     function<void(char *, size_t)> encode = nullptr;
     if (options[CODE]) {
         code = atoi(options[CODE].arg);
