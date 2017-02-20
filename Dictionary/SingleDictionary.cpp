@@ -53,7 +53,7 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
     
     istringstream iss(s);
     
-    uint32_t dummy = 0;
+    uint32_t dummy;
     iss.read((char *)&dummy, sizeof(dummy));
     iss.read((char *)&numberOfFieldsPerLine, sizeof(numberOfFieldsPerLine));
     iss >> entryTrie;
