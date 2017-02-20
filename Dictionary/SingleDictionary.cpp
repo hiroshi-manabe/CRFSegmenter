@@ -62,7 +62,7 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
     lastLineIndexList.resize(entryTrie.num_keys());
     iss.read((char *)lastLineIndexList.data(), sizeof(lastLineIndexList[0]) * lastLineIndexList.size());
     uint32_t fieldIdCount;
-    iss.read((char *)fieldIdCount, sizeof(fieldIdCount));
+    iss.read((char *)&fieldIdCount, sizeof(fieldIdCount));
     fieldIdList.resize(fieldIdCount);
     iss.read((char *)fieldIdList.data(), sizeof(fieldIdList[0]) * fieldIdList.size());
 }
