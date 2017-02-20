@@ -61,7 +61,9 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
     
     lastLineIndexList.resize(entryTrie.num_keys());
     iss.read((char *)lastLineIndexList.data(), sizeof(lastLineIndexList[0]) * lastLineIndexList.size());
-    fieldIdList.resize(fieldTrie.num_keys());
+    uint32_t fieldIdCount;
+    iss.read((char *)fieldIdCount, sizeof(fieldIdCount));
+    fieldIdList.resize(fieldIdCount);
     iss.read((char *)fieldIdList.data(), sizeof(fieldIdList[0]) * fieldIdList.size());
 }
 
@@ -139,6 +141,8 @@ void SingleDictionary::build(istream &is, ostream &os, function<void(char *, siz
     oss << fieldTrie;
     
     oss.write((char *)lastLineIndexList.data(), sizeof(lastLineIndexList[0]) * lastLineIndexList.size());
+    uint32_t fieldIdCount = fieldIdList.size();
+    oss.write((char *)&fieldIdCount, sizeof(fieldIdCount));
     oss.write((char *)fieldIdList.data(), sizeof(fieldIdList[0]) * fieldIdList.size());
 
     size_t pos = (size_t)oss.tellp();
