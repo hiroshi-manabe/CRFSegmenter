@@ -39,7 +39,7 @@ const option::Descriptor usage[] =
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
     { CODE, 0, "c", "code", Arg::Required, "  -c, --code  <number>\tDesignates the dictionary header code." },
-    { CODE, 0, "o", "out", Arg::Required, "  -o, --out  <filename>\tDesignates the output file." },
+    { OUT, 0, "o", "out", Arg::Required, "  -o, --out  <filename>\tDesignates the output file." },
     { 0, 0, 0, 0, 0, 0 }
 };
 
