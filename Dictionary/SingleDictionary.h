@@ -15,8 +15,8 @@ namespace Dictionary {
 
 class SingleDictionary {
 public:
-    SingleDictionary(const std::string &file, std::function<void(char *, size_t)> decode = nullptr);
-    static void build(std::istream &is, std::ostream &os, std::function<void(char *, size_t)> encode = nullptr);
+    SingleDictionary(const std::string &file, std::function<void(char *, size_t)> decrypt = nullptr);
+    static void build(std::istream &is, std::ostream &os, std::function<void(char *, size_t)> encrypt = nullptr);
     std::vector<std::pair<size_t, std::vector<std::vector<std::string>>>> commonPrefixSearch(const std::string &str) const;
     std::vector<std::vector<std::string>> lookup(const std::string &str) const;
 

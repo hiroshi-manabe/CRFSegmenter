@@ -1,5 +1,5 @@
 #include "../optionparser/optionparser.h"
-#include "../Utility/EncodeUtil.h"
+#include "../Utility/EncryptionUtil.h"
 #include "SingleDictionary.h"
 
 #include <cstdlib>
@@ -43,7 +43,7 @@ const option::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0 }
 };
 
-void encodeWithCode(uint32_t code, char *buf, size_t size) {
+void encryptWithCode(uint32_t code, char *buf, size_t size) {
     // Not implemented
 }
 
@@ -75,10 +75,10 @@ int mainProc(int argc, char **argv) {
     }
 
     uint32_t code = 0;
-    function<void(char *, size_t)> encode = nullptr;
+    function<void(char *, size_t)> encrypt = nullptr;
     if (options[CODE]) {
         code = atoi(options[CODE].arg);
-        encode = bind(&Utility::encode, code, std::placeholders::_1, std::placeholders::_2);
+        encrypt = bind(&Utility::encrypt, code, std::placeholders::_1, std::placeholders::_2);
     }
 
     string outfile;
@@ -96,7 +96,7 @@ int mainProc(int argc, char **argv) {
         cerr << "Cannot open file: " << outfile << endl;
         return 1;
     }
-    SingleDictionary::build(cin, os, encode);
+    SingleDictionary::build(cin, os, encrypt);
     return 0;
 }
 

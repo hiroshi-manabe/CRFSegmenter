@@ -36,7 +36,7 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-SingleDictionary::SingleDictionary(const string &file, function<void(char *, size_t)> decode) {
+SingleDictionary::SingleDictionary(const string &file, function<void(char *, size_t)> decrypt) {
     ifstream ifs(file, std::ios::binary);
     size_t filesize = (size_t)Utility::getSize(ifs);
 
@@ -46,8 +46,8 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
     ifs.read(p, filesize);
     ifs.close();
 
-    if (decode) {
-        decode(p, filesize);
+    if (decrypt) {
+        decrypt(p, filesize);
     }
     
     istringstream iss(s, std::ios::binary);
@@ -66,7 +66,7 @@ SingleDictionary::SingleDictionary(const string &file, function<void(char *, siz
     iss.read((char *)fieldIdList.data(), sizeof(fieldIdList[0]) * fieldIdList.size());
 }
 
-void SingleDictionary::build(istream &is, ostream &os, function<void(char *, size_t)> encode) {
+void SingleDictionary::build(istream &is, ostream &os, function<void(char *, size_t)> encrypt) {
     marisa::Trie entryTrie;
     marisa::Trie fieldTrie;
     
@@ -148,8 +148,8 @@ void SingleDictionary::build(istream &is, ostream &os, function<void(char *, siz
     string s = oss.str();
     char *p = &s[0];
 
-    if (encode) {
-        encode(p, pos);
+    if (encrypt) {
+        encrypt(p, pos);
     }
     
     os.write(&s[0], pos);

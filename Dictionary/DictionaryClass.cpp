@@ -2,6 +2,7 @@
 #include "SingleDictionary.h"
 
 #include "../libmarisa/marisa.h"
+#include "../Utility/EncryptionUtil.h"
 #include "../Utility/StringUtil.h"
 
 #include <iterator>
@@ -21,9 +22,9 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
-DictionaryClass::DictionaryClass(const unordered_set<string> &files, void(*decode)(char *, size_t)) {
+DictionaryClass::DictionaryClass(const unordered_set<string> &files) {
     for (const auto &filename : files) {
-        dictionaryList.emplace_back(make_shared<SingleDictionary>(filename, decode));
+        dictionaryList.emplace_back(make_shared<SingleDictionary>(filename, Utility::decrypt));
     }
 }
 
