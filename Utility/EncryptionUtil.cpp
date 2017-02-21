@@ -32,7 +32,9 @@ void encrypt(uint32_t code, char *buf, size_t size) {
 
 void decrypt(char *buf, size_t size) {
     uint32_t code = *(uint32_t *)buf;
-    encryptDecrypt(code, buf, size);
+    if (code) {
+        encryptDecrypt(code, buf, size);
+    }
 }
 
 }  // namespace Utility
