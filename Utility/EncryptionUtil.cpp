@@ -1,4 +1,4 @@
-#include "EncodeUtil.h"
+#include "EncryptionUtil.h"
 
 #include <cstddef>
 #include <cstring>
@@ -12,7 +12,7 @@ static uint32_t xorshift32(uint32_t y) {
     return y;
 }
 
-void encodeDecode(uint32_t code, char *buf, size_t size) {
+void encryptDecrypt(uint32_t code, char *buf, size_t size) {
     uint32_t *p = (uint32_t *)buf;
     for (size_t i = 0; i < size / 4; ++i) {
         p[i] ^= code;
@@ -26,13 +26,13 @@ void encodeDecode(uint32_t code, char *buf, size_t size) {
     }
 }
 
-void encode(uint32_t code, char *buf, size_t size) {
-    encodeDecode(code, buf, size);
+void encrypt(uint32_t code, char *buf, size_t size) {
+    encryptDecrypt(code, buf, size);
 }
 
-void decode(char *buf, size_t size) {
+void decrypt(char *buf, size_t size) {
     uint32_t code = *(uint32_t *)buf;
-    encodeDecode(code, buf, size);
+    encryptDecrypt(code, buf, size);
 }
 
 }  // namespace Utility
