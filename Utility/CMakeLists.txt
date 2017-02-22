@@ -1,6 +1,6 @@
 add_library(
     Utility
-    EncodeUtil.cpp
+    EncryptionUtil.cpp
     FileUtil.cpp
     StringUtil.cpp
     UnicodeCharacter.cpp

@@ -15,7 +15,7 @@ class SingleDictionary;
 
 class DictionaryClass {
 public:
-    DictionaryClass(const std::unordered_set<std::string> &files, void (*decode)(char *, size_t) = nullptr);
+    DictionaryClass(const std::unordered_set<std::string> &files);
     std::vector<std::pair<size_t, std::vector<std::vector<std::string>>>> commonPrefixSearch(const std::string &str) const;
     std::vector<std::vector<std::string>> lookup(const std::string &str) const;
 
