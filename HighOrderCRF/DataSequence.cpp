@@ -72,7 +72,7 @@ DataSequence::DataSequence(istream &is) {
 void DataSequence::write(ostream &os) const {
     for (size_t i = 0; i < labels.size(); ++i) {
         os << originalStringList[i] << "\t";
-        if (possibleLabelSetList.empty()) {
+        if (possibleLabelSetList[i].empty()) {
             os << "*";
         }
         else {
