@@ -84,7 +84,7 @@ void HighOrderCRFProcessor::train(const string &filename,
     unordered_set<string> labelSet;
     while (true) {
         DataSequence seq(ifs_label);
-        if (seq.empty()) {
+        if (!ifs_label) {
             break;
         }
         auto s = seq.getUsedLabelSet();
@@ -105,7 +105,7 @@ void HighOrderCRFProcessor::train(const string &filename,
     internalDataSequenceList.reserve(count);
     while (true) {
         DataSequence seq(ifs);
-        if (seq.empty()) {
+        if (!ifs) {
             break;
         }
         internalDataSequenceList.emplace_back(seq.toInternalDataSequence(labelMap));
@@ -161,7 +161,7 @@ void HighOrderCRFProcessor::test(const string &filename,
     vector<DataSequence> seqList;
     while (true) {
         DataSequence seq(ifs);
-        if (seq.empty()) {
+        if (!ifs) {
             break;
         }
         seqList.emplace_back(seq);

@@ -233,13 +233,12 @@ void MorphemeDisambiguatorClass::train(const string &trainingFilename,
 
     while (true) {
         vector<string> sequence = Utility::readSequence(ifs);
+        if (!ifs) {
+            break;
+        }
         vector<string> sentence;
         vector<vector<string>> correctResultList;
         splitSentenceAndResult(sequence, &sentence, &correctResultList);
-        
-        if (sentence.empty()) {
-            break;
-        }
         auto dictResultListList = lookupSentence(sentence, *dictionary);
         auto commonAttributeSetList = convertSentenceToCommonAttributeSetList(sentence, dictResultListList, options);
         assert(sentence.size() == dictResultListList.size() &&
@@ -285,12 +284,12 @@ void MorphemeDisambiguatorClass::test(const string &testFilename) const {
     size_t allCount = 0;
     while (true) {
         vector<string> sequence = Utility::readSequence(ifs);
+        if (!ifs) {
+            break;
+        }
         vector<string> sentence;
         vector<vector<string>> correctResultList;
         splitSentenceAndResult(sequence, &sentence, &correctResultList);
-        if (sentence.empty()) {
-            break;
-        }
         auto inferredResultList = tag(sentence);
         assert(inferredResultList.size() == correctResultList.size());
         for (size_t i = 0; i < inferredResultList.size(); ++i) {

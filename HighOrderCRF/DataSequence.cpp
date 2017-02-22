@@ -44,7 +44,6 @@ DataSequence::DataSequence(vector<string> originalStringList,
 
 DataSequence::DataSequence(istream &is) {
     string line;
-    bool isOK = false;
 
     auto seq = Utility::readSequence(is);
     
