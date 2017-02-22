@@ -56,7 +56,7 @@ DataSequence::DataSequence(istream &is) {
         }
         originalStringList.emplace_back(move(fields[0]));
         if (fields[1] != "*") {
-            auto possibleLabelList = Utility::splitString(fields[1], ',');
+            auto possibleLabelList = Utility::splitString(fields[1], ' ');
             set<string> possibleLabelSet(possibleLabelList.begin(),
                                          possibleLabelList.end());
             possibleLabelSetList.emplace_back(move(possibleLabelSet));
@@ -81,7 +81,7 @@ void DataSequence::write(ostream &os) const {
                  it != possibleLabelSetList[i].end();
                  ++it) {
                 if (it != possibleLabelSetList[i].begin()) {
-                    os << ",";
+                    os << " ";
                 }
                 os << *it;
             }
