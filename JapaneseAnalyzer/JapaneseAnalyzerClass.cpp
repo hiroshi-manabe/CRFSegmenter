@@ -173,7 +173,8 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
             ret.emplace_back(str);
             str.clear();
         }
-        str.append(origChars[i].toString());
+        auto s = Utility::splitString(segmenterInput[i])[0];
+        str.append(s, s[0] == ' ' ? 1 : 0, string::npos);
     }
     return ret;
 }
