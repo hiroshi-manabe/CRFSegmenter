@@ -53,7 +53,7 @@ while (<STDIN>) {
     while (s/^([\x20\xa0]?)(.)//) {
         my $sp = $1;
         my $ch = $2;
-        if ($ch eq '\t') {
+        if ($ch eq "\t") {
             $sp = ' ';
             $ch = ' ';
         }
