@@ -54,6 +54,10 @@ while (<STDIN>) {
     while (s/^([\x20\xa0]?)(.)//) {
         my $sp = $1;
         my $ch = $2;
+        if ($ch eq '\t') {
+            $sp = ' ';
+            $ch = ' ';
+        }
         $preprocessed =~ s/^[\x20\xa0]?(.)//;
         my $preprocessed_char = $1;
         

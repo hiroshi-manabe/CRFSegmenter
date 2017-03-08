@@ -127,6 +127,10 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
             ++i;
             ch = input[i];
         }
+        else if (ch.getCodePoint() == '\t') {
+            ch = UnicodeCharacter(0x20);
+            sp = UnicodeCharacter(0x20);
+        }
         
         auto processedCharCode = processedChars[i].getCodePoint();
         hasSpace = (i == 0 || sp.getCodePoint() == 0x20);
