@@ -38,7 +38,6 @@ $preprocess = ($opt_ignore_url || $opt_ignore_numbers || $opt_ignore_latin);
 
 while (<STDIN>) {
     chomp;
-    s/\t/ /g;
     my $is_first = 1;
     my $prev = "";
 
