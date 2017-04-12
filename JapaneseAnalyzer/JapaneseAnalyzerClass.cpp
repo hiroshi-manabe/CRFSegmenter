@@ -127,6 +127,10 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
             ++i;
             ch = input[i];
         }
+        else if (ch.getCodePoint() == '\t') {
+            ch = UnicodeCharacter(0x20);
+            sp = UnicodeCharacter(0x20);
+        }
         
         auto processedCharCode = processedChars[i].getCodePoint();
         hasSpace = (i == 0 || sp.getCodePoint() == 0x20);
@@ -173,7 +177,8 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
             ret.emplace_back(str);
             str.clear();
         }
-        str.append(origChars[i].toString());
+        auto s = Utility::splitString(segmenterInput[i])[0];
+        str.append(s, s[0] == ' ' ? 1 : 0, string::npos);
     }
     return ret;
 }
