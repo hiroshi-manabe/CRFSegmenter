@@ -61,7 +61,7 @@ while (<STDIN>) {
         
         my $correct_label =($is_first or ((not $opt_concat and $sp ne "") or $opt_concat and $sp eq " ")) ? "1" : "0";
         
-        my $possible_labels = "0,1";
+        my $possible_labels = "0 1";
         if ($is_first) {
             $possible_labels = "1";
         }
@@ -82,7 +82,7 @@ while (<STDIN>) {
                 $possible_labels = "1";
             }
             else {
-                $possible_labels = "0,1";
+                $possible_labels = "0 1";
             }
         }
         
