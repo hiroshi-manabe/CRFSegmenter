@@ -37,8 +37,8 @@ vector<string> DictionaryDecoder::decode(const vector<string> &input) const {
     }
     auto decoded = ngramDecoder->decode(words);
     vector<string> ret;
-    for (const auto word : words) {
-        ret.emplace_back(word.ngramString);
+    for (const auto word : decoded) {
+        ret.emplace_back(word->ngramString);
     }
     return ret;
 }
