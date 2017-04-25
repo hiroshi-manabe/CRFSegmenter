@@ -90,7 +90,7 @@ while (<STDIN>) {
         }
         
         my %possible_label_dict = ();
-        @possible_label_dict{split(/,/, $possible_labels)} = ();
+        @possible_label_dict{split(/ /, $possible_labels)} = ();
         if (not exists $possible_label_dict{$correct_label}) {
             if ($preprocess) {
                 $correct_label = (keys %possible_label_dict)[0];
