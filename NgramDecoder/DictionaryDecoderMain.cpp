@@ -103,22 +103,24 @@ int mainProc(int argc, char **argv) {
     DictionaryDecoder decoder(modelFilename, dictionaries);
 
     hwm::task_queue tq(numThreads);
-    queue<future<vector<string>>> futureQueue;
+    queue<future<void>> futureQueue;
 
     while (true) {
         auto seq = Utility::readSequence(cin);
+        vector<string> ret;
+        vector<size_t> lengths;
         bool emptyFlag = seq.empty();
-        future<vector<string>> f = tq.enqueue(&DictionaryDecoder::decode, decoder, seq);
+        future<void> f = tq.enqueue(&DictionaryDecoder::decode_and_return_lengths, decoder, seq, &ret, &lengths);
         futureQueue.push(move(f));
 
         if ((numThreads == 1 || !cin) && !futureQueue.empty()) {
             futureQueue.front().wait();
         }
         while (!futureQueue.empty() && futureQueue.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            auto ret = futureQueue.front().get();
+            futureQueue.front().get();
             futureQueue.pop();
-            for (const auto &str : ret) {
-                cout << str << "\n";
+            for (size_t i = 0; i < ret.size(); ++i) {
+                cout << seq[i] << "\t" << ret[i] << "\n";
             }
             cout << endl;
         }

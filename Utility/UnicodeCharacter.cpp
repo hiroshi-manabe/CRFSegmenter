@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "UnicodeCharacter.h"
 #include "script_data.h"
@@ -8,6 +9,7 @@
 namespace Utility {
 
 using std::string;
+using std::vector;
 
 UnicodeCharacter::UnicodeCharacter() {
     this->codePoint = 0;
@@ -92,6 +94,24 @@ ERROR:
     codePoint = '?';
     *charCount = 1;
     return UnicodeCharacter(codePoint);
+}
+
+vector<UnicodeCharacter> UnicodeCharacter::stringToUnicodeCharacterList(const string &orig) {
+    vector<UnicodeCharacter> ret;
+    for (auto it = orig.begin(); it != orig.end(); ) {
+        size_t charCount;
+        ret.emplace_back(UnicodeCharacter::fromString(it, orig.end() - it, &charCount));
+        it += charCount;
+    }
+    return ret;
+}
+
+string UnicodeCharacter::unicodeCharacterListToString(const vector<UnicodeCharacter> &origChars) {
+    string ret;
+    for (const auto c : origChars) {
+        ret += c.toString();
+    }
+    return ret;
 }
 
 }  // namespace Utility

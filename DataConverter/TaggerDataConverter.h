@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "../Dictionary/DictionaryClass.h"
-#include "CharWithSpace.h"
 #include "DataConverterInterface.h"
 #include "FeatureTemplateGenerator.h"
 

@@ -1,5 +1,6 @@
 add_library(
     Utility
+    CharWithSpace.cpp
     EncryptionUtil.cpp
     FileUtil.cpp
     StringUtil.cpp

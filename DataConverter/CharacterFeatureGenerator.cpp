@@ -6,7 +6,7 @@
 
 #include "CharacterFeatureGenerator.h"
 
-#include "CharWithSpace.h"
+#include "../Utility/CharWithSpace.h"
 
 namespace DataConverter {
 
@@ -18,6 +18,7 @@ using std::stringstream;
 using std::vector;
 
 using HighOrderCRF::FeatureTemplate;
+using Utility::CharWithSpace;
 
 CharacterFeatureGenerator::CharacterFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength) {
     this->maxNgram = maxNgram;

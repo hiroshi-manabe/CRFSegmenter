@@ -22,7 +22,8 @@ DictionaryDecoder::DictionaryDecoder(const string &modelFilename, const unordere
     ngramDecoder = make_shared<NgramDecoderClass>(modelFilename);
 }
 
-vector<string> DictionaryDecoder::decode(const vector<string> &input) const {
+void DictionaryDecoder::decode_and_return_lengths(const vector<string> &input, vector<string> *ret, vector<size_t> *lengths) const {
+    ret->clear();
     vector<Word> words;
     size_t pos = 0;
     for (const auto &str : input) {
@@ -35,11 +36,17 @@ vector<string> DictionaryDecoder::decode(const vector<string> &input) const {
         }
         pos++;
     }
-    auto decoded = ngramDecoder->decode(words);
-    vector<string> ret;
+    vector<const Word *> decoded;
+    ngramDecoder->decode_and_return_lengths(words, &decoded, lengths);
     for (const auto word : decoded) {
-        ret.emplace_back(word->ngramString);
+        ret->emplace_back(word->ngramString);
     }
+}
+
+vector<string> DictionaryDecoder::decode(const vector<string> &input) const {
+    vector<string> ret;
+    vector<size_t> lengths;
+    decode_and_return_lengths(input, &ret, &lengths);
     return ret;
 }
 

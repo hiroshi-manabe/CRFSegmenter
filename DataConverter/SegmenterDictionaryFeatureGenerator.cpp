@@ -1,7 +1,7 @@
 #include "SegmenterDictionaryFeatureGenerator.h"
 
 #include "../Dictionary/DictionaryClass.h"
-#include "CharWithSpace.h"
+#include "../Utility/CharWithSpace.h"
 
 #include <algorithm>
 #include <cassert>
@@ -22,6 +22,7 @@ using std::vector;
 
 using Dictionary::DictionaryClass;
 using HighOrderCRF::FeatureTemplate;
+using Utility::CharWithSpace;
 
 SegmenterDictionaryFeatureGenerator::SegmenterDictionaryFeatureGenerator(const unordered_set<string> &dictionaries, size_t maxLabelLength) {
     dictionary = make_shared<DictionaryClass>(dictionaries);

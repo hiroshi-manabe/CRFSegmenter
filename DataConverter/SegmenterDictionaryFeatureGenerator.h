@@ -9,15 +9,18 @@
 #include <vector>
 
 #include "../Dictionary/DictionaryClass.h"
-#include "CharWithSpace.h"
 #include "FeatureTemplateGenerator.h"
+
+namespace Utility {
+class CharWithSpace;
+}
 
 namespace DataConverter {
 
-class SegmenterDictionaryFeatureGenerator : public FeatureTemplateGenerator<CharWithSpace> {
+class SegmenterDictionaryFeatureGenerator : public FeatureTemplateGenerator<Utility::CharWithSpace> {
 public:
     SegmenterDictionaryFeatureGenerator(const std::unordered_set<std::string> &dictionaries, size_t maxLabelLength);
-    virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<CharWithSpace> &observationList) const;
+    virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<Utility::CharWithSpace> &observationList) const;
 
 private:
     std::shared_ptr<Dictionary::DictionaryClass> dictionary;

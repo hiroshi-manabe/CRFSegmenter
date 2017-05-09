@@ -3,15 +3,18 @@
 
 #include <vector>
 
-#include "CharWithSpace.h"
 #include "FeatureTemplateGenerator.h"
+
+namespace Utility {
+class CharWithSpace;
+}
 
 namespace DataConverter {
 
-class CharWithSpaceFeatureGenerator : public FeatureTemplateGenerator<CharWithSpace> {
+class CharWithSpaceFeatureGenerator : public FeatureTemplateGenerator<Utility::CharWithSpace> {
 public:
     CharWithSpaceFeatureGenerator(size_t maxNgram, size_t maxWindow, size_t maxLabelLength);
-    virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<CharWithSpace> &observationList) const;
+    virtual std::vector<std::vector<HighOrderCRF::FeatureTemplate>> generateFeatureTemplates(const std::vector<Utility::CharWithSpace> &observationList) const;
 
 private:
     size_t maxNgram;

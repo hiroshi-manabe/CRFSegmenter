@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace Utility {
 
@@ -16,6 +17,8 @@ public:
     uint32_t getCodePoint() const;
     std::string getCharacterType() const;
     static UnicodeCharacter fromString(std::string::const_iterator it, size_t len, size_t *charCount);
+    static std::string unicodeCharacterListToString(const std::vector<UnicodeCharacter> &origChars);
+    static std::vector<UnicodeCharacter> stringToUnicodeCharacterList(const std::string &orig);
 private:
     uint32_t codePoint;
 };

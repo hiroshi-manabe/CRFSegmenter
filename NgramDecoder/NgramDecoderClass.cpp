@@ -47,15 +47,16 @@ NgramDecoderClass::NgramDecoderClass(const string &modelFilename) {
 }
 
 struct Node {
-    const lm::ngram::State state;
     const size_t wordSubscript;
     shared_ptr<Node> left;
-    int position;
+    size_t ngram_length;
     float score;
 };
 
-vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const {
-    vector<const Word *> ret;
+void NgramDecoderClass::decode_and_return_lengths(const vector<Word> &words, vector<const Word *> *ret, vector<size_t> *lengths) const {
+    ret->clear();
+    lengths->clear();
+    
     const lm::ngram::Vocabulary &vocab = model->GetVocabulary();
     unordered_map<size_t, unordered_set<pair<size_t, lm::WordIndex>>> wordsByPositionMap;
     unordered_map<size_t, unordered_map<lm::WordIndex, const Word *>> wordIndexToWordMap;
@@ -69,7 +70,7 @@ vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const 
     wordsByPositionMap[maxPosition].emplace(make_pair(words.size(), vocab.EndSentence()));
     vector<unordered_map<lm::ngram::State, shared_ptr<Node>>> lattice(maxPosition + 2);
     lm::ngram::State beginState = model->BeginSentenceState();
-    lattice[0].emplace(beginState, make_shared<Node>(Node{ beginState, words.size(), nullptr, -1, 0.0 }));
+    lattice[0].emplace(beginState, make_shared<Node>(Node{ words.size(), nullptr, 0, 0.0 }));
     for (int position = 0; position <= maxPosition; ++position) {
         for (auto entry : lattice.at(position)) {
             auto &curState = entry.first;
@@ -79,20 +80,21 @@ vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const 
                 size_t length = wordSubscript == words.size() ? 1 : words[wordSubscript].length;
                 auto wordIndex = pair.second;
                 lm::ngram::State newState;
-                float score = model->Score(curState, wordIndex, newState);
+                lm::FullScoreReturn ret = model->FullScore(curState, wordIndex, newState);
+                float score = ret.prob;
                 float newScore = curNode->score + score;
                 
                 auto &rightMap = lattice[position + length];
                 auto it = rightMap.find(newState);
                 if (it == rightMap.end() || newScore > it->second->score) {
-                    rightMap[newState] = make_shared<Node>(Node { newState, wordSubscript, entry.second, position, newScore });
+                    rightMap[newState] = make_shared<Node>(Node { wordSubscript, entry.second, ret.ngram_length, newScore });
                 }
             }
         }
     }
 
     if (lattice[maxPosition + 1].size() == 0) {
-        return ret;
+        return;
     }
 
     float bestScore = 0.0;
@@ -108,10 +110,18 @@ vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const 
     bestNode = bestNode->left;
 
     while (bestNode->left) {
-        ret.insert(ret.begin(), &words[bestNode->wordSubscript]);
+        ret->insert(ret->begin(), &words[bestNode->wordSubscript]);
+        lengths->insert(lengths->begin(), bestNode->ngram_length);
         bestNode = bestNode->left;
     }
     
+    return;
+}
+
+vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const {
+    vector<const Word *> ret;
+    vector<size_t> orders;
+    decode_and_return_lengths(words, &ret, &orders);
     return ret;
 }
 

@@ -36,24 +36,6 @@ using Utility::UnicodeCharacter;
 
 namespace JapaneseAnalyzer {
 
-vector<UnicodeCharacter> toUnicodeCharacterList(const string &orig) {
-    vector<UnicodeCharacter> ret;
-    for (auto it = orig.begin(); it != orig.end(); ) {
-        size_t charCount;
-        ret.emplace_back(UnicodeCharacter::fromString(it, orig.end() - it, &charCount));
-        it += charCount;
-    }
-    return ret;
-}
-
-string toString(const vector<UnicodeCharacter> &origChars) {
-    string ret;
-    for (const auto c : origChars) {
-        ret += c.toString();
-    }
-    return ret;
-}
-
 vector<UnicodeCharacter> toHankaku(const vector<UnicodeCharacter> &origChars) {
     vector<UnicodeCharacter> ret(origChars.size());
     transform(origChars.begin(),
@@ -104,12 +86,12 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
     static const regex regexLatin(R"([A-Za-z]+)");
 
-    string processed = toString(toHankaku(input));
+    string processed = UnicodeCharacter::unicodeCharacterListToString(toHankaku(input));
     processed = replaceWithNonChar(processed, regexUrl);
     processed = replaceWithNonChar(processed, regexEmail);
     processed = replaceWithNonChar(processed, regexNumber);
     processed = replaceWithNonChar(processed, regexLatin);
-    auto processedChars = toUnicodeCharacterList(processed);
+    auto processedChars = UnicodeCharacter::stringToUnicodeCharacterList(processed);
     assert(input.size() == processedChars.size());
 
     vector<string> ret;
@@ -117,7 +99,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     
     for (size_t i = 0; i < input.size(); ++i) {
         bool hasSpace;
-        string possibleLabelStr("0,1");
+        string possibleLabelStr("0 1");
         
         auto ch = input[i];
         auto sp = UnicodeCharacter(0);
@@ -147,9 +129,6 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
                      isNonCharCode(processedCharCode)) {
                 possibleLabelStr = "1";
             }
-            else {
-                possibleLabelStr = "0,1";
-            }
         }
         prevProcessedCharCode = processedCharCode;
         ret.emplace_back(string(hasSpace ? " " : "") +
@@ -165,7 +144,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
 vector<string> segment(const DataConverter::DataConverterInterface &segmenterConverter,
                        const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
                        const string &line) {
-    auto origChars = toUnicodeCharacterList(line);
+    auto origChars = UnicodeCharacter::stringToUnicodeCharacterList(line);
     origChars.emplace_back(0x3002);  // '。'
     auto segmenterInput = toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
@@ -201,17 +180,17 @@ vector<vector<string>> morphTag(const MorphemeDisambiguator::MorphemeDisambiguat
 }
 
 vector<vector<string>> concatenate(const MorphemeConcatenator::MorphemeConcatenatorClass &morphemeConcatenator,
-                                const vector<vector<string>> &input) {
+                                   const vector<vector<string>> &input) {
     return morphemeConcatenator.concatenate(input);
 }
 
 JapaneseAnalyzerClass::JapaneseAnalyzerClass(const unordered_set<string> &segmenterDicts,
-                                   const string &segmenterModel,
-                                   const unordered_set<string> &taggerDicts,
-                                   const string &taggerModel,
-                                   const unordered_set<string> &morphDicts,
-                                   const string &morphModel,
-                                   const unordered_set<string> &concatDicts) {
+                                             const string &segmenterModel,
+                                             const unordered_set<string> &taggerDicts,
+                                             const string &taggerModel,
+                                             const unordered_set<string> &morphDicts,
+                                             const string &morphModel,
+                                             const unordered_set<string> &concatDicts) {
     
     unordered_map<string, string> segmenterOptions{};
     unordered_map<string, string> taggerOptions{};

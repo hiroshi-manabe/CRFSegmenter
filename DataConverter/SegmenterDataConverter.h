@@ -9,9 +9,12 @@
 #include <vector>
 
 #include "../HighOrderCRF/DataSequence.h"
-#include "CharWithSpace.h"
 #include "DataConverterInterface.h"
 #include "FeatureTemplateGenerator.h"
+
+namespace Utility {
+class CharWithSpace;
+}
 
 namespace DataConverter {
 
@@ -21,7 +24,7 @@ public:
     virtual std::shared_ptr<HighOrderCRF::DataSequence> toDataSequence(const std::vector<std::string> &sequence) const;
 
 private:
-    std::shared_ptr<FeatureTemplateGenerator<CharWithSpace>> generator;
+    std::shared_ptr<FeatureTemplateGenerator<Utility::CharWithSpace>> generator;
     std::unordered_map<std::string, std::string> options;
     std::unordered_set<std::string> dictionaries;
 };

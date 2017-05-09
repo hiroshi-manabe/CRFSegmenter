@@ -20,6 +20,7 @@ class NgramDecoderClass {
 public:
     NgramDecoderClass(const std::string &modelFilename);
     std::vector<const Word *> decode(const std::vector<Word> &words) const;
+    void decode_and_return_lengths(const std::vector<Word> &words, std::vector<const Word *> *ret, std::vector<size_t> *orders) const;
 private:
     std::shared_ptr<lm::ngram::Model> model;
 };

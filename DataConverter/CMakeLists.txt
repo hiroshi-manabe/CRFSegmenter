@@ -2,7 +2,6 @@ add_library(
     DataConverter
     CharacterFeatureGenerator.cpp
     CharacterTypeFeatureGenerator.cpp
-    CharWithSpace.cpp
     CharWithSpaceFeatureGenerator.cpp
     CharWithSpaceTypeFeatureGenerator.cpp
     DictionaryFeatureGenerator.cpp

@@ -23,6 +23,7 @@ using std::cerr;
 using std::future;
 using std::queue;
 using std::shared_ptr;
+using std::stoi;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
@@ -86,7 +87,7 @@ int mainProc(int argc, char **argv) {
     for (auto &option : options) {
         if (option.desc && option.desc->index == UNKNOWN) {
             cerr << "Unknown option: " << option.name << endl;
-            option::printUsage(cout, usage);
+            option::printUsage(cerr, usage);
             return 1;
         }
     }
@@ -116,25 +117,25 @@ int mainProc(int argc, char **argv) {
     
     if (options[SEGMENT]) {
         if (options[CHAR_N]) {
-            op["charMaxNgram"] = atoi(options[CHAR_N].arg);
+            op["charMaxNgram"] = options[CHAR_N].arg;
         }
         if (options[CHAR_W]) {
-            op["charMaxWindow"] = atoi(options[CHAR_W].arg);
+            op["charMaxWindow"] = options[CHAR_W].arg;
         }
         if (options[CHAR_L]) {
-            op["charMaxLabelLength"] = atoi(options[CHAR_L].arg);
+            op["charMaxLabelLength"] = options[CHAR_L].arg;
         }
         if (options[TYPE_N]) {
-            op["charMaxNgram"] = atoi(options[TYPE_N].arg);
+            op["charMaxNgram"] = options[TYPE_N].arg;
         }
         if (options[TYPE_W]) {
-            op["charMaxWindow"] = atoi(options[TYPE_W].arg);
+            op["charMaxWindow"] = options[TYPE_W].arg;
         }
         if (options[TYPE_L]) {
-            op["charMaxLabelLength"] = atoi(options[TYPE_L].arg);
+            op["charMaxLabelLength"] = options[TYPE_L].arg;
         }
         if (options[DICT_L]) {
-            op["dictMaxLabelLength"] = atoi(options[TYPE_L].arg);
+            op["dictMaxLabelLength"] = options[TYPE_L].arg;
         }
         if (options[CONTAINS_SPACES]) {
             op["containsSpaces"] = "true";
@@ -143,27 +144,45 @@ int mainProc(int argc, char **argv) {
     }
     else if (options[TAG]) {
         if (options[WORD_N]) {
-            op["wordMaxNgram"] = atoi(options[WORD_N].arg);
+            op["wordMaxNgram"] = options[WORD_N].arg;
         }
         if (options[WORD_W]) {
-            op["wordMaxWindow"] = atoi(options[WORD_W].arg);
+            op["wordMaxWindow"] = options[WORD_W].arg;
         }
         if (options[WORD_L]) {
-            op["wordMaxLabelLength"] = atoi(options[WORD_L].arg);
+            op["wordMaxLabelLength"] = options[WORD_L].arg;
         }
         if (options[CHAR]) {
-            op["characterLength"] = atoi(options[CHAR].arg);
+            op["characterLength"] = options[CHAR].arg;
         }
         if (options[CHAR_TYPE]) {
-            op["characterTypeLength"] = atoi(options[CHAR_TYPE].arg);
+            op["characterTypeLength"] = options[CHAR_TYPE].arg;
         }
         converter.reset(new TaggerDataConverter(op, dictionaries));
     }
     else {
         cerr << "You must specify --segment or --tag option." << endl;
-        option::printUsage(cout, usage);
+        option::printUsage(cerr, usage);
         return 1;
     }
+    
+    try {
+        if (options[SEGMENT]) {
+            converter.reset(new SegmenterDataConverter(op, dictionaries));
+        }
+        else if (options[TAG]) {
+            converter.reset(new TaggerDataConverter(op, dictionaries));
+        }
+    }
+    catch (std::invalid_argument) {
+        cerr << "Invalid argument." << endl;
+        option::printUsage(cerr, usage);
+    }
+    catch (std::out_of_range) {
+        cerr << "Argument out of range." << endl;
+        option::printUsage(cerr, usage);
+    }
+
 
     hwm::task_queue tq(numThreads);
     queue<future<shared_ptr<HighOrderCRF::DataSequence>>> futureQueue;

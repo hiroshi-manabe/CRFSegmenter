@@ -15,6 +15,7 @@ class DictionaryDecoder {
 public:
     DictionaryDecoder(const std::string &model, const std::unordered_set<std::string> &dictionaries);
     std::vector<std::string> decode(const std::vector<std::string> &input) const;
+    void decode_and_return_lengths(const std::vector<std::string> &words, std::vector<std::string> *ret, std::vector<size_t> *lengths) const;
 private:
     std::shared_ptr<NgramDecoderClass> ngramDecoder;
     std::shared_ptr<Dictionary::DictionaryClass> dictionary;

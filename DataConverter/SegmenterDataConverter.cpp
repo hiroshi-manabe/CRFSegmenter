@@ -2,11 +2,11 @@
 
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
+#include "../Utility/CharWithSpace.h"
 #include "../Utility/StringUtil.h"
 #include "AggregatedFeatureTemplateGenerator.h"
 #include "CharacterFeatureGenerator.h"
 #include "CharacterTypeFeatureGenerator.h"
-#include "CharWithSpace.h"
 #include "CharWithSpaceFeatureGenerator.h"
 #include "CharWithSpaceTypeFeatureGenerator.h"
 #include "FeatureTemplateGenerator.h"
@@ -37,6 +37,7 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+using Utility::CharWithSpace;
 using Utility::UnicodeCharacter;
 
 namespace DataConverter {
@@ -108,7 +109,7 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
             cerr << "Only one character is allowed. " << endl << str << endl;
             exit(1);
         }
-        auto possibleLabels = Utility::splitString(possibleLabelStr, ',');
+        auto possibleLabels = Utility::splitString(possibleLabelStr, ' ');
         set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
         labelList.emplace_back(move(label));
