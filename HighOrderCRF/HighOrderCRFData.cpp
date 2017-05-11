@@ -320,7 +320,7 @@ void HighOrderCRFData::dumpFeatures(const string &filename, bool outputWeights) 
                 out << weight_to_double(weightList[featureIndex]) << "\t";
             }
             out << (ft.getTag());
-            auto &labelSequence = labelSequenceList[featureIndex];
+            auto &labelSequence = labelSequenceList[featureLabelSequenceIndexList[featureIndex]];
             for (size_t j = 0; j < labelSequence.getLength(); ++j) {
                 out << "\t" << labelStringList[labelSequence.getLabelAt(j)];
             }
