@@ -126,13 +126,13 @@ int mainProc(int argc, char **argv) {
             op["charMaxLabelLength"] = options[CHAR_L].arg;
         }
         if (options[TYPE_N]) {
-            op["charMaxNgram"] = options[TYPE_N].arg;
+            op["charTypeMaxNgram"] = options[TYPE_N].arg;
         }
         if (options[TYPE_W]) {
-            op["charMaxWindow"] = options[TYPE_W].arg;
+            op["charTypeMaxWindow"] = options[TYPE_W].arg;
         }
         if (options[TYPE_L]) {
-            op["charMaxLabelLength"] = options[TYPE_L].arg;
+            op["charTypeMaxLabelLength"] = options[TYPE_L].arg;
         }
         if (options[DICT_L]) {
             op["dictMaxLabelLength"] = options[TYPE_L].arg;
