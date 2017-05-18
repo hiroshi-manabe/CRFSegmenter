@@ -55,7 +55,7 @@ const vector<label_t> &InternalDataSequence::getLabels() const {
 
 void InternalDataSequence::accumulateFeatureData(unordered_map<FeatureTemplate, vector<uint32_t>> *featureTemplateToFeatureIndexListMap,
                                                  unordered_map<Feature, uint32_t> *featureToFeatureIndexMap,
-                                                 vector<double> *featureCountList) const {
+                                                 vector<size_t> *featureCountList) const {
     for (size_t pos = 0; pos < labels.size(); ++pos) {
         for (auto &ft : featureTemplateListList[pos]) {
             if (pos < ft.getLabelLength() - 1) {

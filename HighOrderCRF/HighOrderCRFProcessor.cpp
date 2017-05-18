@@ -5,6 +5,8 @@
 #include <fstream>
 #include <future>
 #include <iostream>
+#include <iterator>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -27,15 +29,20 @@
 
 namespace HighOrderCRF {
 
+using std::back_inserter;
 using std::cerr;
+using std::copy_if;
 using std::endl;
 using std::future;
 using std::ifstream;
 using std::make_pair;
 using std::make_shared;
 using std::move;
+using std::numeric_limits;
+using std::remove;
 using std::shared_ptr;
 using std::string;
+using std::transform;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
@@ -69,6 +76,7 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t conc
 HighOrderCRFProcessor::HighOrderCRFProcessor() : modelData(new HighOrderCRFData) {}
 
 void HighOrderCRFProcessor::train(const string &filename,
+                                  size_t cutoff,
                                   size_t concurrency,
                                   size_t maxIter,
                                   double regularizationCoefficientL1,
@@ -114,9 +122,30 @@ void HighOrderCRFProcessor::train(const string &filename,
     
     unordered_map<FeatureTemplate, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
     unordered_map<Feature, uint32_t> featureToFeatureIndexMap;
-    vector<double> featureCountList;
+    vector<size_t> featureCountList;
     for (auto &internalDataSequence : internalDataSequenceList) {
         internalDataSequence.accumulateFeatureData(&featureTemplateToFeatureIndexListMap, &featureToFeatureIndexMap, &featureCountList);
+    }
+
+    // prune features
+    vector<double> prunedFeatureCountList;
+    copy_if(featureCountList.begin(), featureCountList.end(), back_inserter(prunedFeatureCountList), [&](size_t x) { return x >= cutoff; });
+    vector<size_t> indexToNewIndexList;
+    size_t counter = 0;
+    size_t invalidSize = numeric_limits<size_t>::max();
+    transform(featureCountList.begin(), featureCountList.end(), back_inserter(indexToNewIndexList), [&](size_t x) { return x >= cutoff ? counter++ : invalidSize; });
+    for (auto &entry : featureTemplateToFeatureIndexListMap) {
+        auto &indexList = entry.second;
+        transform(indexList.begin(), indexList.end(), indexList.begin(), [&](size_t x) { return indexToNewIndexList[x]; });
+        indexList.erase(remove(indexList.begin(), indexList.end(), invalidSize), indexList.end());
+    }
+    for (auto it = featureToFeatureIndexMap.begin(); it != featureToFeatureIndexMap.end();) {
+        if (it->second == invalidSize) {
+            featureToFeatureIndexMap.erase(it++);
+        }
+        else {
+            ++it;
+        }
     }
 
     unordered_map<LabelSequence, uint32_t> labelSequenceToIndexMap;
@@ -142,7 +171,7 @@ void HighOrderCRFProcessor::train(const string &filename,
     // free memory
     vector<InternalDataSequence>().swap(internalDataSequenceList);
         
-    auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, featureCountList, concurrency, maxIter, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
+    auto optimizer = make_shared<OptimizerClass>(hocrfUpdateProc, (void *)&patternSetSequenceList, prunedFeatureCountList, concurrency, maxIter, regularizationCoefficientL1, regularizationCoefficientL2, epsilonForConvergence);
     auto initialWeightList = make_shared<vector<double>>(featureCountList.size());
     optimizer->optimize(initialWeightList->data());
     auto bestWeightList = optimizer->getBestWeightList();

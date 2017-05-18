@@ -29,7 +29,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, C1, C2, EPSILON, MAXITER };
+enum optionIndex { UNKNOWN, HELP, TRAIN, TAG, CALC_LIKELIHOOD, TEST, MODEL, THREADS, C1, C2, EPSILON, MAXITER, CUTOFF };
 
 struct Arg : public option::Arg
 {
@@ -47,6 +47,7 @@ const option::Descriptor usage[] =
     { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
+    { CUTOFF, 0, "", "cutoff", Arg::Required, "  --cutoff  <number>\tCut-off threshold for features. Features whose frequency is less than this threshold will be ignored." },
     { MODEL, 0, "", "model", Arg::Required, "  --model  <file>\tDesignates the model file to be saved/loaded. Options will be saved to/loaded from <file>.options." },
     { TAG, 0, "", "tag", Arg::None, "  --tag  \tTag the text read from the standard input and writes the result to the standard output. This option can be omitted." },
     { CALC_LIKELIHOOD, 0, "", "calc-likelihood", Arg::None, "  --calc-likelihood  \tCalculates the likelihoods of labels at each position." },
@@ -140,12 +141,27 @@ int mainProc(int argc, char **argv) {
         double c2 = 0.0;
         double epsilon = 0.0;
         int maxIter = 0;
+        int cutoff = 0;
 
+        if (options[EPSILON]) {
+            epsilon = atof(options[EPSILON].arg);
+        }
         if (options[EPSILON]) {
             epsilon = atof(options[EPSILON].arg);
         }
         if (options[MAXITER]) {
             maxIter = atoi(options[MAXITER].arg);
+            if (maxIter < 0) {
+                cerr << "--maxiter must be a positive number." << endl;
+                exit(1);
+            }
+        }
+        if (options[CUTOFF]) {
+            cutoff = atoi(options[CUTOFF].arg);
+            if (cutoff < 0) {
+                cerr << "--cutoff must be a positive number." << endl;
+                exit(1);
+            }
         }
         if (options[C1]) {
             c1 = atof(options[C1].arg);
@@ -158,7 +174,7 @@ int mainProc(int argc, char **argv) {
         }
         
         HighOrderCRFProcessor processor;
-        processor.train(filename, numThreads, maxIter, c1, c2, epsilon);
+        processor.train(filename, 0, numThreads, maxIter, c1, c2, epsilon);
         processor.writeModel(modelFilename);
         
         return 0;

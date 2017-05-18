@@ -20,6 +20,7 @@ class HighOrderCRFProcessor
 public:
     HighOrderCRFProcessor();
     void train(const std::string &filename,
+               size_t cutoff,
                size_t concurrency,
                size_t maxIter,
                double regularizationCoefficientL1,
