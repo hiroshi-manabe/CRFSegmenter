@@ -174,7 +174,7 @@ int mainProc(int argc, char **argv) {
         }
         
         HighOrderCRFProcessor processor;
-        processor.train(filename, 0, numThreads, maxIter, c1, c2, epsilon);
+        processor.train(filename, cutoff, numThreads, maxIter, c1, c2, epsilon);
         processor.writeModel(modelFilename);
         
         return 0;

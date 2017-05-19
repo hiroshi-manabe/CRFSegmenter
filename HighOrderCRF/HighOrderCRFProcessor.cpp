@@ -140,10 +140,11 @@ void HighOrderCRFProcessor::train(const string &filename,
         indexList.erase(remove(indexList.begin(), indexList.end(), invalidSize), indexList.end());
     }
     for (auto it = featureToFeatureIndexMap.begin(); it != featureToFeatureIndexMap.end();) {
-        if (it->second == invalidSize) {
+        if (indexToNewIndexList[it->second] == invalidSize) {
             featureToFeatureIndexMap.erase(it++);
         }
         else {
+            it->second = indexToNewIndexList[it->second];
             ++it;
         }
     }
