@@ -122,21 +122,21 @@ void HighOrderCRFProcessor::train(const string &filename,
     
     unordered_map<FeatureTemplate, vector<uint32_t>> featureTemplateToFeatureIndexListMap;
     unordered_map<Feature, uint32_t> featureToFeatureIndexMap;
-    vector<size_t> featureCountList;
+    vector<uint32_t> featureCountList;
     for (auto &internalDataSequence : internalDataSequenceList) {
         internalDataSequence.accumulateFeatureData(&featureTemplateToFeatureIndexListMap, &featureToFeatureIndexMap, &featureCountList);
     }
 
     // prune features
     vector<double> prunedFeatureCountList;
-    copy_if(featureCountList.begin(), featureCountList.end(), back_inserter(prunedFeatureCountList), [&](size_t x) { return x >= cutoff; });
-    vector<size_t> indexToNewIndexList;
-    size_t counter = 0;
-    size_t invalidSize = numeric_limits<size_t>::max();
-    transform(featureCountList.begin(), featureCountList.end(), back_inserter(indexToNewIndexList), [&](size_t x) { return x >= cutoff ? counter++ : invalidSize; });
+    copy_if(featureCountList.begin(), featureCountList.end(), back_inserter(prunedFeatureCountList), [&](uint32_t x) { return x >= cutoff; });
+    vector<uint32_t> indexToNewIndexList;
+    uint32_t counter = 0;
+    uint32_t invalidSize = numeric_limits<uint32_t>::max();
+    transform(featureCountList.begin(), featureCountList.end(), back_inserter(indexToNewIndexList), [&](uint32_t x) { return x >= cutoff ? counter++ : invalidSize; });
     for (auto &entry : featureTemplateToFeatureIndexListMap) {
         auto &indexList = entry.second;
-        transform(indexList.begin(), indexList.end(), indexList.begin(), [&](size_t x) { return indexToNewIndexList[x]; });
+        transform(indexList.begin(), indexList.end(), indexList.begin(), [&](uint32_t x) { return indexToNewIndexList[x]; });
         indexList.erase(remove(indexList.begin(), indexList.end(), invalidSize), indexList.end());
     }
     for (auto it = featureToFeatureIndexMap.begin(); it != featureToFeatureIndexMap.end();) {

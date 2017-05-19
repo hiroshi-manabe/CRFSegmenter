@@ -22,7 +22,7 @@ public:
     InternalDataSequence(std::vector<label_t> labelList, std::vector<std::unordered_set<label_t>> possibleLabelSetList, std::vector<std::vector<FeatureTemplate>> featureTemplateListList);
     size_t length() const;
     LabelSequence getLabelSequence(size_t pos, size_t length) const;
-    void accumulateFeatureData(std::unordered_map<FeatureTemplate, std::vector<uint32_t>> *featureTemplateToFeatureIndexListMap, std::unordered_map<Feature, uint32_t> *featureToFeatureIndexMap, std::vector<size_t> *featureCountList) const;
+    void accumulateFeatureData(std::unordered_map<FeatureTemplate, std::vector<uint32_t>> *featureTemplateToFeatureIndexListMap, std::unordered_map<Feature, uint32_t> *featureToFeatureIndexMap, std::vector<uint32_t> *featureCountList) const;
     std::shared_ptr<PatternSetSequence> generatePatternSetSequence(const std::unordered_map<FeatureTemplate, std::vector<uint32_t>> &featureTemplateToFeatureIndexListMap, const std::vector<uint32_t> &featureLabelSequenceIndexList, const std::vector<LabelSequence> &labelSequenceList, bool hasValidLabels) const;
     const std::vector<label_t> &getLabels() const;
 private:
