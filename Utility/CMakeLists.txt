@@ -3,6 +3,7 @@ add_library(
     CharWithSpace.cpp
     EncryptionUtil.cpp
     FileUtil.cpp
+    KoreanUtil.cpp
     StringUtil.cpp
     UnicodeCharacter.cpp
 )

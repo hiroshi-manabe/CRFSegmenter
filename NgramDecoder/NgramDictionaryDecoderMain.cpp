@@ -1,4 +1,4 @@
-#include "DictionaryDecoder.h"
+#include "NgramDictionaryDecoder.h"
 
 #include "../optionparser/optionparser.h"
 #include "../task/task_queue.hpp"
@@ -100,7 +100,7 @@ int mainProc(int argc, char **argv) {
         return 1;
     }
 
-    DictionaryDecoder decoder(modelFilename, dictionaries);
+    NgramDictionaryDecoder decoder(modelFilename, dictionaries);
 
     hwm::task_queue tq(numThreads);
     queue<future<void>> futureQueue;
@@ -110,7 +110,7 @@ int mainProc(int argc, char **argv) {
         vector<string> ret;
         vector<size_t> lengths;
         bool emptyFlag = seq.empty();
-        future<void> f = tq.enqueue(&DictionaryDecoder::decode_and_return_lengths, decoder, seq, &ret, &lengths);
+        future<void> f = tq.enqueue(&NgramDictionaryDecoder::decode_and_return_lengths, decoder, seq, &ret, &lengths);
         futureQueue.push(move(f));
 
         if ((numThreads == 1 || !cin) && !futureQueue.empty()) {

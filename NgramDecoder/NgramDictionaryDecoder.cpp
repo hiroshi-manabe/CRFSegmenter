@@ -1,4 +1,4 @@
-#include "DictionaryDecoder.h"
+#include "NgramDictionaryDecoder.h"
 #include "NgramDecoderClass.h"
 
 #include "../Dictionary/DictionaryClass.h"
@@ -17,12 +17,12 @@ using Dictionary::DictionaryClass;
 
 namespace NgramDecoder {
 
-DictionaryDecoder::DictionaryDecoder(const string &modelFilename, const unordered_set<string> &dictionaries) {
+NgramDictionaryDecoder::NgramDictionaryDecoder(const string &modelFilename, const unordered_set<string> &dictionaries) {
     dictionary = make_shared<DictionaryClass>(dictionaries);
     ngramDecoder = make_shared<NgramDecoderClass>(modelFilename);
 }
 
-void DictionaryDecoder::decode_and_return_lengths(const vector<string> &input, vector<string> *ret, vector<size_t> *lengths) const {
+void NgramDictionaryDecoder::decode_and_return_lengths(const vector<string> &input, vector<string> *ret, vector<size_t> *lengths) const {
     ret->clear();
     vector<Word> words;
     size_t pos = 0;
@@ -36,14 +36,14 @@ void DictionaryDecoder::decode_and_return_lengths(const vector<string> &input, v
         }
         pos++;
     }
-    vector<const Word *> decoded;
-    ngramDecoder->decode_and_return_lengths(words, &decoded, lengths);
-    for (const auto word : decoded) {
-        ret->emplace_back(word->ngramString);
+    vector<size_t> indexes;
+    ngramDecoder->decode_and_return_lengths(words, &indexes, lengths);
+    for (const auto index : indexes) {
+        ret->emplace_back(words[index].ngramString);
     }
 }
 
-vector<string> DictionaryDecoder::decode(const vector<string> &input) const {
+vector<string> NgramDictionaryDecoder::decode(const vector<string> &input) const {
     vector<string> ret;
     vector<size_t> lengths;
     decode_and_return_lengths(input, &ret, &lengths);

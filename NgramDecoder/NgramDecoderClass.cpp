@@ -53,10 +53,10 @@ struct Node {
     float score;
 };
 
-void NgramDecoderClass::decode_and_return_lengths(const vector<Word> &words, vector<const Word *> *ret, vector<size_t> *lengths) const {
+void NgramDecoderClass::decode_and_return_lengths(const vector<Word> &words, vector<size_t> *ret, vector<size_t> *lengths) const {
     ret->clear();
     lengths->clear();
-    
+
     const lm::ngram::Vocabulary &vocab = model->GetVocabulary();
     unordered_map<size_t, unordered_set<pair<size_t, lm::WordIndex>>> wordsByPositionMap;
     unordered_map<size_t, unordered_map<lm::WordIndex, const Word *>> wordIndexToWordMap;
@@ -110,7 +110,7 @@ void NgramDecoderClass::decode_and_return_lengths(const vector<Word> &words, vec
     bestNode = bestNode->left;
 
     while (bestNode->left) {
-        ret->insert(ret->begin(), &words[bestNode->wordSubscript]);
+        ret->insert(ret->begin(), bestNode->wordSubscript);
         lengths->insert(lengths->begin(), bestNode->ngram_length);
         bestNode = bestNode->left;
     }
@@ -118,11 +118,12 @@ void NgramDecoderClass::decode_and_return_lengths(const vector<Word> &words, vec
     return;
 }
 
-vector<const Word *> NgramDecoderClass::decode(const vector<Word> &words) const {
-    vector<const Word *> ret;
+vector<size_t> NgramDecoderClass::decode(vector<Word> &words) const {
+    vector<size_t> indexes;
     vector<size_t> orders;
-    decode_and_return_lengths(words, &ret, &orders);
-    return ret;
+    decode_and_return_lengths(words, &indexes, &orders);
+    
+    return indexes;
 }
 
 }  // namespace NgramDecoder

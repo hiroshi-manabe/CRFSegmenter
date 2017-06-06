@@ -15,7 +15,7 @@ class HighOrderCRFProcessor;
 }
 
 namespace NgramDecoder {
-class DictionaryDecoder;
+class NgramDictionaryDecoder;
 }
 
 namespace KoreanAnalyzer {
@@ -34,7 +34,7 @@ private:
     std::shared_ptr<HighOrderCRF::HighOrderCRFProcessor> segmenterProcessor;
     std::shared_ptr<DataConverter::DataConverterInterface> taggerConverter;
     std::shared_ptr<HighOrderCRF::HighOrderCRFProcessor> taggerProcessor;
-    std::shared_ptr<NgramDecoder::DictionaryDecoder> dictionaryDecoder;
+    std::shared_ptr<NgramDecoder::NgramDictionaryDecoder> dictionaryDecoder;
 };
 
 }  // namespace KoreanAnalyzer

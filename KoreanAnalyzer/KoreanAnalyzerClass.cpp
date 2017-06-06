@@ -5,8 +5,9 @@
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
-#include "../NgramDecoder/DictionaryDecoder.h"
+#include "../NgramDecoder/NgramDictionaryDecoder.h"
 #include "../Utility/CharWithSpace.h"
+#include "../Utility/KoreanUtil.h"
 #include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
 
@@ -25,6 +26,7 @@ using std::back_inserter;
 using std::make_shared;
 using std::move;
 using std::string;
+using std::to_string;
 using std::transform;
 using std::unordered_map;
 using std::unordered_set;
@@ -36,51 +38,6 @@ using Utility::UnicodeCharacter;
 namespace KoreanAnalyzer {
 
 const string delim(u8"\ue100");
-
-bool isHangeul(UnicodeCharacter ch) {
-    return ch.getCodePoint() >= 0xac00 && ch.getCodePoint() <= 0xd7a3;
-}
-
-bool isPatchim(UnicodeCharacter ch) {
-    return ch.getCodePoint() >= 0xe000 && ch.getCodePoint() <= 0xe01f;
-}
-
-vector<CharWithSpace> decomposeHangeul(CharWithSpace ch) {
-    vector<CharWithSpace> ret{ ch };
-    if (!isHangeul(ch.getUnicodeCharacter())) {
-        return ret;
-    }
-    uint32_t code = ch.getUnicodeCharacter().getCodePoint();
-    uint32_t patchimCode = (code - 0xac00) % 28;
-    if (patchimCode == 4 ||
-        patchimCode == 8 ||
-        patchimCode == 16 ||
-        patchimCode == 17 ||
-        patchimCode == 20) {
-        ret = { { code - patchimCode, ch.hasSpace() }, { 0xe000 + patchimCode, false } };
-    }
-    else if (patchimCode == 10) {
-        ret = { {code - 2, ch.hasSpace()}, { 0xe000 + 16, false } };
-    }
-    return ret;
-}
-
-CharWithSpace recomposeHangeul(CharWithSpace input, CharWithSpace next) {
-    CharWithSpace ret(input);
-    if (next.hasSpace() || !isHangeul(input.getUnicodeCharacter()) || !isPatchim(next.getUnicodeCharacter())) {
-        return ret;
-    }
-    uint32_t code = input.getUnicodeCharacter().getCodePoint();
-    uint32_t patchimCode = (code - 0xac00) % 28;
-    uint32_t newPatchimCode = next.getUnicodeCharacter().getCodePoint() - 0xe000;
-    if (patchimCode == 0) {
-        return{ code + newPatchimCode, input.hasSpace() };
-    }
-    else if (patchimCode == 8 && newPatchimCode == 16) {
-        return{ code + 2, input.hasSpace() };
-    }
-    return ret;
-}
 
 vector<string> toSegmenterInput(const vector<CharWithSpace> &input) {
     vector<string> ret;
@@ -117,7 +74,7 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
     auto origChars = CharWithSpace::stringToCharWithSpaceList(line);
     vector<CharWithSpace> processedChars;
     for (const auto &ch : origChars) {
-        auto chars = decomposeHangeul(ch);
+        auto chars = Utility::decomposeHangeul(ch);
         processedChars.insert(processedChars.end(), chars.begin(), chars.end());
     }
     auto segmenterInput = toSegmenterInput(processedChars);
@@ -129,10 +86,10 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
         if (i == segmenterOutput.size() || (i > 0 && segmenterOutput[i] == "1")) {
             string str;
             for (size_t j = prev; j < i; ++j) {
-                if (j != prev && isPatchim(processedChars[j].getUnicodeCharacter())) {
+                if (j != prev && Utility::isPatchim(processedChars[j].getUnicodeCharacter())) {
                     continue;
                 }
-                str.append(recomposeHangeul(processedChars[j],
+                str.append(Utility::recomposeHangeul(processedChars[j],
                     (j == segmenterOutput.size() - 1 || segmenterOutput[j + 1] == "1") ?
                     CharWithSpace(0, false) : processedChars[j + 1]).getUnicodeCharacter().toString());
             }
@@ -155,7 +112,7 @@ vector<string> tag(const DataConverter::DataConverterInterface &taggerConverter,
     return ret;
 }
 
-vector<vector<string>> ngramDecode(const NgramDecoder::DictionaryDecoder &dictionaryDecoder,
+vector<vector<string>> ngramDecode(const NgramDecoder::NgramDictionaryDecoder &dictionaryDecoder,
                                    const vector<string> &input) {
     auto decoded = dictionaryDecoder.decode(input);
     vector<vector<string>> ret;
@@ -168,7 +125,7 @@ vector<vector<string>> ngramDecode(const NgramDecoder::DictionaryDecoder &dictio
         }
         fields.emplace_back(str);
         if (fields.size() == 2) {
-            fields.emplace_back(fields[0]);
+            fields.push_back(fields[0]);
         }
         ret.emplace_back(move(fields));
     }
@@ -189,7 +146,7 @@ KoreanAnalyzerClass::KoreanAnalyzerClass(const unordered_set<string> &segmenterD
     taggerConverter = make_shared<DataConverter::TaggerDataConverter>(taggerOptions, taggerDicts);
     taggerProcessor = make_shared<HighOrderCRF::HighOrderCRFProcessor>();
     taggerProcessor->readModel(taggerModel);
-    dictionaryDecoder = make_shared<NgramDecoder::DictionaryDecoder>(ngramModel, ngramDicts);
+    dictionaryDecoder = make_shared<NgramDecoder::NgramDictionaryDecoder>(ngramModel, ngramDicts);
 }
 
 vector<vector<string>> KoreanAnalyzerClass::analyze(const string &line) const {
