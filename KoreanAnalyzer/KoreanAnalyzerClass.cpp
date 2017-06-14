@@ -8,6 +8,7 @@
 #include "../NgramDecoder/NgramDictionaryDecoder.h"
 #include "../Utility/CharWithSpace.h"
 #include "../Utility/KoreanUtil.h"
+#include "../Utility/SegmenterUtil.h"
 #include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
 
@@ -39,27 +40,6 @@ namespace KoreanAnalyzer {
 
 const string delim(u8"\ue100");
 
-vector<string> toSegmenterInput(const vector<CharWithSpace> &input) {
-    vector<string> ret;
-    
-    for (const auto ch : input) {
-        string possibleLabelStr("0 1");
-        
-        if (ch.hasSpace()) {
-            possibleLabelStr = "1";
-        }
-        else {
-            possibleLabelStr = "0 1";
-        }
-        ret.emplace_back(ch.toString() +
-                         "\t" +
-                         possibleLabelStr +
-                         "\t" +
-                         "*");
-    }
-    return ret;
-}
-
 struct StringWithSpace {
     string str;
     bool hasSpace;
@@ -77,7 +57,7 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
         auto chars = Utility::decomposeHangeul(ch);
         processedChars.insert(processedChars.end(), chars.begin(), chars.end());
     }
-    auto segmenterInput = toSegmenterInput(processedChars);
+    auto segmenterInput = Utility::toSegmenterInput(processedChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
     vector<StringWithSpace> ret;

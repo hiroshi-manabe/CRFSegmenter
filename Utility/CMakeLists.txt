@@ -4,6 +4,7 @@ add_library(
     EncryptionUtil.cpp
     FileUtil.cpp
     KoreanUtil.cpp
+    SegmenterUtil.cpp
     StringUtil.cpp
     UnicodeCharacter.cpp
 )
