@@ -42,7 +42,9 @@ namespace JapaneseAnalyzer {
 vector<string> segment(const DataConverter::DataConverterInterface &segmenterConverter,
                        const HighOrderCRF::HighOrderCRFProcessor &segmenterProcessor,
                        const string &line) {
-    auto origChars = CharWithSpace::stringToCharWithSpaceList(line);
+    string transformed;
+    transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
+    auto origChars = CharWithSpace::stringToCharWithSpaceList(transformed);
     origChars.emplace_back(0x3002, false);  // '。'
     auto segmenterInput = Utility::toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);

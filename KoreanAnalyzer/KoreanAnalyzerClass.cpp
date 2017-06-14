@@ -51,7 +51,7 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
                                 const string &line) {
     string transformed;
     transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
-    auto origChars = CharWithSpace::stringToCharWithSpaceList(line);
+    auto origChars = CharWithSpace::stringToCharWithSpaceList(transformed);
     vector<CharWithSpace> processedChars;
     for (const auto &ch : origChars) {
         auto chars = Utility::decomposeHangeul(ch);
