@@ -20,7 +20,7 @@ using std::vector;
 
 namespace Dictionary {
 
-enum optionIndex { UNKNOWN, HELP, CODE, OUT };
+enum optionIndex { UNKNOWN, HELP, ENCRYPT, OUT };
 
 struct Arg : public option::Arg
 {
@@ -70,9 +70,8 @@ int mainProc(int argc, char **argv) {
         return 0;
     }
 
-    uint32_t code = 0;
     function<void(char *, size_t)> encrypt = nullptr;
-    if (options[CODE]) {
+    if (options[ENCRYPT]) {
         encrypt = &Utility::encrypt;
     }
 
