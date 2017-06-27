@@ -43,10 +43,6 @@ const option::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0 }
 };
 
-void encryptWithCode(uint32_t code, char *buf, size_t size) {
-    // Not implemented
-}
-
 int mainProc(int argc, char **argv) {
     argv += (argc > 0);
     argc -= (argc > 0);
@@ -77,8 +73,7 @@ int mainProc(int argc, char **argv) {
     uint32_t code = 0;
     function<void(char *, size_t)> encrypt = nullptr;
     if (options[CODE]) {
-        code = atoi(options[CODE].arg);
-        encrypt = bind(&Utility::encrypt, code, std::placeholders::_1, std::placeholders::_2);
+        encrypt = &Utility::encrypt;
     }
 
     string outfile;
