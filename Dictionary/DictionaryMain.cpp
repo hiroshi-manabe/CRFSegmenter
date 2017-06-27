@@ -38,7 +38,7 @@ const option::Descriptor usage[] =
     { UNKNOWN, 0, "", "", Arg::None, "USAGE:  [options]\n\n"
     "Options:" },
     { HELP, 0, "h", "help", Arg::None, "  -h, --help  \tPrints usage and exit." },
-    { CODE, 0, "c", "code", Arg::Required, "  -c, --code  <number>\tDesignates the dictionary header code." },
+    { ENCRYPT, 0, "e", "encrypt", Arg::None, "  -e, --encrypt  \tEncrypts the dictionary." },
     { OUT, 0, "o", "out", Arg::Required, "  -o, --out  <filename>\tDesignates the output file." },
     { 0, 0, 0, 0, 0, 0 }
 };
