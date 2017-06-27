@@ -26,7 +26,9 @@ void encryptDecrypt(uint32_t code, char *buf, size_t size) {
     }
 }
 
-void encrypt(uint32_t code, char *buf, size_t size) {
+void encrypt(char *buf, size_t size) {
+    uint32_t code = (uint32_t)size;
+    code = xorshift32(code);
     encryptDecrypt(code, buf, size);
 }
 
