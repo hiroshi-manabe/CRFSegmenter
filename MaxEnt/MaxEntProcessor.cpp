@@ -25,7 +25,7 @@ using std::vector;
 
 namespace MaxEnt {
 
-double maxEntUpdateProc(void *updateData, const double *x, double *g, size_t concurrency) {
+double maxEntUpdateProc(void *updateData, const double *x, double *g, int n, size_t concurrency) {
     
     auto compiledDataList = static_cast<shared_ptr<vector<shared_ptr<CompiledData>>> *>(updateData);
     hwm::task_queue tq(concurrency);

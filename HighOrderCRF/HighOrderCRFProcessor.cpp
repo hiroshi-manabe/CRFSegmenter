@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -29,6 +30,7 @@
 
 namespace HighOrderCRF {
 
+using std::atomic_uint_least64_t;
 using std::back_inserter;
 using std::cerr;
 using std::copy_if;
@@ -49,22 +51,31 @@ using std::vector;
 
 using Optimizer::OptimizerClass;
 
-double hocrfUpdateProc(void *updateData, const double *x, double *g, size_t concurrency) {
+double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size_t concurrency) {
     auto sequenceList = static_cast<vector<shared_ptr<PatternSetSequence>> *>(updateData);
     
     hwm::task_queue tq(concurrency);
     vector<future<double>> futureList;
+    vector<atomic_uint_least64_t> g2;
+    
+    for (int i = 0; i < n; ++i) {
+        g2[i] = g[i] * 0x100000000;
+    }
 
     for (auto &sequence : *sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double* expWeightArray, double* expectationArray) -> double {
-                return pat->accumulateFeatureExpectations(expWeightArray, expectationArray);
+        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<atomic_uint_least64_t> *expectationList) -> double {
+                return pat->accumulateFeatureExpectations(expWeightArray, expectationList);
             },
             sequence,
             x,
-            g);
+            &g2);
         futureList.emplace_back(move(f));
     }
     tq.wait();
+
+    for (int i = 0; i < n; ++i) {
+        g[i] = (double)g2[i] / 0x100000000;
+    }
 
     double logLikelihood = 0.0;
     for (auto &f : futureList) {

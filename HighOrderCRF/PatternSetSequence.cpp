@@ -1,6 +1,6 @@
 #include <algorithm>
+#include <atomic>
 #include <cfloat>
-#include <mutex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -12,11 +12,11 @@
 
 namespace HighOrderCRF {
 
+using std::atomic_uint_least64_t;
 using std::copy;
 using std::fill;
 using std::make_pair;
 using std::move;
-using std::mutex;
 using std::swap;
 using std::unordered_map;
 using std::vector;
@@ -230,23 +230,20 @@ double PatternSetSequence::calcScores(const double *expWeights, vector<vector<do
     return logLikelihood;
 }
 
-static mutex expectationMutex;
 // returns log likelihood of the sequence
-double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, double *expectations) const {
+double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, vector<atomic_uint_least64_t> *expectations) const {
     vector<vector<double>> scoreListList;
     double logLikelihood = calcScores(expWeights, &scoreListList);
     
     // accumulates expectations
-    expectationMutex.lock();
     for (size_t pos = 0; pos < scoreListList.size(); ++pos) {
         auto &curPatternList = patternListList[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
             for (auto &featureIndex : curPatternList[index].getFeatureIndexList()) {
-                expectations[featureIndex] += scoreListList[pos][index];
+                (*expectations)[featureIndex] += scoreListList[pos][index] * 0x100000000;
             }
         }
     }
-    expectationMutex.unlock();
 
     return logLikelihood;
 }

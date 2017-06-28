@@ -17,11 +17,11 @@ using std::move;
 using std::vector;
 
 double lbfgsEvaluate(void *instance,
-                              const double *x,
-                              double *g,
-                              const int n,
-                              const double step) {
-    return ((OptimizerClass*)instance)->evaluate(x, g);
+                     const double *x,
+                     double *g,
+                     const int n,
+                     const double step) {
+    return ((OptimizerClass*)instance)->evaluate(x, g, n);
 }
 
 int lbfgsProgress(void *instance,
@@ -37,7 +37,7 @@ int lbfgsProgress(void *instance,
     return ((OptimizerClass*)instance)->progress(x, g, fx, xnorm, gnorm, step, n, k, ls);
 }
 
-OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, size_t), void *updateData, vector<double> featureCountList,
+OptimizerClass::OptimizerClass(double (*updateProc)(void *, const double *, double *, int, size_t), void *updateData, vector<double> featureCountList,
     size_t concurrency, size_t maxIter, double regularizationCoefficientL1, double regularizationCoefficientL2, double epsilonForConvergence) {
     this->updateProc = updateProc;
     this->updateData = updateData;
@@ -85,7 +85,7 @@ void OptimizerClass::optimize(const double* featureWeights) {
     }
 };
 
-double OptimizerClass::evaluate(const double *x, double *g) {
+double OptimizerClass::evaluate(const double *x, double *g, int n) {
     size_t featureListSize = featureCountList.size();
     vector<double> expWeights(featureListSize);
 
@@ -95,7 +95,7 @@ double OptimizerClass::evaluate(const double *x, double *g) {
         g[i] = -featureCountList[i];
     }
 
-    double logLikelihood = updateProc(updateData, expWeights.data(), g, concurrency);
+    double logLikelihood = updateProc(updateData, expWeights.data(), g, n, concurrency);
 
     if (regularizationCoefficientL2 > 0.0) {
         for (size_t i = 0; i < featureListSize; ++i) {
