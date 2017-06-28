@@ -30,7 +30,7 @@
 
 namespace HighOrderCRF {
 
-using std::atomic_uint_least64_t;
+using std::atomic_int_least64_t;
 using std::back_inserter;
 using std::cerr;
 using std::copy_if;
@@ -56,14 +56,14 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size
     
     hwm::task_queue tq(concurrency);
     vector<future<double>> futureList;
-    vector<atomic_uint_least64_t> g2(n);
+    vector<atomic_int_least64_t> g2(n);
     
     for (int i = 0; i < n; ++i) {
         g2[i] = g[i] * 0x100000000;
     }
 
     for (auto &sequence : *sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<atomic_uint_least64_t> *expectationList) -> double {
+        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<atomic_int_least64_t> *expectationList) -> double {
                 return pat->accumulateFeatureExpectations(expWeightArray, expectationList);
             },
             sequence,

@@ -12,7 +12,7 @@
 
 namespace HighOrderCRF {
 
-using std::atomic_uint_least64_t;
+using std::atomic_int_least64_t;
 using std::copy;
 using std::fill;
 using std::make_pair;
@@ -231,7 +231,7 @@ double PatternSetSequence::calcScores(const double *expWeights, vector<vector<do
 }
 
 // returns log likelihood of the sequence
-double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, vector<atomic_uint_least64_t> *expectations) const {
+double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, vector<atomic_int_least64_t> *expectations) const {
     vector<vector<double>> scoreListList;
     double logLikelihood = calcScores(expWeights, &scoreListList);
     
