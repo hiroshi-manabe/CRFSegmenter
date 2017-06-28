@@ -56,7 +56,7 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size
     
     hwm::task_queue tq(concurrency);
     vector<future<double>> futureList;
-    vector<atomic_uint_least64_t> g2;
+    vector<atomic_uint_least64_t> g2(n);
     
     for (int i = 0; i < n; ++i) {
         g2[i] = g[i] * 0x100000000;
