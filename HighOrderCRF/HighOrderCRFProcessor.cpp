@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -19,6 +18,7 @@
 
 #include "../task/task_queue.hpp"
 #include "../Optimizer/OptimizerClass.h"
+#include "../Utility/AtomicFixedPointNumber.h"
 #include "types.h"
 #include "PatternSetSequence.h"
 #include "DataSequence.h"
@@ -30,7 +30,6 @@
 
 namespace HighOrderCRF {
 
-using std::atomic_int_least64_t;
 using std::back_inserter;
 using std::cerr;
 using std::copy_if;
@@ -56,14 +55,14 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size
     
     hwm::task_queue tq(concurrency);
     vector<future<double>> futureList;
-    vector<atomic_int_least64_t> g2(n);
+    vector<Utility::AtomicFixedPointNumber64> g2(n);
     
     for (int i = 0; i < n; ++i) {
-        g2[i] = g[i] * 0x100000000;
+        g2[i] = g[i];
     }
 
     for (auto &sequence : *sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<atomic_int_least64_t> *expectationList) -> double {
+        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<Utility::AtomicFixedPointNumber64> *expectationList) -> double {
                 return pat->accumulateFeatureExpectations(expWeightArray, expectationList);
             },
             sequence,
@@ -74,7 +73,7 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size
     tq.wait();
 
     for (int i = 0; i < n; ++i) {
-        g[i] = (double)g2[i] / 0x100000000;
+        g[i] = g2[i];
     }
 
     double logLikelihood = 0.0;

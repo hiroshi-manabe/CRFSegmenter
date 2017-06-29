@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <atomic>
 #include <cfloat>
 #include <unordered_map>
 #include <utility>
@@ -7,12 +6,12 @@
 
 #include "PatternSetSequence.h"
 
-#include "Pattern.h"
+#include "../Utility/AtomicFixedPointNumber.h"
 #include "Feature.h"
+#include "Pattern.h"
 
 namespace HighOrderCRF {
 
-using std::atomic_int_least64_t;
 using std::copy;
 using std::fill;
 using std::make_pair;
@@ -231,7 +230,7 @@ double PatternSetSequence::calcScores(const double *expWeights, vector<vector<do
 }
 
 // returns log likelihood of the sequence
-double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, vector<atomic_int_least64_t> *expectations) const {
+double PatternSetSequence::accumulateFeatureExpectations(const double *expWeights, vector<Utility::AtomicFixedPointNumber64> *expectations) const {
     vector<vector<double>> scoreListList;
     double logLikelihood = calcScores(expWeights, &scoreListList);
     
@@ -240,7 +239,7 @@ double PatternSetSequence::accumulateFeatureExpectations(const double *expWeight
         auto &curPatternList = patternListList[pos];
         for (size_t index = 1; index < curPatternList.size(); ++index) {
             for (auto &featureIndex : curPatternList[index].getFeatureIndexList()) {
-                (*expectations)[featureIndex] += scoreListList[pos][index] * 0x100000000;
+                (*expectations)[featureIndex] += scoreListList[pos][index];
             }
         }
     }
