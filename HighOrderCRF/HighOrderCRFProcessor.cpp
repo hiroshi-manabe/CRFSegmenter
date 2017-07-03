@@ -62,12 +62,7 @@ double hocrfUpdateProc(void *updateData, const double *x, double *g, int n, size
     }
 
     for (auto &sequence : *sequenceList) {
-        future<double> f = tq.enqueue([](shared_ptr<PatternSetSequence> pat, const double *expWeightArray, vector<Utility::AtomicFixedPointNumber64> *expectationList) -> double {
-                return pat->accumulateFeatureExpectations(expWeightArray, expectationList);
-            },
-            sequence,
-            x,
-            &g2);
+        future<double> f = tq.enqueue(&PatternSetSequence::accumulateFeatureExpectations, sequence, x, &g2);
         futureList.emplace_back(move(f));
     }
     tq.wait();
