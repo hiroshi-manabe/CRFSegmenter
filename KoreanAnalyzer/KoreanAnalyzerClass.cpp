@@ -6,7 +6,6 @@
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
 #include "../NgramDecoder/NgramDictionaryDecoder.h"
-#include "../Utility/CharWithSpace.h"
 #include "../Utility/KoreanUtil.h"
 #include "../Utility/SegmenterUtil.h"
 #include "../Utility/StringUtil.h"
@@ -33,7 +32,6 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-using Utility::CharWithSpace;
 using Utility::UnicodeCharacter;
 
 namespace KoreanAnalyzer {
@@ -51,8 +49,8 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
                                 const string &line) {
     string transformed;
     transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
-    auto origChars = CharWithSpace::stringToCharWithSpaceList(transformed);
-    vector<CharWithSpace> processedChars;
+    auto origChars = UnicodeCharacter::stringToUnicodeCharacterList(transformed);
+    vector<UnicodeCharacter> processedChars;
     for (const auto &ch : origChars) {
         auto chars = Utility::decomposeHangeul(ch);
         processedChars.insert(processedChars.end(), chars.begin(), chars.end());
@@ -62,18 +60,25 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
     vector<StringWithSpace> ret;
     size_t prev = 0;
+    size_t indexProcessedChars = 0;
     for (size_t i = 0; i <= segmenterOutput.size(); ++i) {
         if (i == segmenterOutput.size() || (i > 0 && segmenterOutput[i] == "1")) {
             string str;
             for (size_t j = prev; j < i; ++j) {
-                if (j != prev && Utility::isPatchim(processedChars[j].getUnicodeCharacter())) {
+                if (j != prev && Utility::isPatchim(processedChars[j])) {
                     continue;
                 }
                 str.append(Utility::recomposeHangeul(processedChars[j],
                     (j == segmenterOutput.size() - 1 || segmenterOutput[j + 1] == "1") ?
-                    CharWithSpace(0, false) : processedChars[j + 1]).getUnicodeCharacter().toString());
+                    UnicodeCharacter(0) : processedChars[j + 1]).toString());
             }
-            ret.emplace_back(str, processedChars[prev].hasSpace());
+            indexProcessedChars += i - prev;
+            bool hasSpace = false;
+            if (indexProcessedChars < processedChars.size() && processedChars[indexProcessedChars].getCodePoint() == ' ') {
+                hasSpace = true;
+                ++indexProcessedChars;
+            }
+            ret.emplace_back(move(str), hasSpace);
             prev = i;
         }
     }

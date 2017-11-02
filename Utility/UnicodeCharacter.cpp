@@ -28,6 +28,44 @@ UnicodeCharacter::UnicodeCharacter(uint32_t codePoint) {
     this->codePoint = codePoint;
 }
 
+UnicodeCharacter::UnicodeCharacter(string::const_iterator beginIterator, string::const_iterator endIterator, size_t *charCount) {
+    assert(endIterator > beginIterator);
+    uint32_t codePoint;
+    
+    if ((beginIterator[0] & 0x80) == 0x0) {
+        codePoint = beginIterator[0];
+        *charCount = 1;
+    } else if (endIterator > beginIterator + 1 && (beginIterator[0] & 0xe0) == 0xc0 && (beginIterator[1] & 0xc0) == 0x80) {
+        codePoint = ((beginIterator[0] & 0x1f) << 6) | (beginIterator[1] & 0x3f);
+        *charCount = 2;
+        if (codePoint < 0x80) {
+            goto ERROR;
+        }
+    } else if (endIterator > beginIterator + 2 && (beginIterator[0] & 0xf0) == 0xe0 && (beginIterator[1] & 0xc0) == 0x80 && (beginIterator[2] & 0xc0) == 0x80) {
+        codePoint = ((beginIterator[0] & 0x0f) << 12) | ((beginIterator[1] & 0x3f) << 6) | (beginIterator[2] & 0x3f);
+        *charCount = 3;
+        if (codePoint < 0x800) {
+            goto ERROR;
+        }
+    } else if (endIterator > beginIterator + 3 && (beginIterator[0] & 0xf8) == 0xf0 && (beginIterator[1] & 0xc0) == 0x80 && (beginIterator[2] & 0xc0) == 0x80 && (beginIterator[3] & 0xc0) == 0x80) {
+        codePoint = ((beginIterator[0] & 0x07) << 18) | ((beginIterator[1] & 0x3f) << 12) | ((beginIterator[2] & 0x3f) << 6) | (beginIterator[3] & 0x3f);
+        *charCount = 4;
+        if (codePoint < 0x10000) {
+            goto ERROR;
+        }
+    }
+    else {
+        goto ERROR;
+    }
+
+    this->codePoint = codePoint;
+    return;
+
+ERROR:
+    this->codePoint = '?';
+    *charCount = 1;
+}
+
 string UnicodeCharacter::toString() const {
     string ret;
     if (codePoint < 0x80) {
@@ -58,49 +96,11 @@ uint32_t UnicodeCharacter::getCodePoint() const {
     return codePoint;
 }
 
-UnicodeCharacter UnicodeCharacter::fromString(string::const_iterator it, size_t len, size_t *charCount) {
-    assert(len > 0);
-    uint32_t codePoint;
-    
-    if ((it[0] & 0x80) == 0x0) {
-        codePoint = it[0];
-        *charCount = 1;
-    } else if (len >= 2 && (it[0] & 0xe0) == 0xc0 && (it[1] & 0xc0) == 0x80) {
-        codePoint = ((it[0] & 0x1f) << 6) | (it[1] & 0x3f);
-        *charCount = 2;
-        if (codePoint < 0x80) {
-            goto ERROR;
-        }
-    } else if (len >= 3 && (it[0] & 0xf0) == 0xe0 && (it[1] & 0xc0) == 0x80 && (it[2] & 0xc0) == 0x80) {
-        codePoint = ((it[0] & 0x0f) << 12) | ((it[1] & 0x3f) << 6) | (it[2] & 0x3f);
-        *charCount = 3;
-        if (codePoint < 0x800) {
-            goto ERROR;
-        }
-    } else if (len >= 4 && (it[0] & 0xf8) == 0xf0 && (it[1] & 0xc0) == 0x80 && (it[2] & 0xc0) == 0x80 && (it[3] & 0xc0) == 0x80) {
-        codePoint = ((it[0] & 0x07) << 18) | ((it[1] & 0x3f) << 12) | ((it[2] & 0x3f) << 6) | (it[3] & 0x3f);
-        *charCount = 4;
-        if (codePoint < 0x10000) {
-            goto ERROR;
-        }
-    }
-    else {
-        goto ERROR;
-    }
-
-    return UnicodeCharacter(codePoint);
-
-ERROR:
-    codePoint = '?';
-    *charCount = 1;
-    return UnicodeCharacter(codePoint);
-}
-
 vector<UnicodeCharacter> UnicodeCharacter::stringToUnicodeCharacterList(const string &orig) {
     vector<UnicodeCharacter> ret;
     for (auto it = orig.begin(); it != orig.end(); ) {
         size_t charCount;
-        ret.emplace_back(UnicodeCharacter::fromString(it, orig.end() - it, &charCount));
+        ret.emplace_back(it, orig.end(), &charCount);
         it += charCount;
     }
     return ret;

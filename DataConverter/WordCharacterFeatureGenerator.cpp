@@ -30,7 +30,7 @@ static string utf8Substr(const string &str, size_t len, bool fromTail) {
     vector<UnicodeCharacter> unicodeList;
     for (auto it = str.begin(); it != str.end(); ) {
         size_t charCount;
-        unicodeList.emplace_back(UnicodeCharacter::fromString(it, str.end() - it, &charCount));
+        unicodeList.emplace_back(it, str.end(), &charCount);
         it += charCount;
     }
     if (len > unicodeList.size()) {

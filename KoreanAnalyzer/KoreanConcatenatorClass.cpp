@@ -4,7 +4,6 @@
 #include "../HighOrderCRF/DataSequence.h"
 #include "../HighOrderCRF/FeatureTemplate.h"
 #include "../HighOrderCRF/HighOrderCRFProcessor.h"
-#include "../Utility/CharWithSpace.h"
 #include "../Utility/KoreanUtil.h"
 #include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
@@ -29,21 +28,23 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-using Utility::CharWithSpace;
 using Utility::UnicodeCharacter;
 
 namespace KoreanAnalyzer {
 
 const string delim(u8"\ue100");
 
-vector<string> toConcatenatorInput(const vector<CharWithSpace> &input) {
+vector<string> toConcatenatorInput(const vector<UnicodeCharacter> &input) {
     vector<string> ret;
     
-    for (const auto ch : input) {
+    for (size_t i = 0; i < input.size(); ++i) {
+        auto &ch = input[i];
+        bool nextIsSpace = i + 1 < input.size() ? input[i + 1].getCodePoint() == ' ' : false;
         string possibleLabelStr("0 1");
         
-        if (ch.hasSpace()) {
+        if (nextIsSpace) {
             possibleLabelStr = "0 1";
+            ++i;
         }
         else {
             possibleLabelStr = "0";
@@ -63,13 +64,13 @@ struct StringWithSpace {
     StringWithSpace(string str, bool hasSpace) : str(str), hasSpace(hasSpace) {};
 };
 
-vector<StringWithSpace> execute(const DataConverter::DataConverterInterface &concatenatorConverter,
+string execute(const DataConverter::DataConverterInterface &concatenatorConverter,
                                 const HighOrderCRF::HighOrderCRFProcessor &concatenatorProcessor,
                                 const string &line) {
     string transformed;
     transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
-    auto origChars = CharWithSpace::stringToCharWithSpaceList(line);
-    vector<CharWithSpace> processedChars;
+    auto origChars = UnicodeCharacter::stringToUnicodeCharacterList(line);
+    vector<UnicodeCharacter> processedChars;
     for (const auto &ch : origChars) {
         auto chars = Utility::decomposeHangeul(ch);
         processedChars.insert(processedChars.end(), chars.begin(), chars.end());
@@ -77,24 +78,22 @@ vector<StringWithSpace> execute(const DataConverter::DataConverterInterface &con
     auto concatenatorInput = toConcatenatorInput(processedChars);
     auto dataSequence = concatenatorConverter.toDataSequence(concatenatorInput);
     auto concatenatorOutput = concatenatorProcessor.tag(dataSequence.get());
-    vector<CharWithSpace> resultChars;
+    vector<UnicodeCharacter> resultChars;
     for (size_t i = 0; i < concatenatorOutput.size(); ++i) {
-        resultChars.emplace_back(processedChars[i].getUnicodeCharacter(), concatenatorOutput[i] == "1" ? true : false);
+        resultChars.emplace_back(processedChars[i]);
     }
-    vector<StringWithSpace> ret;
+    string ret;
     size_t prev = 0;
     for (size_t i = 0; i <= concatenatorOutput.size(); ++i) {
         if (i == concatenatorOutput.size() || (i > 0 && concatenatorOutput[i] == "1")) {
-            string str;
             for (size_t j = prev; j < i; ++j) {
-                if (j != prev && isPatchim(resultChars[j].getUnicodeCharacter())) {
+                if (j != prev && isPatchim(resultChars[j])) {
                     continue;
                 }
-                str.append(recomposeHangeul(resultChars[j],
+                ret += recomposeHangeul(resultChars[j],
                     (j == concatenatorOutput.size() - 1 || concatenatorOutput[j + 1] == "1") ?
-                    CharWithSpace(0, false) : resultChars[j + 1]).getUnicodeCharacter().toString());
+                    0 : resultChars[j + 1]).toString();
             }
-            ret.emplace_back(str, resultChars[prev].hasSpace());
             prev = i;
         }
     }
@@ -118,10 +117,7 @@ string KoreanConcatenatorClass::concatenate(const string &line) const {
     if (line.empty()) {
         return "";
     }
-    auto concatenated = execute(*concatenatorConverter.get(), *concatenatorProcessor.get(), line);
-    vector<string> concatenatedStringList;
-    transform(concatenated.begin(), concatenated.end(), back_inserter(concatenatedStringList), [](StringWithSpace s) { return s.str; });
-    return Utility::join(concatenatedStringList, ' ');
+    return execute(*concatenatorConverter.get(), *concatenatorProcessor.get(), line);
 }
 
 }  // namespace KoreanAnalyzer

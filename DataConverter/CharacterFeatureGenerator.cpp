@@ -45,7 +45,7 @@ vector<vector<FeatureTemplate>> CharacterFeatureGenerator::generateFeatureTempla
                 }
                 string obs(prefix.str());
                 for (size_t offset = 0; offset < n; ++offset) {
-                    obs += observationList[curPos + offset].getUnicodeCharacter().toString();
+                    obs += observationList[curPos + offset].getCharacterCluster().toString();
                 }
                 size_t maxLen = min(maxLabelLength, pos - curPos + 1);
                 for (size_t labelLength = 1; labelLength <= maxLen; ++labelLength) {

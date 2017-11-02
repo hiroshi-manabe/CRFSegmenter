@@ -13,10 +13,10 @@ public:
     ~UnicodeCharacter();
     UnicodeCharacter(const UnicodeCharacter &uchar);
     UnicodeCharacter(uint32_t codePoint);
+    UnicodeCharacter(std::string::const_iterator beginIterator, std::string::const_iterator endIterator, size_t *charCount);
     std::string toString() const;
     uint32_t getCodePoint() const;
     std::string getCharacterType() const;
-    static UnicodeCharacter fromString(std::string::const_iterator it, size_t len, size_t *charCount);
     static std::string unicodeCharacterListToString(const std::vector<UnicodeCharacter> &origChars);
     static std::vector<UnicodeCharacter> stringToUnicodeCharacterList(const std::string &orig);
 private:

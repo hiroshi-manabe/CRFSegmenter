@@ -48,7 +48,7 @@ vector<vector<FeatureTemplate>> CharWithSpaceTypeFeatureGenerator::generateFeatu
                     if (cs.hasSpace()) {
                         obs += "SPACE_";
                     }
-                    obs += cs.getUnicodeCharacter().getCharacterType();
+                    obs += cs.getCharacterCluster().getFirstCharacterType();
                     if (offset < n - 1) {
                         obs += "_";
                     }

@@ -46,7 +46,7 @@ vector<vector<FeatureTemplate>> CharacterTypeFeatureGenerator::generateFeatureTe
                 }
                 string obs(prefix.str());
                 for (size_t offset = 0; offset < n; ++offset) {
-                    obs += observationList[curPos + offset].getUnicodeCharacter().getCharacterType();
+                    obs += observationList[curPos + offset].getCharacterCluster().getFirstCharacterType();
                     if (offset < n - 1) {
                         obs += "_";
                     }
