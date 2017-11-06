@@ -79,18 +79,21 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
 
     vector<string> ret;
     uint32_t prevProcessedCharCode = 0;
+    bool hasSpace;
     
     for (size_t i = 0; i < input.size(); ++i) {
-        bool hasSpace;
         string possibleLabelStr("0 1");
         
-        auto &ch = input[i];
-        bool nextIsSpace = i + 1 < input.size() ? input[i + 1].getCodePoint() == ' ' : false;
+        auto ch = input[i];
         auto processedCharCode = processedChars[i].getCodePoint();
         
-        if (nextIsSpace) {
+        hasSpace = (i == 0 || ch.getCodePoint() == ' ');
+        if (hasSpace) {
             possibleLabelStr = "1";
-            ++i;
+            if (i != 0) {
+                ++i;
+            }
+            ch = input[i];
         }
         else if (isNonCharCode(prevProcessedCharCode) ||
                  isNonCharCode(processedCharCode)) {
@@ -103,7 +106,8 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
             }
         }
         prevProcessedCharCode = processedCharCode;
-        ret.emplace_back(ch.toString() +
+        ret.emplace_back(string(hasSpace ? " " : "") +
+                         ch.toString() +
                          "\t" +
                          possibleLabelStr +
                          "\t" +
