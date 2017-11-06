@@ -36,20 +36,25 @@ const string delim(u8"\ue100");
 
 vector<string> toConcatenatorInput(const vector<UnicodeCharacter> &input) {
     vector<string> ret;
+    bool hasSpace;
     
     for (size_t i = 0; i < input.size(); ++i) {
-        auto &ch = input[i];
-        bool nextIsSpace = i + 1 < input.size() ? input[i + 1].getCodePoint() == ' ' : false;
+        auto ch = input[i];
+        hasSpace = (i == 0 || ch.getCodePoint() == ' ');
         string possibleLabelStr("0 1");
         
-        if (nextIsSpace) {
+        if (hasSpace) {
             possibleLabelStr = "0 1";
-            ++i;
+            if (i != 0) {
+                ++i;
+            }
+            ch = input[i];
         }
         else {
             possibleLabelStr = "0";
         }
-        ret.emplace_back(ch.toString() +
+        ret.emplace_back(string(hasSpace ? " " : "") +
+                         ch.toString() +
                          "\t" +
                          possibleLabelStr +
                          "\t" +
