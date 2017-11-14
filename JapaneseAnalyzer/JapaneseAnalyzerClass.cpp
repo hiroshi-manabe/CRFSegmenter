@@ -8,7 +8,6 @@
 #include "../MorphemeConcatenator/MorphemeConcatenatorClass.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorOptions.h"
 #include "../MorphemeDisambiguator/MorphemeDisambiguatorClass.h"
-#include "../Utility/CharWithSpace.h"
 #include "../Utility/SegmenterUtil.h"
 #include "../Utility/StringUtil.h"
 #include "../Utility/UnicodeCharacter.h"
@@ -34,7 +33,6 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-using Utility::CharWithSpace;
 using Utility::UnicodeCharacter;
 
 namespace JapaneseAnalyzer {
@@ -44,8 +42,8 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
                        const string &line) {
     string transformed;
     transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
-    auto origChars = CharWithSpace::stringToCharWithSpaceList(transformed);
-    origChars.emplace_back(0x3002, false);  // '。'
+    auto origChars = UnicodeCharacter::stringToUnicodeCharacterList(transformed);
+    origChars.emplace_back(0x3002);  // '。'
     auto segmenterInput = Utility::toSegmenterInput(origChars);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());

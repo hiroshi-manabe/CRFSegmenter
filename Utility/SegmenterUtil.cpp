@@ -1,6 +1,8 @@
 #include "SegmenterUtil.h"
 
+#include "CharacterCluster.h"
 #include "CharWithSpace.h"
+#include "UnicodeCharacter.h"
 
 #include <algorithm>
 #include <cassert>
@@ -17,16 +19,16 @@ using std::vector;
 
 namespace Utility {
 
-static vector<UnicodeCharacter> toHankaku(const vector<CharWithSpace> &origChars) {
+static vector<UnicodeCharacter> toHankaku(const vector<UnicodeCharacter> &origChars) {
     vector<UnicodeCharacter> ret(origChars.size());
     transform(origChars.begin(),
               origChars.end(),
               ret.begin(),
-              [](CharWithSpace ch) {
-                  auto c = ch.getUnicodeCharacter().getCodePoint();
+              [](UnicodeCharacter ch) {
+                  auto c = ch.getCodePoint();
                   return ((c >= 0xff01 &&
                            c <= 0xff5e) ?
-                          UnicodeCharacter(c - 0xfee0) : ch.getUnicodeCharacter());
+                          c - 0xfee0 : ch);
               });
     return ret;
 }
@@ -61,7 +63,7 @@ static bool isNonCharCode(uint32_t code) {
     return code >= 0xfdd0 && code <= 0xfdef;
 }
 
-vector<string> toSegmenterInput(const vector<CharWithSpace> &input) {
+vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     static const regex regexUrl(R"([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_-]+)");
     static const regex regexEmail(R"((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)");
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
@@ -77,17 +79,21 @@ vector<string> toSegmenterInput(const vector<CharWithSpace> &input) {
 
     vector<string> ret;
     uint32_t prevProcessedCharCode = 0;
+    bool hasSpace;
     
     for (size_t i = 0; i < input.size(); ++i) {
-        bool hasSpace;
         string possibleLabelStr("0 1");
         
         auto ch = input[i];
-        
         auto processedCharCode = processedChars[i].getCodePoint();
         
-        if (ch.hasSpace()) {
+        hasSpace = (i == 0 || ch.getCodePoint() == ' ');
+        if (hasSpace) {
             possibleLabelStr = "1";
+            if (i != 0) {
+                ++i;
+            }
+            ch = input[i];
         }
         else if (isNonCharCode(prevProcessedCharCode) ||
                  isNonCharCode(processedCharCode)) {
@@ -100,7 +106,8 @@ vector<string> toSegmenterInput(const vector<CharWithSpace> &input) {
             }
         }
         prevProcessedCharCode = processedCharCode;
-        ret.emplace_back(ch.toString() +
+        ret.emplace_back(string(hasSpace ? " " : "") +
+                         ch.toString() +
                          "\t" +
                          possibleLabelStr +
                          "\t" +

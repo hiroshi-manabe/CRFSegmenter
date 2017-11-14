@@ -1,5 +1,6 @@
 add_library(
     Utility
+    CharacterCluster.cpp
     CharWithSpace.cpp
     EncryptionUtil.cpp
     FileUtil.cpp

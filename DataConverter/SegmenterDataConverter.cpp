@@ -38,7 +38,7 @@ using std::unordered_set;
 using std::vector;
 
 using Utility::CharWithSpace;
-using Utility::UnicodeCharacter;
+using Utility::CharacterCluster;
 
 namespace DataConverter {
 
@@ -103,17 +103,12 @@ shared_ptr<HighOrderCRF::DataSequence> SegmenterDataConverter::toDataSequence(co
         originalStringList.emplace_back(character);
 
         bool hasSpace = (character.size() > 1 && character[0] == 0x20);
-        size_t charCount = 0;
-        auto ch = UnicodeCharacter::fromString(character.begin() + hasSpace, character.size() - hasSpace, &charCount);
-        if (charCount + hasSpace != character.size()) {
-            cerr << "Only one character is allowed. " << endl << str << endl;
-            exit(1);
-        }
+        CharacterCluster cl(character.begin() + hasSpace, character.end());
         auto possibleLabels = Utility::splitString(possibleLabelStr, ' ');
         set<string> possibleLabelSet(possibleLabels.begin(), possibleLabels.end());
         possibleLabelSetList.emplace_back(move(possibleLabelSet));
         labelList.emplace_back(move(label));
-        observationList.emplace_back(ch, hasSpace);
+        observationList.emplace_back(cl, hasSpace);
     }
     return make_shared<HighOrderCRF::DataSequence>(move(originalStringList), move(labelList), move(possibleLabelSetList), generator->generateFeatureTemplates(observationList));
 }

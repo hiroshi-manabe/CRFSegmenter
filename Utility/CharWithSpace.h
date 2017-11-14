@@ -1,7 +1,7 @@
 #ifndef HOCRF_UTILITY_CHAR_WITH_SPACE_H
 #define HOCRF_UTILITY_CHAR_WITH_SPACE_H
 
-#include "UnicodeCharacter.h"
+#include "CharacterCluster.h"
 
 #include <string>
 
@@ -9,15 +9,13 @@ namespace Utility {
 
 class CharWithSpace {
 public:
-    CharWithSpace(Utility::UnicodeCharacter c, bool hasSpace);
-    const Utility::UnicodeCharacter &getUnicodeCharacter() const;
+    CharWithSpace(Utility::CharacterCluster c, bool hasSpace);
+    const Utility::CharacterCluster &getCharacterCluster() const;
     bool hasSpace() const;
     std::string toString() const;
-    static std::string charWithSpaceListToString(const std::vector<CharWithSpace> &origChars);
-    static std::vector<CharWithSpace> stringToCharWithSpaceList(const std::string &orig);
 
 private:
-    Utility::UnicodeCharacter ch;
+    Utility::CharacterCluster ch;
     bool sp;
 };
 
