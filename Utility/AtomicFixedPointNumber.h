@@ -14,7 +14,8 @@ class AtomicFixedPointNumber64 {
     }
    
     AtomicFixedPointNumber64 &operator=(double d) {
-        num_ = d * SCALING_CONSTANT;
+        num_ = (int_least64_t)(d * SCALING_CONSTANT);
+        return *this;
     }
 
     operator double() const {
@@ -22,7 +23,8 @@ class AtomicFixedPointNumber64 {
     }
 
     AtomicFixedPointNumber64 &operator+=(double d) {
-        num_ += d * SCALING_CONSTANT;
+        num_ += (int_least64_t)(d * SCALING_CONSTANT);
+        return *this;
     }
 
  private:
