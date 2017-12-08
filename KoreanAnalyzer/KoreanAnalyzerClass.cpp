@@ -64,13 +64,14 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
     for (size_t i = 0; i <= segmenterOutput.size(); ++i) {
         if (i == segmenterOutput.size() || (i > 0 && segmenterOutput[i] == "1")) {
             string str;
+            int diff = indexProcessedChars - prev;
             for (size_t j = prev; j < i; ++j) {
-                if (j != prev && Utility::isPatchim(processedChars[j])) {
+                if (j != prev && Utility::isPatchim(processedChars[j + diff])) {
                     continue;
                 }
-                str.append(Utility::recomposeHangeul(processedChars[j],
+                str.append(Utility::recomposeHangeul(processedChars[j + diff],
                     (j == segmenterOutput.size() - 1 || segmenterOutput[j + 1] == "1") ?
-                    UnicodeCharacter(0) : processedChars[j + 1]).toString());
+                    UnicodeCharacter(0) : processedChars[j + diff + 1]).toString());
             }
             indexProcessedChars += i - prev;
             bool hasSpace = false;
