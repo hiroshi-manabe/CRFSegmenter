@@ -87,7 +87,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
         auto ch = input[i];
         auto processedCharCode = processedChars[i].getCodePoint();
         
-        hasSpace = (i == 0 || ch.getCodePoint() == ' ');
+        hasSpace = (i == 0 || ch.getCodePoint() == ' ' && i < input.size() - 1);
         if (hasSpace) {
             possibleLabelStr = "1";
             if (i != 0) {

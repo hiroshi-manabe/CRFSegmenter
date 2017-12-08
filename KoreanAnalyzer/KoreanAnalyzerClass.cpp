@@ -61,6 +61,7 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
     vector<StringWithSpace> ret;
     size_t prev = 0;
     size_t indexProcessedChars = 0;
+    bool prevHasSpace = false;
     for (size_t i = 0; i <= segmenterOutput.size(); ++i) {
         if (i == segmenterOutput.size() || (i > 0 && segmenterOutput[i] == "1")) {
             string str;
@@ -73,13 +74,13 @@ vector<StringWithSpace> segment(const DataConverter::DataConverterInterface &seg
                     (j == segmenterOutput.size() - 1 || segmenterOutput[j + 1] == "1") ?
                     UnicodeCharacter(0) : processedChars[j + diff + 1]).toString());
             }
+            ret.emplace_back(move(str), prevHasSpace);
+            prevHasSpace = false;
             indexProcessedChars += i - prev;
-            bool hasSpace = false;
-            if (indexProcessedChars < processedChars.size() && processedChars[indexProcessedChars].getCodePoint() == ' ') {
-                hasSpace = true;
+            if (indexProcessedChars < processedChars.size() && processedChars[indexProcessedChars].getCodePoint() == ' ' && indexProcessedChars < processedChars.size() - 1) {
+                prevHasSpace = true;
                 ++indexProcessedChars;
             }
-            ret.emplace_back(move(str), hasSpace);
             prev = i;
         }
     }
