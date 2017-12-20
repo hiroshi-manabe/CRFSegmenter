@@ -52,7 +52,7 @@ vector<vector<string>> MorphemeConcatenatorClass::concatenate(const vector<vecto
         for (const auto &result : results) {
             if (posSet.find(prevPos + result.first) != posSet.end() &&
                 prevPos + result.first != pos) {
-                const auto &firstResult = result.second[0];  // only uses the first one
+                const auto &firstResult = *result.second.begin();  // only uses the first one
                 vector<string> temp;
                 temp.reserve(firstResult.size() + 1);
                 temp.emplace_back(allSentence.substr(prevPos, result.first));

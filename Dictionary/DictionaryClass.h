@@ -4,6 +4,7 @@
 #include "SingleDictionary.h"
 
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -16,8 +17,8 @@ class SingleDictionary;
 class DictionaryClass {
 public:
     DictionaryClass(const std::unordered_set<std::string> &files);
-    std::vector<std::pair<size_t, std::vector<std::vector<std::string>>>> commonPrefixSearch(const std::string &str) const;
-    std::vector<std::vector<std::string>> lookup(const std::string &str) const;
+    std::vector<std::pair<size_t, std::set<std::vector<std::string>>>> commonPrefixSearch(const std::string &str) const;
+    std::set<std::vector<std::string>> lookup(const std::string &str) const;
 
 private:
     std::vector<std::shared_ptr<SingleDictionary>> dictionaryList;
