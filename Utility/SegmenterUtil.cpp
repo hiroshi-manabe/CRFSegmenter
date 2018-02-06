@@ -27,9 +27,8 @@ static vector<UnicodeCharacter> hanZenConverter(const vector<UnicodeCharacter> &
               [&](UnicodeCharacter ch) {
                   auto c = ch.getCodePoint();
                   return (toZenkaku ?
-                      ((c >= 0x21 && c <= 0x7e) ? c + 0xfee0 : ch) :
-                      ((c >= 0xff01 && c <= 0xff5e) ? c - 0xfee0 : ch));
-                                          
+                      (c == 0x20 ? 0x3000 : ((c >= 0x21 && c <= 0x7e) ? c + 0xfee0 : ch)) :
+                      (c == 0x3000 ? 0x20 : ((c >= 0xff01 && c <= 0xff5e) ? c - 0xfee0 : ch)));
               });
     return ret;
 }
