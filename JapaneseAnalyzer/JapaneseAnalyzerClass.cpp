@@ -44,7 +44,7 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
     transform(line.begin(), line.end(), back_inserter(transformed), [](char c) { return c == '\t' ? ' ' : c; });
     auto origChars = UnicodeCharacter::stringToUnicodeCharacterList(transformed);
     origChars.emplace_back(0x3002);  // '。'
-    auto segmenterInput = Utility::toSegmenterInput(origChars);
+    auto segmenterInput = Utility::toSegmenterInput(origChars, true);
     auto dataSequence = segmenterConverter.toDataSequence(segmenterInput);
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
     vector<string> ret;
