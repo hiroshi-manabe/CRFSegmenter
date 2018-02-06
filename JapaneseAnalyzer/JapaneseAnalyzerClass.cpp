@@ -54,7 +54,7 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
             ret.emplace_back(str);
             str.clear();
         }
-        auto s = Utility::splitString(segmenterInput[i])[0];
+        auto s = origChars[i].toString();
         str.append(s, s[0] == ' ' ? 1 : 0, string::npos);
     }
     return ret;
