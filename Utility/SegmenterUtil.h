@@ -8,7 +8,7 @@
 
 namespace Utility {
 
-std::vector<std::string> toSegmenterInput(const std::vector<UnicodeCharacter> &input);
+std::vector<std::string> toSegmenterInput(const std::vector<UnicodeCharacter> &input, bool toZenkaku = false);
 
 }  // namespace Utility
 

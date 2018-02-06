@@ -19,18 +19,27 @@ using std::vector;
 
 namespace Utility {
 
-static vector<UnicodeCharacter> toHankaku(const vector<UnicodeCharacter> &origChars) {
+static vector<UnicodeCharacter> hanZenConverter(const vector<UnicodeCharacter> &origChars, bool toZenkaku) {
     vector<UnicodeCharacter> ret(origChars.size());
     transform(origChars.begin(),
               origChars.end(),
               ret.begin(),
-              [](UnicodeCharacter ch) {
+              [&](UnicodeCharacter ch) {
                   auto c = ch.getCodePoint();
-                  return ((c >= 0xff01 &&
-                           c <= 0xff5e) ?
-                          c - 0xfee0 : ch);
+                  return (toZenkaku ?
+                      ((c >= 0xff01 && c <= 0xff5e) ? c - 0xfee0 : ch) :
+                      ((c >= 0x21 && c <= 0x7e) ? c + 0xfee0 : ch));
+                                          
               });
     return ret;
+}
+
+static vector<UnicodeCharacter> toHankaku(const vector<UnicodeCharacter> &origChars) {
+    return hanZenConverter(origChars, false);
+}
+
+static vector<UnicodeCharacter> toZenkaku(const vector<UnicodeCharacter> &origChars) {
+    return hanZenConverter(origChars, true);
 }
 
 static string replaceWithNonChar(const string &input, const regex &re) {
@@ -63,7 +72,7 @@ static bool isNonCharCode(uint32_t code) {
     return code >= 0xfdd0 && code <= 0xfdef;
 }
 
-vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
+vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input, bool convertToZenkaku) {
     static const regex regexUrl(R"([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_-]+)");
     static const regex regexEmail(R"((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)");
     static const regex regexNumber(R"([\d\.,]*[\d\.])");
@@ -76,24 +85,25 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input) {
     processed = replaceWithNonChar(processed, regexLatin);
     auto processedChars = UnicodeCharacter::stringToUnicodeCharacterList(processed);
     assert(input.size() == processedChars.size());
+    auto inputZen = convertToZenkaku ? toZenkaku(input) : input;
 
     vector<string> ret;
     uint32_t prevProcessedCharCode = 0;
     bool hasSpace;
     
-    for (size_t i = 0; i < input.size(); ++i) {
+    for (size_t i = 0; i < inputZen.size(); ++i) {
         string possibleLabelStr("0 1");
         
-        auto ch = input[i];
+        auto ch = inputZen[i];
         auto processedCharCode = processedChars[i].getCodePoint();
         
-        hasSpace = (i == 0 || ch.getCodePoint() == ' ' && i < input.size() - 1);
+        hasSpace = (i == 0 || ch.getCodePoint() == ' ' && i < inputZen.size() - 1);
         if (hasSpace) {
             possibleLabelStr = "1";
             if (i != 0) {
                 ++i;
             }
-            ch = input[i];
+            ch = inputZen[i];
         }
         else if (isNonCharCode(prevProcessedCharCode) ||
                  isNonCharCode(processedCharCode)) {
