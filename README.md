@@ -44,7 +44,7 @@ Output data will be separated with spaces (\x20) and not non-breaking spaces (\x
 
 #### Dictionary Format
 
-A dictionary file should be in tab-separated form, like:
+A source dictionary file should be in tab-separated form, like:
 
     天气[TAB]LEN:2[TAB]POS:NN[TAB]...[LF]
     好[TAB]LEN:1[TAB]POS:JJ[TAB]...[LF]
@@ -52,16 +52,20 @@ A dictionary file should be in tab-separated form, like:
 
 The first column should contain words. You can add an arbitrary number of features in other columns, but the number of columns should be consistent throughout the file.
 
+You have to convert source dictionary files into the binary format to be used by the program as follows:
+
+    ./Dictionary/DictionaryMain -o <output dictionary> < <source dictionary>
+
 #### Training
 
-    cat <input file> | ./scripts/sentence_splitter.pl | DataConverter/DataConverterMain --segment [--dict <dictionary file] > <temporary file>
+    cat <input file> | ./scripts/sentence_splitter.pl | ./DataConverter/DataConverterMain --segment [--dict <dictionary file] > <temporary file>
     ./HighOrderCRF/HighOrderCRFMain --train <temporary file> --model <model file> --c1 <L1 regularization coefficient> --c2 <L2 regularization coefficient>
 
 If you omit both ```--c1``` and ```c2```, L1 regularization coefficient will be set to 0.05 and L2 regularization coefficient will be set to 0.
 
 #### Performing segmentation
 
-    cat <input file> | ./scripts/sentence_splitter.pl [--ignore-latin] | DataConverter/DataConverterMain --segment [--dict <dictionary file>] | ./HighOrderCRF/HighOrderCRFMain --tag --model <model file> | ./scripts/sentence_joiner.pl
+    cat <input file> | ./scripts/sentence_splitter.pl [--ignore-latin] | ./DataConverter/DataConverterMain --segment [--dict <dictionary file>] | ./HighOrderCRF/HighOrderCRFMain --tag --model <model file> | ./scripts/sentence_joiner.pl
 
 If you use --ignore-latin option, the result will never be split between latin characters, which is often the desired behavior when processing CJK texts.
 
@@ -116,16 +120,20 @@ The dictionary file should list words and their possible tags, like in the follo
 
 "Possible tags" means the tags with which the word is tagged. In the above example, the word "time" will always be tagged with NN or VB and never with NNS or VBS.
 
+You have to convert source dictionary files into the binary format to be used by the program as follows:
+
+    ./Dictionary/DictionaryMain -o <output dictionary> < <source dictionary>
+
 #### Training
 
-    cat <input file> | DataConverter/DataConverterMain --tag [--dict <dictionary file] > <temporary file>
+    cat <input file> | ./DataConverter/DataConverterMain --tag [--dict <dictionary file] > <temporary file>
     ./HighOrderCRF/HighOrderCRFMain --train <temporary file> --model <model file>  --c1 <L1 regularization coefficient> --c2 <L2 regularization coefficient>
     
 If you omit both ```--c1``` and ```c2```, L1 regularization coefficient will be set to 0.05 and L2 regularization coefficient will be set to 0.
 
 #### Performing POS-tagging
 
-    cat <input file> | DataConverter/DataConverterMain --tag [--dict <dictionary file] | ./HighOrderCRF/HighOrderCRFMain --tag --model <model file>
+    cat <input file> | ./DataConverter/DataConverterMain --tag [--dict <dictionary file] | ./HighOrderCRF/HighOrderCRFMain --tag --model <model file>
 
 ### Directly using high-order CRF
 
