@@ -115,12 +115,17 @@ while (<STDIN>) {
         }
         elsif ($preprocess and
                ($prev_preprocessed_char =~ m{$nonchar_regex} or
-                $preprocessed_char =~ m{$nonchar_regex}) and
-               $prev_preprocessed_char eq $preprocessed_char) {
+                $preprocessed_char =~ m{$nonchar_regex})) {
+            if ($prev_preprocessed_char eq $preprocessed_char) {
                 $possible_labels = "0";
-        }
-        else {
-            $possible_labels = "0 1";
+            }
+            elsif ($prev_preprocessed_char =~ m{$nonchar_regex} and
+                   $preprocessed_char =~ m{$nonchar_regex}) {
+                $possible_labels = "1";
+            }
+            else {
+                $possible_labels = "0 1";
+            }
         }
         
         my %possible_label_dict = ();
