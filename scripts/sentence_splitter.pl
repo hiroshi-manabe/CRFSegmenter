@@ -17,6 +17,7 @@ my $opt_concat = 0;
 my $opt_ignore_latin = 0;
 my $opt_ignore_url = 0;
 my $opt_ignore_numbers = 0;
+my $opt_convert_han_zen = 0;
 my $preprocess = 0;
 
 my $nonchar_base = 0xfdd0;
@@ -30,11 +31,20 @@ sub rotate_nonchar {
 }
 
 sub to_hankaku {
-    my $orig = shift;
-    return join('', map { my $c = ord($_); ($c >= 0xff01 && $c <= 0xff5e) ? chr($c - 0xfee0) : $_; } split(//, $orig));
+    return han_zen_converter($_[0], 0);
+}
+
+sub to_zenkaku {
+    return han_zen_converter($_[0], 1);
+}
+
+sub han_zen_converter {
+    my ($orig, $to_zenkaku) = @_;
+    return join('', map { my $c = ord($_); $to_zenkaku ? ($c == 0x20 ? "\x{3000}" : $c == 0x22 ? "\x{201c}" : (($c >= 0x21 && $c <= 0x7e) ? chr($c + 0xfee0) : $_)) : ($c == 0x3000 ? "\x20" : (($c >= 0xff01 && $c <= 0xff5e) ? chr($c - 0xfee0) : $_)); } split(//, $orig));
 }
 
 GetOptions('concatenate' => \$opt_concat,
+           'convert-han-zen', \$opt_convert_han_zen,
            'ignore-latin' => \$opt_ignore_latin,
            'ignore-url' => \$opt_ignore_url,
            'ignore-numbers' => \$opt_ignore_numbers);
@@ -43,6 +53,9 @@ $preprocess = ($opt_ignore_url || $opt_ignore_numbers || $opt_ignore_latin);
 
 while (<STDIN>) {
     chomp;
+    if ($opt_convert_han_zen) {
+        $_ = to_zenkaku($_);
+    }
 
     my $preprocessed = to_hankaku($_);
     if ($preprocess) {
