@@ -103,6 +103,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input, bool conv
                 ++i;
             }
             ch = inputZen[i];
+            processedCharCode = processedChars[i].getCodePoint();
         }
         else if (isNonCharCode(prevProcessedCharCode) ||
                  isNonCharCode(processedCharCode)) {
