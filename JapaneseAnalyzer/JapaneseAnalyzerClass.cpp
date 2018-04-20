@@ -49,12 +49,22 @@ vector<string> segment(const DataConverter::DataConverterInterface &segmenterCon
     auto segmenterOutput = segmenterProcessor.tag(dataSequence.get());
     vector<string> ret;
     string str;
-    for (size_t i = 0; i < segmenterOutput.size(); ++i) {
+    bool isFirst = true;
+    size_t j = 0;
+    for (size_t i = 0; i < segmenterOutput.size(); ++i, ++j) {
         if ((i > 0 && segmenterOutput[i] == "1") || i == segmenterOutput.size() - 1) {
             ret.emplace_back(str);
             str.clear();
+            isFirst = true;
         }
-        auto s = origChars[i].toString();
+        else if (i > 0) {
+            isFirst = false;
+        }
+        auto s = origChars[j].toString();
+        if (isFirst && s == " ") {
+            j++;
+            s = origChars[j].toString();
+        }
         str.append(s);
     }
     return ret;
