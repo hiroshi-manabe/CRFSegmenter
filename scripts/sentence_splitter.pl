@@ -40,7 +40,7 @@ sub to_zenkaku {
 
 sub han_zen_converter {
     my ($orig, $to_zenkaku) = @_;
-    return join('', map { my $c = ord($_); $to_zenkaku ? ($c == 0x20 ? "\x{3000}" : $c == 0x22 ? "\x{201c}" : (($c >= 0x21 && $c <= 0x7e) ? chr($c + 0xfee0) : $_)) : ($c == 0x3000 ? "\x20" : (($c >= 0xff01 && $c <= 0xff5e) ? chr($c - 0xfee0) : $_)); } split(//, $orig));
+    return join('', map { my $c = ord($_); $to_zenkaku ? ($c == 0x22 ? "\x{201c}" : (($c >= 0x21 && $c <= 0x7e) ? chr($c + 0xfee0) : $_)) : ((($c >= 0xff01 && $c <= 0xff5e) ? chr($c - 0xfee0) : $_)); } split(//, $orig));
 }
 
 GetOptions('concatenate' => \$opt_concat,
