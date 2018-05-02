@@ -8,10 +8,9 @@ use open ':std';
 use FindBin;
 use lib $FindBin::Bin;
 use AbgdData;
+use FileHandle qw();
 
 use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
-
-$| = 1;
 
 my $opt_concat = 0;
 my $opt_ignore_latin = 0;
@@ -22,7 +21,7 @@ my $preprocess = 0;
 
 my $nonchar_base = 0xfdd0;
 my $nonchar_code = -1;
-my $nonchar = "\x{fdd0}";
+my $nonchar = chr(0xfdd0);
 my $nonchar_regex = qr{[\x{fd00}-\x{fdef}]};
 
 sub rotate_nonchar {
