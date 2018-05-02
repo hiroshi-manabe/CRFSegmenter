@@ -16,17 +16,18 @@ my $opt_concat = 0;
 my $opt_ignore_latin = 0;
 my $opt_ignore_url = 0;
 my $opt_ignore_numbers = 0;
+my $opt_decompose_html_tags = 0;
 my $opt_convert_han_zen = 0;
 my $preprocess = 0;
 
 my $nonchar_base = 0xfdd0;
 my $nonchar_code = -1;
 my $nonchar = chr(0xfdd0);
-my $nonchar_regex = qr{[\x{fd00}-\x{fdef}]};
+my $nonchar_range = chr(0xfd00)."-".chr(0xfdef);
 
-sub rotate_nonchar {
+sub get_next_nonchar {
     $nonchar_code = ($nonchar_code + 1) % 32;
-    $nonchar = chr($nonchar_base + $nonchar_code);
+    return chr($nonchar_base + $nonchar_code);
 }
 
 sub to_hankaku {
@@ -46,9 +47,10 @@ GetOptions('concatenate' => \$opt_concat,
            'convert-han-zen', \$opt_convert_han_zen,
            'ignore-latin' => \$opt_ignore_latin,
            'ignore-url' => \$opt_ignore_url,
+           'decompose-html-tags' => \$opt_decompose_html_tags,
            'ignore-numbers' => \$opt_ignore_numbers);
 
-$preprocess = ($opt_ignore_url || $opt_ignore_numbers || $opt_ignore_latin);
+$preprocess = ($opt_ignore_url || $opt_ignore_numbers || $opt_ignore_latin || $opt_decompose_html_tags);
 
 while (<STDIN>) {
     chomp;
@@ -58,10 +60,18 @@ while (<STDIN>) {
 
     my $preprocessed = to_hankaku($_);
     if ($preprocess) {
-        $preprocessed =~ s{([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_-]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_url;
-        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)}{ rotate_nonchar(); $nonchar x length($1); }ge  if $opt_ignore_url;
-        $preprocessed =~ s{([\d\.,]*[\d\.])}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_numbers;
-        $preprocessed =~ s{([A-Za-z]+)}{ rotate_nonchar(); $nonchar x length($1); }ge if $opt_ignore_latin;
+        $preprocessed =~ s{([a-z]+://[~.!*'()A-Za-z0-9;/?:@&=+$,%#_-]+)}{ get_next_nonchar() x length($1); }ge if $opt_ignore_url;
+        $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)}{ get_next_nonchar() x length($1); }ge  if $opt_ignore_url;
+        $preprocessed =~ s{([\d\.,]*[\d\.])}{ get_next_nonchar() x length($1); }ge if $opt_ignore_numbers;
+        $preprocessed =~ s{([A-Za-z]+)}{ get_next_nonchar() x length($1); }ge if $opt_ignore_latin;
+        $preprocessed =~ s{(<[\x20-\x7e$nonchar_range]+>)}{
+            my $match = $1;
+            my $result = "";
+            while ($match =~ m{\G(.+?(?:\s|\b|$))}g) {
+                $result .= get_next_nonchar() x length($1);
+            }
+            $result;
+        }eg if $opt_decompose_html_tags;
     }
 
     my @chars = split //;
@@ -126,13 +136,13 @@ while (<STDIN>) {
             $possible_labels = "0";
         }
         elsif ($preprocess and
-               ($prev_preprocessed_char =~ m{$nonchar_regex} or
-                $preprocessed_char =~ m{$nonchar_regex})) {
+               ($prev_preprocessed_char =~ m{[$nonchar_range]} or
+                $preprocessed_char =~ m{[$nonchar_range]})) {
             if ($prev_preprocessed_char eq $preprocessed_char) {
                 $possible_labels = "0";
             }
-            elsif ($prev_preprocessed_char =~ m{$nonchar_regex} and
-                   $preprocessed_char =~ m{$nonchar_regex}) {
+            elsif ($prev_preprocessed_char =~ m{[$nonchar_range]} and
+                   $preprocessed_char =~ m{[$nonchar_range]}) {
                 $possible_labels = "1";
             }
             else {
