@@ -20,13 +20,13 @@ my $opt_decompose_html_tags = 0;
 my $opt_convert_han_zen = 0;
 my $preprocess = 0;
 
-my $nonchar_base = 0xfdd0;
+my $nonchar_base = 0xff000;
+my $nonchar_num = 0xfffe;
 my $nonchar_code = -1;
-my $nonchar = chr(0xfdd0);
-my $nonchar_range = chr(0xfd00)."-".chr(0xfdef);
+my $nonchar_range = chr($nonchar_base)."-".chr($nonchar_base + $nonchar_num - 1);
 
 sub get_next_nonchar {
-    $nonchar_code = ($nonchar_code + 1) % 32;
+    $nonchar_code = ($nonchar_code + 1) % $nonchar_num;
     return chr($nonchar_base + $nonchar_code);
 }
 
@@ -64,13 +64,12 @@ while (<STDIN>) {
         $preprocessed =~ s{((?:mailto:)?[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*)}{ get_next_nonchar() x length($1); }ge  if $opt_ignore_url;
         $preprocessed =~ s{([\d\.,]*[\d\.])}{ get_next_nonchar() x length($1); }ge if $opt_ignore_numbers;
         $preprocessed =~ s{([A-Za-z]+)}{ get_next_nonchar() x length($1); }ge if $opt_ignore_latin;
-        $preprocessed =~ s{(<[\x20-\x7e$nonchar_range]+>)}{
+        $preprocessed =~ s{(<[^>]+>)}{
             my $match = $1;
-            my $result = "";
-            while ($match =~ m{\G(.+?(?:\s|\b|$))}g) {
-                $result .= get_next_nonchar() x length($1);
-            }
-            $result;
+            $match =~ s{[\x20-\x2f\x3a-\x40\x5b-\x5e\x60\x7b-\x7e]}{
+                get_next_nonchar();
+            }eg;
+            $match;
         }eg if $opt_decompose_html_tags;
     }
 
