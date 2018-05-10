@@ -41,6 +41,9 @@ static vector<UnicodeCharacter> toZenkaku(const vector<UnicodeCharacter> &origCh
     return hanZenConverter(origChars, true);
 }
 
+static const int NONCHAR_BASE = 0xff000;
+static const int NONCHAR_NUM = 0xfffe;
+
 static string replaceWithNonChar(const string &input, const regex &re) {
     string ret;
     bool isMatch = false;
@@ -48,11 +51,12 @@ static string replaceWithNonChar(const string &input, const regex &re) {
     
     auto callback = [&](const string &m) {
         if (isMatch) {
-            string nonChar = UnicodeCharacter(0xfdd0 + nonCharCode).toString();
-            for (size_t i = 0; i < m.size(); ++i) {
+            auto v = UnicodeCharacter::stringToUnicodeCharacterList(m);
+            string nonChar = UnicodeCharacter(NONCHAR_BASE + nonCharCode).toString();
+            for (size_t i = 0; i < v.size(); ++i) {
                 ret += nonChar;
             }
-            nonCharCode = (nonCharCode + 1) % 0x20;
+            nonCharCode = (nonCharCode + 1) % NONCHAR_NUM;
         }
         else {
             ret += m;
@@ -68,7 +72,29 @@ static string replaceWithNonChar(const string &input, const regex &re) {
 }
 
 static bool isNonCharCode(uint32_t code) {
-    return code >= 0xfdd0 && code <= 0xfdef;
+    return code >= NONCHAR_BASE && code < NONCHAR_BASE + NONCHAR_NUM;
+}
+
+static string processTags(const string &input) {
+    string ret;
+    static const regex regexTag(R"(<[^>]+>)");
+    static const regex regexNonWord(R"([\x20-\x2f\x3a-\x40\x5b-\x5e\x60\x7b-\x7e])");
+    bool isMatch = false;
+    auto callback = [&](const string &m) {
+        if (isMatch) {
+            auto r = replaceWithNonChar(m, regexNonWord);
+            ret += r;
+        }
+        else {
+            ret += m;
+        }
+        isMatch = !isMatch;
+    };
+    sregex_token_iterator begin(input.begin(), input.end(), regexTag, {-1, 0});
+    sregex_token_iterator end;
+    for_each(begin, end, callback);
+
+    return ret;
 }
 
 vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input, bool convertToZenkaku) {
@@ -80,6 +106,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input, bool conv
     string processed = UnicodeCharacter::unicodeCharacterListToString(toHankaku(input));
     processed = replaceWithNonChar(processed, regexUrl);
     processed = replaceWithNonChar(processed, regexEmail);
+    processed = processTags(processed);
     processed = replaceWithNonChar(processed, regexNumber);
     processed = replaceWithNonChar(processed, regexLatin);
     auto processedChars = UnicodeCharacter::stringToUnicodeCharacterList(processed);
