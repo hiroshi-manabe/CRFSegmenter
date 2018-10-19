@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (HOCRF)
 if (NOT MSVC)
-    list(APPEND CMAKE_CXX_FLAGS "-pthread -std=c++11 -fPIC ${CMAKE_CXX_FLAGS}")
+    list(APPEND CMAKE_CXX_FLAGS "-pthread -fPIC ${CMAKE_CXX_FLAGS}")
     list(APPEND CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 add_subdirectory(kenlm)
