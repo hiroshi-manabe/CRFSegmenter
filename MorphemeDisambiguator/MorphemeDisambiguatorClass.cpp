@@ -293,8 +293,8 @@ void MorphemeDisambiguatorClass::test(const string &testFilename) const {
         auto inferredResultList = tag(sentence);
         assert(inferredResultList.size() == correctResultList.size());
         for (size_t i = 0; i < inferredResultList.size(); ++i) {
-            if (inferredResultList[i].size() == correctResultList[i].size() + 1 &&
-                equal(inferredResultList[i].begin() + 1, inferredResultList[i].end(), correctResultList[i].begin())) {
+            if (inferredResultList[i].size() == correctResultList[i].size() + 2 &&
+                equal(inferredResultList[i].begin() + 2, inferredResultList[i].end(), correctResultList[i].begin())) {
                 ++correctCount;
             }
             ++allCount;
