@@ -233,6 +233,18 @@ void MorphemeDisambiguatorClass::train(const string &trainingFilename,
 
     while (true) {
         vector<string> sequence = Utility::readSequence(ifs);
+        vector<bool> flags;
+        bool has_flags = false;
+        for (auto &s : sequence) {
+            bool flag = false;
+            if (!s.empty() && s[0] == '>') {
+                s = string(s.begin() + 1, s.end());
+                flag = true;
+            }
+            flags.push_back(flag);
+            has_flags = has_flags || flag;
+        }
+        
         if (!ifs) {
             break;
         }
@@ -244,8 +256,10 @@ void MorphemeDisambiguatorClass::train(const string &trainingFilename,
         assert(sentence.size() == dictResultListList.size() &&
                sentence.size() == commonAttributeSetList.size());
         for (size_t i = 0; i < sentence.size(); ++i) {
-            auto o = generateTrainingObservationList(dictResultListList[i], commonAttributeSetList[i], correctResultList[i]);
-            move(o.begin(), o.end(), back_inserter(observationList));
+            if (!has_flags || flags[i]) {
+                auto o = generateTrainingObservationList(dictResultListList[i], commonAttributeSetList[i], correctResultList[i]);
+                move(o.begin(), o.end(), back_inserter(observationList));
+            }
         }
     }
     ifs.close();
