@@ -9,7 +9,7 @@ sub get_config {
     my ($config_ref) = @_;
     $config_ref->{"SCRIPT_DIR"} = dirname(__FILE__);
     
-    open IN, "<", "build_dir.txt";
+    open IN, "<", "$config_ref->{SCRIPT_DIR}/build_dir.txt" or die "build_dir.txt not generated.";
     my $t = <IN>;
     chomp $t;
     close IN;

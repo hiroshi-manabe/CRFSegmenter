@@ -14,10 +14,10 @@ if (not -d $build_dir) {
 }
 my $build_dir_abs = File::Spec->rel2abs(Cwd::realpath($build_dir));
 
-open OUT, ">", "build_dir.txt";
+open OUT, ">", "$cur_dir/build_dir.txt";
 print OUT "$build_dir_abs\n";
 close OUT;
 
 my $project_dir_abs = File::Spec->rel2abs(Cwd::realpath($cur_dir."/.."));
 
-print qq{Please execute "cmake $project_dir_abs" and "make" in directory $build_dir_abs.\n"};
+print qq{cd to $build_dir and execute "cmake $project_dir_abs" and "make".\n"};
