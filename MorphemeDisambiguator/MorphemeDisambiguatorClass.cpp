@@ -315,7 +315,7 @@ void MorphemeDisambiguatorClass::test(const string &testFilename) const {
         }
     }
     ifs.close();
-    printf("Accuracy: %d / %d (%1.4f)\n", correctCount, allCount, correctCount / (double)allCount);
+    printf("Accuracy: %zu / %zu (%1.4f)\n", correctCount, allCount, correctCount / (double)allCount);
 }
 
 void MorphemeDisambiguatorClass::readModel(const string &modelFilename) {

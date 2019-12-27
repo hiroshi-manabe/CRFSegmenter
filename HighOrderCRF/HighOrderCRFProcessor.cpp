@@ -261,15 +261,15 @@ void HighOrderCRFProcessor::test(const string &filename,
     printf("Performance by label (#match, #model, #ref) (precision, recall, F1):\n");
     for (const auto &entry : labelMap) {
         const auto &key = entry.first;
-        printf("    %s: (%d, %d, %d) (%1.4f, %1.4f, %1.4f)\n",
+        printf("    %s: (%zu, %zu, %zu) (%1.4f, %1.4f, %1.4f)\n",
                key.c_str(),
                correctLabelCountMap[key], inferredLabelCountMap[key], dataLabelCountMap[key],
                precisionByLabel[key], recallByLabel[key], fMeasureByLabel[key]);
     }
     printf("\n");
-    printf("Item accuracy: %d / %d (%1.4f)\n",
+    printf("Item accuracy: %zu / %zu (%1.4f)\n",
            correctLabelCount, allLabelCount, correctLabelCount / (double)allLabelCount);
-    printf("Instance Accuracy: %d / %d (%1.4f)\n",
+    printf("Instance Accuracy: %zu / %zu (%1.4f)\n",
            correctSequenceCount, sequenceCount, correctSequenceCount / (double)sequenceCount);
 }
 

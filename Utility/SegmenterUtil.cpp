@@ -123,7 +123,7 @@ vector<string> toSegmenterInput(const vector<UnicodeCharacter> &input, bool conv
         auto ch = inputZen[i];
         auto processedCharCode = processedChars[i].getCodePoint();
         
-        hasSpace = (i == 0 || ch.getCodePoint() == ' ' && i < inputZen.size() - 1);
+        hasSpace = (i == 0 || (ch.getCodePoint() == ' ' && i < inputZen.size() - 1));
         if (hasSpace) {
             possibleLabelStr = "1";
             if (ch.getCodePoint() == ' ') {
