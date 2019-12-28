@@ -23,7 +23,7 @@ CRFSegmenter
 
     $ ./scripts/set_build_dir.pl build/
     $ cd build/
-    $ cmake
+    $ cmake ..
     $ make
 
 実行・入出力
