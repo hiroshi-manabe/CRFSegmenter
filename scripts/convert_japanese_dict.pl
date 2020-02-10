@@ -92,7 +92,10 @@ sub main {
     %output_set = ();
     @output_set{qw(segment postag morph)} = ();
     for my $file(@{$opts{"dict"}}) {
-        open IN, "<", $file or close_files($output_dict{"output-types"}); die "Cannot open: $file";
+        if (!open IN, "<", $file) {
+            close_files($output_dict{"output-types"});
+            die "Cannot open: $file"
+        }
         while (<IN>) {
             chomp;
             my @F = split /\t/;
