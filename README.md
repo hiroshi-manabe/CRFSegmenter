@@ -60,24 +60,12 @@ CRFSegmenter
 ユーザー辞書
 ------------
 
-ユーザー辞書は、非用言と用言でフォーマットが違い、ファイルを分ける必要があります。
-
-非用言のユーザー辞書のフォーマットはタブ区切りテキストで、左から順に
+ユーザー辞書のフォーマットはタブ区切りテキストで、左から順に
 
 - 読み
 - 発音
 - 品詞（resources/pos_table_ipadic.tsv 1列目に記載）
-- 表記
-- 代表形（「表記-読み」形式）
-
-となります。
-
-用言のユーザー辞書のフォーマットもタブ区切りテキストで、左から順に
-
-- 読み
-- 発音
-- 品詞（resources/pos_table_ipadic.tsv 1列目に記載）
-- 活用タイプ（resources/cforms.tsv 1列目に記載）
+- 活用タイプ（resources/cforms.tsv 1列目に記載。非用言の場合は"*"）
 - 表記
 - 代表形（「表記-読み」形式）
 
@@ -87,9 +75,9 @@ CRFSegmenter
 
 変換は以下のようにします。
 
-    $ ./script/convert_japanese_dict.pl --prefix <出力ファイル名> [-n 非用言辞書]... [-d 用言辞書]...
+    $ ./script/convert_japanese_dict.pl --prefix <出力ファイル名> [-d 辞書]...
 
--n, -d は複数指定可能です。
+-d は複数指定可能です。
 
 --prefix で指定したファイル名に .segment, .postag, .morph という拡張子が追加されたファイルがそれぞれ生成されます。
 
