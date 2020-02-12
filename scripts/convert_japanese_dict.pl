@@ -20,7 +20,7 @@ USAGE
     exit(0);
 }
 
-sub close_files {
+sub delete_temp_files {
     my ($ref) = @_;
     for my $type(keys %{$ref}) {
         close $ref->{$type}->{"handle"};
@@ -93,7 +93,7 @@ sub main {
     @output_set{qw(segment postag morph)} = ();
     for my $file(@{$opts{"dict"}}) {
         if (!open IN, "<", $file) {
-            close_files($output_dict{"output-types"});
+            delete_temp_files($output_dict{"output-types"});
             die "Cannot open: $file"
         }
         while (<IN>) {
@@ -155,6 +155,7 @@ sub main {
         system("$config_ref->{DICTIONARY_CONVERTER} -o $output_types->{$type}{'file'} < $output_types->{$type}{'file'}$TEMP_EXT");
         unlink $output_types->{$type}{"file"}.$TEMP_EXT;
     }
+    delete_temp_files($output_dict{"output-types"});
 }
 
 sub output
