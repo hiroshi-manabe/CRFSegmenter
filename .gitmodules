@@ -1,0 +1,3 @@
+[submodule "nictdict"]
+	path = nictdict
+	url = https://github.com/hiroshi-manabe/nictdict.git
