@@ -17,10 +17,10 @@ sub get_config {
     
     $config_ref->{"ROOT_DIR"} = "$config_ref->{SCRIPT_DIR}/..";
     $config_ref->{"MODEL_DIR"} = "$config_ref->{ROOT_DIR}/models";
-    $config_ref->{"RESOURCE_DIR"} = "$config_ref->{ROOT_DIR}/resources";
+    $config_ref->{"DICT_DIR"} = "$config_ref->{ROOT_DIR}/dict";
 
-    $config_ref->{"CFORMS_FILE"} = "$config_ref->{RESOURCE_DIR}/cforms.tsv";
-    $config_ref->{"POS_TABLE_FILE"} = "$config_ref->{RESOURCE_DIR}/pos_table_ipadic.tsv";
+    $config_ref->{"CFORMS_FILE"} = "$config_ref->{DICT_DIR}/cforms.tsv";
+    $config_ref->{"POS_TABLE_FILE"} = "$config_ref->{DICT_DIR}/pos_table_ipadic.tsv";
 
     $config_ref->{"SENTENCE_SPLITTER"} = "$config_ref->{SCRIPT_DIR}/sentence_splitter.pl";
     $config_ref->{"SENTENCE_JOINER"} = "$config_ref->{SCRIPT_DIR}/sentence_joiner.pl";
