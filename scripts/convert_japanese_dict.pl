@@ -33,7 +33,7 @@ sub main {
     GetOptions(
         \%opts,
         "cforms-file=s",
-        "pos-table-file",
+        "pos-table-file=s",
         "dict|d=s@",
         "concat-dict|c=s@",
         "prefix=s",
