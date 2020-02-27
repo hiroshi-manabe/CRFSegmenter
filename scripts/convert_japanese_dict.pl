@@ -153,7 +153,6 @@ sub main {
         next if not exists $output_types->{$type}{"handle"};
         close $output_types->{$type}{"handle"} ;
         system("$config_ref->{DICTIONARY_CONVERTER} -o $output_types->{$type}{'file'} < $output_types->{$type}{'file'}$TEMP_EXT");
-        unlink $output_types->{$type}{"file"}.$TEMP_EXT;
     }
     delete_temp_files($output_dict{"output-types"});
 }
